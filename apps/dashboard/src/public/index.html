@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Public Bot Ecosystem</title>
+  <link rel="stylesheet" href="app.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="toast-container" class="toast-container"></div>
+
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-badge"></div>
+        <div class="brand-text">
+          <span class="brand-title">Ecosystem</span>
+          <span class="brand-sub">Next-Gen Public</span>
+        </div>
+      </div>
+
+      <nav class="nav-menu">
+        <button class="nav-btn active" data-tab="tab-overview">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+          <span>Genel Bakış</span>
+        </button>
+        <button class="nav-btn" data-tab="tab-bot-fleet">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+          <span>Bot Yönetimi ve Tokenlar</span>
+        </button>
+        <button class="nav-btn" data-tab="tab-config">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          <span>Sunucu ve Veritabanı</span>
+        </button>
+        <button class="nav-btn" data-tab="tab-commands">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+          <span>Komutlar ve Slash</span>
+        </button>
+        <button class="nav-btn" data-tab="tab-messages">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          <span>Mesaj Şablonları</span>
+        </button>
+        <button class="nav-btn" data-tab="tab-voice">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+          <span>Ses Karşılama Botları</span>
+        </button>
+        <button class="nav-btn" data-tab="tab-penalties">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+          <span>Sicil ve Cezalar</span>
+        </button>
+        <button class="nav-btn" data-tab="tab-guard">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+          <span>Güvenlik ve Guard</span>
+        </button>
+        <button class="nav-btn" data-tab="tab-metrics">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+          <span>Sistem Monitörü</span>
+        </button>
+        <button class="nav-btn" data-tab="tab-autoresponders">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path><line x1="9" y1="10" x2="15" y2="10"></line></svg>
+          <span>Auto-Responder</span>
+        </button>
+        <button class="nav-btn" data-tab="tab-leaderboard">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+          <span>Liderlik Tablosu</span>
+        </button>
+        <button class="nav-btn" data-tab="tab-weekly-rewards">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+          <span>Haftalık Ödüller</span>
+        </button>
+        <button class="nav-btn" data-tab="tab-staff-matrix">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          <span>Yetkili Matrisi</span>
+        </button>
+        <button class="nav-btn" data-tab="tab-tickets">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+          <span>Destek ve Biletler</span>
+        </button>
+        <button class="nav-btn" data-tab="tab-economy">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"></path></svg>
+          <span>Ekonomi ve Borsa</span>
+        </button>
+        <button class="nav-btn" data-tab="tab-backups">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+          <span>Sunucu Yedekleri</span>
+        </button>
+        <button class="nav-btn" data-tab="tab-invites">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" y1="8" x2="19" y2="14"></line><line x1="22" y1="11" x2="16" y2="11"></line></svg>
+          <span>Davet Sıralaması</span>
+        </button>
+        <button class="nav-btn" data-tab="tab-staff-tasks">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+          <span>Yetkili Görevleri</span>
+        </button>
+        <button class="nav-btn" data-tab="tab-livechat">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+          <span>Canlı Konsol ve Sohbet</span>
+        </button>
+      </nav>
+      <div style="padding: 16px; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 8px;">
+        <button id="theme-toggle" class="btn btn-secondary btn-sm" onclick="toggleDashboardTheme()">🌙 Tema Değiştir</button>
+        <button id="lang-toggle" class="btn btn-secondary btn-sm" onclick="toggleDashboardLang()">🌐 Dil: TR</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <section id="tab-overview" class="tab-pane active">
+        <header class="pane-header">
+          <h2>Genel Bakış</h2>
+          <p>Sistem kaynakları ve gerçek zamanlı sunucu verileri.</p>
+        </header>
+
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <span class="metric-label">Veritabanı</span>
+            <div class="metric-value-row">
+              <span id="overview-db-status" class="status-pill status-pill-active">Bağlı</span>
+              <span id="overview-db-name" class="metric-subtext">mongo:27017</span>
+            </div>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Bellek Kullanımı</span>
+            <span id="overview-ram" class="metric-value">- MB</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Aktif Cezalar</span>
+            <span id="overview-penalties" class="metric-value">0</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Ses Botları</span>
+            <span id="overview-voice" class="metric-value">0</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header-flex">
+            <div>
+              <h3>Çalışan Motor Detayları</h3>
+              <p class="text-sub">Sistem runtime ve gerçek ortam metrikleri</p>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="loadOverview()">Yenile</button>
+          </div>
+          <div class="system-specs-grid">
+            <div class="spec-box"><span class="spec-label">Çalışma Süresi:</span><span id="spec-uptime" class="spec-val">-</span></div>
+            <div class="spec-box"><span class="spec-label">Node Sürümü:</span><span id="spec-node" class="spec-val">-</span></div>
+            <div class="spec-box"><span class="spec-label">Kayıtlı Üyeler:</span><span id="spec-users" class="spec-val">0</span></div>
+            <div class="spec-box"><span class="spec-label">Aktivite Takip:</span><span id="spec-tracked" class="spec-val">0</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-bot-fleet" class="tab-pane">
+        <header class="pane-header">
+          <h2>Bot Yönetimi ve Tokenlar</h2>
+          <p>Sistemdeki tüm botların token, client ID ve durum (presence) ayarlarını belirleyin.</p>
+        </header>
+
+        <div id="bot-credentials-list" class="bot-cards-grid">
+          <div class="card"><p class="text-muted">Bot verileri yükleniyor...</p></div>
+        </div>
+      </section>
+
+      <section id="tab-config" class="tab-pane">
+        <header class="pane-header">
+          <h2>Sunucu ve Veritabanı</h2>
+          <p>Roller, kanallar ve bağlantı sağlayıcı konfigürasyonu.</p>
+        </header>
+
+        <div class="guild-select-bar">
+          <label>Yönetilen Sunucu ID:</label>
+          <input type="text" id="cfg-guildId" class="input-inline" placeholder="Sunucu ID girin">
+          <button id="btn-load-guild" class="btn btn-secondary btn-sm">Sunucuyu Getir</button>
+        </div>
+
+        <form id="form-config" class="config-form">
+          <div class="card">
+            <h3>Temel Yapılandırma</h3>
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label>Komut Ön Eki (Prefix)</label>
+                <input type="text" id="cfg-prefix" placeholder=".">
+              </div>
+              <div class="form-group">
+                <label>Sunucu Tag Sembolü</label>
+                <input type="text" id="cfg-tag" placeholder="✦">
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Rol Tanımları</h3>
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label>Erkek Rolleri (Virgülle ayırın)</label>
+                <input type="text" id="cfg-role-man" placeholder="Rol ID">
+              </div>
+              <div class="form-group">
+                <label>Kadın Rolleri (Virgülle ayırın)</label>
+                <input type="text" id="cfg-role-woman" placeholder="Rol ID">
+              </div>
+              <div class="form-group">
+                <label>Kayıtsız Rolleri (Virgülle ayırın)</label>
+                <input type="text" id="cfg-role-unreg" placeholder="Rol ID">
+              </div>
+              <div class="form-group">
+                <label>Taglı Üye Rolü</label>
+                <input type="text" id="cfg-role-tagrole" placeholder="Rol ID">
+              </div>
+              <div class="form-group">
+                <label>Booster Rolü</label>
+                <input type="text" id="cfg-role-booster" placeholder="Rol ID">
+              </div>
+              <div class="form-group">
+                <label>VIP Üye Rolü</label>
+                <input type="text" id="cfg-role-vip" placeholder="Rol ID">
+              </div>
+              <div class="form-group">
+                <label>Karantina (Jail) Rolü</label>
+                <input type="text" id="cfg-role-jail" placeholder="Rol ID">
+              </div>
+              <div class="form-group">
+                <label>Yazı Susturma (Chat Mute) Rolü</label>
+                <input type="text" id="cfg-role-cmute" placeholder="Rol ID">
+              </div>
+              <div class="form-group">
+                <label>Ses Susturma (Voice Mute) Rolü</label>
+                <input type="text" id="cfg-role-vmute" placeholder="Rol ID">
+              </div>
+              <div class="form-group">
+                <label>Uyarı Rolleri (Virgülle ayırın)</label>
+                <input type="text" id="cfg-role-warn" placeholder="Rol ID'leri">
+              </div>
+              <div class="form-group full-width">
+                <label>Yetkili Rolleri (Virgülle ayırın)</label>
+                <input type="text" id="cfg-role-staff" placeholder="Rol ID'leri">
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Kanal Tanımları</h3>
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label>Genel Sohbet Kanalı</label>
+                <input type="text" id="cfg-ch-chat" placeholder="Kanal ID">
+              </div>
+              <div class="form-group">
+                <label>Kayıt Sohbet Kanalı</label>
+                <input type="text" id="cfg-ch-reg" placeholder="Kanal ID">
+              </div>
+              <div class="form-group">
+                <label>Ceza ve Sicil Log Kanalı</label>
+                <input type="text" id="cfg-ch-penaltylog" placeholder="Kanal ID">
+              </div>
+              <div class="form-group">
+                <label>Güvenlik (Guard) Log Kanalı</label>
+                <input type="text" id="cfg-ch-guardlog" placeholder="Kanal ID">
+              </div>
+              <div class="form-group">
+                <label>Davet Log Kanalı</label>
+                <input type="text" id="cfg-ch-invitelog" placeholder="Kanal ID">
+              </div>
+              <div class="form-group">
+                <label>Kayıt Log Kanalı</label>
+                <input type="text" id="cfg-ch-reglog" placeholder="Kanal ID">
+              </div>
+              <div class="form-group">
+                <label>Ses Log Kanalı</label>
+                <input type="text" id="cfg-ch-voicelog" placeholder="Kanal ID">
+              </div>
+              <div class="form-group">
+                <label>Mesaj Log Kanalı</label>
+                <input type="text" id="cfg-ch-msglog" placeholder="Kanal ID">
+              </div>
+              <div class="form-group">
+                <label>Hoş Geldin Ses Kanalları (Virgülle ayırın)</label>
+                <input type="text" id="cfg-ch-welcomevoice" placeholder="Kanal ID'leri">
+              </div>
+              <div class="form-group">
+                <label>Destek Bilet Kategorisi</label>
+                <input type="text" id="cfg-ch-ticketcat" placeholder="Kategori ID">
+              </div>
+              <div class="form-group">
+                <label>Özel Ses Odası Kategorisi</label>
+                <input type="text" id="cfg-ch-customvoicecat" placeholder="Kategori ID">
+              </div>
+              <div class="form-group">
+                <label>Özel Ses Odası Oluşturma Kanalı</label>
+                <input type="text" id="cfg-ch-customvoicech" placeholder="Kanal ID">
+              </div>
+            </div>
+          </div>
+
+          <div class="card card-warning-zone">
+            <h3>Veritabanı Sağlayıcısı (Database Provider)</h3>
+            <p class="text-sub">Kullanmak istediğiniz veritabanı motorunu seçin.</p>
+
+            <div class="form-grid-2 mt-3">
+              <div class="form-group">
+                <label>Veritabanı Türü</label>
+                <select id="cfg-db-provider" class="select-styled">
+                  <option value="MONGODB">MongoDB (Varsayılan)</option>
+                  <option value="POSTGRESQL">PostgreSQL</option>
+                  <option value="MYSQL">MySQL</option>
+                  <option value="MARIADB">MariaDB</option>
+                  <option value="SQLITE">SQLite (Yerel Dosya)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Bağlantı Adresi (URI / Host)</label>
+                <input type="text" id="cfg-db-uri" placeholder="mongodb://127.0.0.1:27017/db veya postgres://...">
+              </div>
+            </div>
+
+            <div class="alert-box alert-danger mt-3">
+              <strong>DİKKAT:</strong> Veritabanı sağlayıcısını değiştirdiğinizde eski veritabanındaki veriler otomatik olarak yeni motora aktarılmaz. Önceki siciller, cezalar, görev puanları ve kullanıcı istatistikleri sıfırlanır.
+            </div>
+
+            <div class="checkbox-row mt-3">
+              <input type="checkbox" id="cfg-db-confirm">
+              <label for="cfg-db-confirm">Veritabanı değişikliğinde verilerin sıfırlanacağını onaylıyorum.</label>
+            </div>
+          </div>
+
+          <div class="card mt-3">
+            <h3>Kademeli Ceza Puanı Eşikleri</h3>
+            <p class="text-sub">Kullanıcının aktif ceza puanı bu sınırlara ulaştığında bot otomatik yaptırım uygular.</p>
+            <div class="form-grid-3 mt-3">
+              <div class="form-group">
+                <label>Susturma (Mute) Eşiği</label>
+                <input type="number" id="cfg-thresh-mute" placeholder="40">
+              </div>
+              <div class="form-group">
+                <label>Karantina (Jail) Eşiği</label>
+                <input type="number" id="cfg-thresh-jail" placeholder="80">
+              </div>
+              <div class="form-group">
+                <label>Yasaklama (Ban) Eşiği</label>
+                <input type="number" id="cfg-thresh-ban" placeholder="150">
+              </div>
+            </div>
+          </div>
+
+          <div class="card mt-3">
+            <h3>Seviye ve XP Motoru</h3>
+            <p class="text-sub">Metin ve ses aktifliğine göre seviye atlatma ve ödüllendirme parametreleri.</p>
+            <div class="checkbox-row mt-2 mb-3">
+              <input type="checkbox" id="cfg-leveling-enabled">
+              <label for="cfg-leveling-enabled">Seviye ve XP Sistemi Aktif</label>
+            </div>
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label>Mesaj Başına XP</label>
+                <input type="number" id="cfg-leveling-msgxp" placeholder="15">
+              </div>
+              <div class="form-group">
+                <label>Seste Dakika Başına XP</label>
+                <input type="number" id="cfg-leveling-voicexp" placeholder="20">
+              </div>
+            </div>
+            <div class="form-group mt-3">
+              <label>Seviye Rol Ödülleri (Format: Seviye:RolID, Örn: 5:123456, 10:987654)</label>
+              <input type="text" id="cfg-level-rewards" placeholder="5:123456789012345678, 10:987654321098765432">
+            </div>
+          </div>
+
+          <div class="card mt-3">
+            <h3>Akıllı Sohbet Filtreleri (SmartFilter)</h3>
+            <p class="text-sub">Sohbet kanallarında küfür, reklam, spam ve capslock denetimi.</p>
+            <div class="form-grid-3 mt-2 mb-3">
+              <div class="checkbox-row">
+                <input type="checkbox" id="cfg-filter-link">
+                <label for="cfg-filter-link">Davet ve Reklam Engeli</label>
+              </div>
+              <div class="checkbox-row">
+                <input type="checkbox" id="cfg-filter-caps">
+                <label for="cfg-filter-caps">Büyük Harf (Caps) Engeli</label>
+              </div>
+              <div class="checkbox-row">
+                <input type="checkbox" id="cfg-filter-spam">
+                <label for="cfg-filter-spam">Hızlı Mesaj (Spam) Engeli</label>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Özel Filtrelenecek Kelimeler (Virgülle ayırın)</label>
+              <textarea id="cfg-filter-words" rows="3" placeholder="yasak1, yasak2, ..."></textarea>
+            </div>
+          </div>
+
+          <div class="card mt-3">
+            <h3>Güvenlik Panik Modu (Lockdown)</h3>
+            <p class="text-sub">Kısa sürede yoğun yetkisiz işlem algılandığında acil durum alarmı tetiklenir.</p>
+            <div class="checkbox-row mt-2 mb-3">
+              <input type="checkbox" id="cfg-panic-enabled">
+              <label for="cfg-panic-enabled">Otomatik Panik Koruması Aktif</label>
+            </div>
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label>İhlal Sayısı Eşiği</label>
+                <input type="number" id="cfg-panic-threshold" placeholder="5">
+              </div>
+              <div class="form-group">
+                <label>Zaman Aralığı (Milisaniye)</label>
+                <input type="number" id="cfg-panic-window" placeholder="5000">
+              </div>
+            </div>
+          </div>
+
+          <div class="card mt-3">
+            <h3>Yapılandırma Yedekleme ve Klonlama</h3>
+            <p class="text-sub">Tüm ayarları, mesaj şablonlarını ve rolleri JSON olarak indirin veya başka bir sunucuya yükleyin.</p>
+
+            <div style="display: flex; gap: 12px; margin-top: 15px;">
+              <button type="button" class="btn btn-secondary" onclick="exportGuildConfig()">JSON Olarak Dışa Aktar</button>
+              <button type="button" class="btn btn-secondary" onclick="document.getElementById('import-config-input').click()">JSON İçe Aktar</button>
+              <input type="file" id="import-config-input" accept=".json" style="display: none;" onchange="importGuildConfig(event)">
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Ayarları Kaydet</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="tab-commands" class="tab-pane">
+        <header class="pane-header">
+          <h2>Komutlar ve Slash Modları</h2>
+          <p>Tüm sistem komutlarının tetikleyicilerini (Slash / Prefix / Her İkisi) ve alias isimlerini özelleştirin.</p>
+        </header>
+
+        <div class="filter-tabs mb-3">
+          <button class="filter-pill active" data-cmd-cat="all">Tüm Komutlar</button>
+          <button class="filter-pill" data-cmd-cat="mod">Moderasyon</button>
+          <button class="filter-pill" data-cmd-cat="reg">Kayıt</button>
+          <button class="filter-pill" data-cmd-cat="stat">İstatistik</button>
+          <button class="filter-pill" data-cmd-cat="eco">Ekonomi</button>
+          <button class="filter-pill" data-cmd-cat="util">Yardımcı</button>
+          <button class="filter-pill" data-cmd-cat="guard">Güvenlik</button>
+        </div>
+
+        <div class="card">
+          <div class="card-header-flex mb-3">
+            <input type="text" id="cmd-search-input" class="input-inline" placeholder="Komut ara (örn: ban, kayit, borsa)..." style="max-width: 320px;">
+            <button id="btn-save-commands" class="btn btn-primary">Tüm Komutları Kaydet</button>
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Komut</th>
+                <th>Kategori</th>
+                <th>Özel Tetikleyici (Alias)</th>
+                <th>Çalışma Modu</th>
+                <th>Durum</th>
+              </tr>
+            </thead>
+            <tbody id="commands-tbody">
+              <tr><td colspan="5" class="text-muted">Komutlar yükleniyor...</td></tr>
+            </tbody>
+          </table>
+          <div class="form-actions mt-4">
+            <button id="btn-save-commands-bottom" class="btn btn-primary" onclick="document.getElementById('btn-save-commands').click()">Tüm Komutları Kaydet</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-messages" class="tab-pane">
+        <header class="pane-header">
+          <h2>Mesaj ve Yanıt Şablonları</h2>
+          <p>Botların göndereceği her bir mesajı ve biçimini (Embed / ComponentsV2 / Düz Metin) dilediğiniz gibi özelleştirin.</p>
+        </header>
+
+        <div class="card mb-3">
+          <div class="variable-guide">
+            <span class="var-title">Kullanılabilir Değişkenler:</span>
+            <code>{user}</code>
+            <code>{staff}</code>
+            <code>{reason}</code>
+            <code>{points}</code>
+            <code>{amount}</code>
+            <code>{balance}</code>
+            <code>{gender}</code>
+            <code>{channel}</code>
+            <code>{guild}</code>
+            <code>{records}</code>
+          </div>
+        </div>
+
+        <div class="filter-tabs">
+          <button class="filter-pill active" data-filter="all">Tümü (40 Şablon)</button>
+          <button class="filter-pill" data-filter="mod">Moderasyon</button>
+          <button class="filter-pill" data-filter="reg">Kayıt</button>
+          <button class="filter-pill" data-filter="eco">Ekonomi ve Oyunlar</button>
+          <button class="filter-pill" data-filter="util">Özel Oda ve Destek</button>
+          <button class="filter-pill" data-filter="stat">İstatistik ve Görev</button>
+          <button class="filter-pill" data-filter="guard">Güvenlik</button>
+        </div>
+
+        <form id="form-messages">
+          <div id="messages-container">
+            <div class="card"><p class="text-muted">Şablonlar yükleniyor...</p></div>
+          </div>
+
+          <div class="form-actions mt-4">
+            <button type="submit" class="btn btn-primary">Tüm Mesaj Şablonlarını Kaydet</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="tab-voice" class="tab-pane">
+        <header class="pane-header">
+          <h2>Ses Karşılama Botları</h2>
+          <p>Ses teyit odalarında 7/24 bekleyecek karşılama botlarını yönetin.</p>
+        </header>
+
+        <div class="card">
+          <h3>Yeni Ses Karşılama Botu Ekle</h3>
+          <form id="form-voice-add" class="form-grid-3 mt-3">
+            <div class="form-group">
+              <label>Bot Token</label>
+              <input type="password" id="vb-token" required placeholder="Discord Bot Token">
+            </div>
+            <div class="form-group">
+              <label>Görünen İsim</label>
+              <input type="text" id="vb-name" placeholder="Örn: Ses Karşılama #1">
+            </div>
+            <div class="form-group">
+              <label>Hedef Ses Kanalı ID</label>
+              <input type="text" id="vb-channel" placeholder="Ses Kanalı ID">
+            </div>
+            <div class="form-actions full-width">
+              <button type="submit" class="btn btn-primary">Botu Sisteme Ekle</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card mt-4">
+          <h3>Aktif Karşılayıcı Botlar</h3>
+          <table class="data-table mt-3">
+            <thead>
+              <tr>
+                <th>Bot Adı</th>
+                <th>Kanal ID</th>
+                <th>Durum</th>
+                <th>İşlem</th>
+              </tr>
+            </thead>
+            <tbody id="voice-bots-tbody">
+              <tr><td colspan="4" class="text-muted">Kayıtlı bot bulunmuyor.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="tab-penalties" class="tab-pane">
+        <header class="pane-header">
+          <h2>Sicil ve Cezalar</h2>
+          <p>Kullanıcıların aktif ve geçmiş ceza kayıtları ile af işlemleri.</p>
+        </header>
+
+        <div class="card">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Ceza ID</th>
+                <th>Kullanıcı ID</th>
+                <th>Ceza Türü</th>
+                <th>Sebep</th>
+                <th>Puan</th>
+                <th>Durum</th>
+                <th>İşlem</th>
+              </tr>
+            </thead>
+            <tbody id="penalties-tbody">
+              <tr><td colspan="7" class="text-muted">Veritabanında aktif ceza kaydı bulunmuyor.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="tab-guard" class="tab-pane">
+        <header class="pane-header">
+          <h2>Güvenlik ve Guard</h2>
+          <p>Dokunulmaz yetkililer, güvenli botlar ve koruma parametreleri.</p>
+        </header>
+
+        <div class="card">
+          <h3>Güvenli Liste (Whitelist)</h3>
+          <div class="form-group mb-3">
+            <label>Güvenli Kullanıcı ID'leri (Virgülle ayırın)</label>
+            <textarea id="guard-safe-users" rows="3" placeholder="123456789012345678, ..."></textarea>
+          </div>
+          <div class="form-group mb-3">
+            <label>Güvenli Rol ID'leri (Virgülle ayırın)</label>
+            <textarea id="guard-safe-roles" rows="3" placeholder="123456789012345678, ..."></textarea>
+          </div>
+          <div class="form-group mb-3">
+            <label>Güvenli Bot ID'leri (Virgülle ayırın)</label>
+            <textarea id="guard-safe-bots" rows="3" placeholder="123456789012345678, ..."></textarea>
+          </div>
+          <button id="btn-save-guard" class="btn btn-primary">Güvenlik Ayarlarını Kaydet</button>
+        </div>
+
+        <div class="card mt-3">
+          <h3>Kalıcı Karaliste (ForceBan)</h3>
+          <p class="text-sub">Sunucudan kalıcı olarak uzaklaştırılan ve affedilmeyen kullanıcılar.</p>
+          <table class="data-table mt-3">
+            <thead>
+              <tr>
+                <th>Kullanıcı ID</th>
+                <th>Sebep</th>
+                <th>Tarih</th>
+                <th>İşlem</th>
+              </tr>
+            </thead>
+            <tbody id="forcebans-tbody">
+              <tr><td colspan="4" class="text-muted">Aktif karaliste kaydı bulunmuyor.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="tab-metrics" class="tab-pane">
+        <header class="pane-header">
+          <h2>Sistem Monitörü</h2>
+          <p>Mikro-servislerin bellek, gecikme ve sağlık durumlarını canlı olarak izleyin.</p>
+        </header>
+
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <span class="metric-label">Bellek (RSS)</span>
+            <span id="metric-ram-rss" class="metric-value">- MB</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Heap Bellek</span>
+            <span id="metric-ram-heap" class="metric-value">- MB</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">WebSocket Gecikmesi</span>
+            <span id="metric-ping" class="metric-value">- ms</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Çalışma Süresi</span>
+            <span id="metric-uptime" class="metric-value">-</span>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top: 20px;">
+          <div class="card-header-flex">
+            <div>
+              <h3>Canlı Donanım ve Ağ İstatistiği</h3>
+              <p class="text-sub">3 saniyede bir otomatik yenilenir</p>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="fetchLiveMetrics()">Hemen Yenile</button>
+          </div>
+          <div class="system-specs-grid" style="margin-top: 15px;">
+            <div class="spec-box"><span class="spec-label">Node Runtime:</span><span id="metric-node">-</span></div>
+            <div class="spec-box"><span class="spec-label">Ses Karşılama Botları:</span><span id="metric-voice-active">-</span></div>
+            <div class="spec-box"><span class="spec-label">Bağlantı Durumu:</span><span class="status-pill status-pill-active">STABLE</span></div>
+            <div class="spec-box"><span class="spec-label">Watchdog Motoru:</span><span class="status-pill status-pill-active">AKTİF</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-autoresponders" class="tab-pane">
+        <header class="pane-header">
+          <h2>Auto-Responder Yönetimi</h2>
+          <p>Tetikleyici mesaj yazıldığında otomatik yanıt gönderimi sağlayın.</p>
+        </header>
+
+        <div class="card">
+          <h3>Yeni Auto-Responder Ekle</h3>
+          <form id="form-ar-add" class="form-grid-3 mt-3">
+            <div class="form-group">
+              <label>Tetikleyici Metin</label>
+              <input type="text" id="ar-trigger" required placeholder="Örn: sa, discord, destek">
+            </div>
+            <div class="form-group">
+              <label>Eşleşme Türü</label>
+              <select id="ar-matchtype" class="select-styled">
+                <option value="exact">Tam Eşleşme</option>
+                <option value="contains">İçerir</option>
+                <option value="startswith">İle Başlar</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Yanıt Metni</label>
+              <input type="text" id="ar-response" required placeholder="Botun vereceği otomatik cevap">
+            </div>
+            <div class="form-actions full-width">
+              <button type="submit" id="btn-add-ar" class="btn btn-primary">Tetikleyiciyi Kaydet</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card mt-4">
+          <div class="card-header-flex">
+            <div>
+              <h3>Mevcut Auto-Responderlar</h3>
+              <p class="text-sub">Sistemde kayıtlı otomatik yanıtlayıcılar</p>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="loadAutoResponders()">Yenile</button>
+          </div>
+          <table class="data-table mt-3">
+            <thead>
+              <tr>
+                <th>Tetikleyici</th>
+                <th>Eşleşme</th>
+                <th>Yanıt</th>
+                <th>İşlem</th>
+              </tr>
+            </thead>
+            <tbody id="ar-tbody">
+              <tr><td colspan="4" class="text-muted">Kayıtlı yanıt bulunmuyor.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card mt-4">
+          <h3>Yalnızca Medya Kanalları (Galeri Modu)</h3>
+          <p class="text-sub">Bu kanallarda metin mesajları silinir, sadece görsel ve dosya kabul edilir.</p>
+          <form id="form-media-ch-add" class="form-grid-2 mt-3">
+            <div class="form-group">
+              <label>Kanal ID</label>
+              <input type="text" id="media-ch-input" required placeholder="Medya kanalı ID">
+            </div>
+            <div class="form-group" style="display: flex; align-items: flex-end;">
+              <button type="submit" class="btn btn-primary">Kanalı Medya Moduna Al</button>
+            </div>
+          </form>
+          <table class="data-table mt-3">
+            <thead>
+              <tr>
+                <th>Kanal ID</th>
+                <th>İşlem</th>
+              </tr>
+            </thead>
+            <tbody id="media-ch-tbody">
+              <tr><td colspan="2" class="text-muted">Kayıtlı medya kanalı bulunmuyor.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="tab-leaderboard" class="tab-pane">
+        <header class="pane-header">
+          <h2>Liderlik Tablosu</h2>
+          <p>Sunucudaki en aktif üyelerin mesaj, ses ve XP sıralaması.</p>
+        </header>
+
+        <div class="filter-tabs mb-3">
+          <button class="filter-pill active" data-lb-type="messages">Mesaj Sıralaması</button>
+          <button class="filter-pill" data-lb-type="voice">Ses Sıralaması</button>
+          <button class="filter-pill" data-lb-type="xp">XP Sıralaması</button>
+        </div>
+
+        <div class="card">
+          <div class="card-header-flex">
+            <div>
+              <h3 id="lb-title">En Aktif Üyeler</h3>
+              <p class="text-sub">Gerçek zamanlı sunucu aktivite sıralaması</p>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="loadLeaderboard()">Yenile</button>
+          </div>
+          <table class="data-table mt-3">
+            <thead>
+              <tr>
+                <th>Sıra</th>
+                <th>Kullanıcı ID</th>
+                <th id="lb-col-val">Değer</th>
+              </tr>
+            </thead>
+            <tbody id="lb-tbody">
+              <tr><td colspan="3" class="text-muted">Veri yükleniyor...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="tab-weekly-rewards" class="tab-pane">
+        <header class="pane-header">
+          <h2>Haftalık Liderlik Ödülleri</h2>
+          <p>Her Pazar 23:59 saatinde en aktif üyelere otomatik rol ödülü tanımlayın.</p>
+        </header>
+
+        <div class="card">
+          <h3>Ödül Log Kanalı</h3>
+          <div class="form-grid-2 mt-3">
+            <div class="form-group">
+              <label>Haftalık Ödül Duyuru Kanalı ID</label>
+              <input type="text" id="wr-log-channel" placeholder="Kanal ID">
+            </div>
+            <div class="form-group" style="display: flex; align-items: flex-end;">
+              <button type="button" id="btn-save-wr-channel" class="btn btn-primary" onclick="saveWeeklyRewardChannel()">Kanalı Kaydet</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mt-4">
+          <h3>Yeni Sıralama Rol Ödülü Ekle</h3>
+          <form id="form-wr-add" class="form-grid-2 mt-3">
+            <div class="form-group">
+              <label>Sıralama Derecesi (1, 2, 3...)</label>
+              <input type="number" id="wr-rank" min="1" max="50" required placeholder="1">
+            </div>
+            <div class="form-group">
+              <label>Verilecek Rol ID</label>
+              <input type="text" id="wr-role" required placeholder="Rol ID">
+            </div>
+            <div class="form-actions full-width">
+              <button type="submit" id="btn-add-wr" class="btn btn-primary">Ödülü Listeye Ekle</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card mt-4">
+          <div class="card-header-flex">
+            <div>
+              <h3>Tanımlı Haftalık Ödüller</h3>
+              <p class="text-sub">Pazar gecesi dağıtılacak rol listesi</p>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="loadWeeklyRewards()">Yenile</button>
+          </div>
+          <table class="data-table mt-3">
+            <thead>
+              <tr>
+                <th>Sıra Derecesi</th>
+                <th>Rol ID</th>
+                <th>İşlem</th>
+              </tr>
+            </thead>
+            <tbody id="wr-tbody">
+              <tr><td colspan="3" class="text-muted">Tanımlı ödül bulunmuyor.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="tab-staff-matrix" class="tab-pane">
+        <header class="pane-header">
+          <h2>Yetkili Yetki Matrisi</h2>
+          <p>Kayıt, moderasyon ve genel yetkili rollerini sunucu bazında yapılandırın.</p>
+        </header>
+
+        <div class="card">
+          <div class="form-group mb-3">
+            <label>Genel Yetkili Rolleri (Virgülle ayırın)</label>
+            <textarea id="sm-staff" rows="3" placeholder="Rol ID, Rol ID..."></textarea>
+          </div>
+          <div class="form-group mb-3">
+            <label>Kayıt Yetkilisi Rolleri (Virgülle ayırın)</label>
+            <textarea id="sm-register" rows="3" placeholder="Rol ID, Rol ID..."></textarea>
+          </div>
+          <div class="form-group mb-3">
+            <label>Moderasyon Yetkilisi Rolleri (Virgülle ayırın)</label>
+            <textarea id="sm-moderation" rows="3" placeholder="Rol ID, Rol ID..."></textarea>
+          </div>
+          <button id="btn-save-staff-matrix" class="btn btn-primary" onclick="saveStaffMatrix()">Yetkili Matrisini Kaydet</button>
+        </div>
+      </section>
+
+      <section id="tab-tickets" class="tab-pane">
+        <header class="pane-header">
+          <h2>Destek Talepleri ve Biletler</h2>
+          <p>Kullanıcıların açtığı destek biletleri, puan değerlendirmeleri ve transkript dökümleri.</p>
+        </header>
+
+        <div class="card">
+          <div class="card-header-flex">
+            <div>
+              <h3>Tüm Destek Talepleri</h3>
+              <p class="text-sub">Son 50 bilet kaydı</p>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="loadTickets()">Yenile</button>
+          </div>
+          <table class="data-table mt-3">
+            <thead>
+              <tr>
+                <th>Bilet ID</th>
+                <th>Açan Kullanıcı</th>
+                <th>Durum</th>
+                <th>Kapatan</th>
+                <th>Memnuniyet</th>
+                <th>Transkript</th>
+              </tr>
+            </thead>
+            <tbody id="tickets-tbody">
+              <tr><td colspan="6" class="text-muted">Bilet kaydı bulunmuyor.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div id="ticket-modal-card" class="card mt-4" style="display: none;">
+          <div class="card-header-flex">
+            <div>
+              <h3 id="ticket-modal-title">Bilet Transkripti</h3>
+              <p id="ticket-modal-sub" class="text-sub">-</p>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="closeTicketTranscript()">Kapat</button>
+          </div>
+          <div id="ticket-transcript-box" style="margin-top: 15px; max-height: 400px; overflow-y: auto; background: var(--bg-card); padding: 12px; border-radius: 6px; border: 1px solid var(--border-color); font-family: monospace;">
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-economy" class="tab-pane">
+        <header class="pane-header">
+          <h2>Ekonomi ve Borsa Yönetimi</h2>
+          <p>Sunucu ekonomisi, para arzı, altın ve kripto kurları ile piyasa parametreleri.</p>
+        </header>
+
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <span class="metric-label">Toplam Cüzdan Arzı</span>
+            <span id="eco-wallet-sum" class="metric-value">- Coin</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Toplam Banka Kasası</span>
+            <span id="eco-bank-sum" class="metric-value">- Coin</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Kayıtlı Hesap Sayısı</span>
+            <span id="eco-accounts-count" class="metric-value">-</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Altın Fiyatı</span>
+            <span id="eco-gold-disp" class="metric-value">- Coin</span>
+          </div>
+        </div>
+
+        <div class="card mt-4">
+          <h3>Borsa ve Kur Ayarları</h3>
+          <p class="text-sub">Piyasadaki anlık emtia ve kripto fiyatlarını güncelleyin.</p>
+          <div class="form-grid-2 mt-3">
+            <div class="form-group">
+              <label>Altın Birim Fiyatı (Coin)</label>
+              <input type="number" id="eco-gold-input" placeholder="2500">
+            </div>
+            <div class="form-group">
+              <label>Bitcoin Birim Fiyatı (Coin)</label>
+              <input type="number" id="eco-btc-input" placeholder="65000">
+            </div>
+            <div class="form-actions full-width">
+              <button type="button" class="btn btn-primary" onclick="saveEconomyRates()">Borsa Kurlarını Güncelle</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-backups" class="tab-pane">
+        <header class="pane-header">
+          <h2>Sunucu Yedekleri ve Afet Kurtarma</h2>
+          <p>Veritabanında kayıtlı tam kanal, rol ve izin yedekleri.</p>
+        </header>
+
+        <div class="card">
+          <div class="card-header-flex">
+            <div>
+              <h3>Mevcut Sunucu Yedekleri</h3>
+              <p class="text-sub">Felaket durumunda geri yüklenebilecek yedek arşivleri</p>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="loadBackups()">Yenile</button>
+          </div>
+          <table class="data-table mt-3">
+            <thead>
+              <tr>
+                <th>Yedek ID</th>
+                <th>Tür</th>
+                <th>Oluşturulma Tarihi</th>
+                <th>Rol Sayısı</th>
+                <th>Kanal Sayısı</th>
+              </tr>
+            </thead>
+            <tbody id="backups-tbody">
+              <tr><td colspan="5" class="text-muted">Kayıtlı yedek bulunmuyor.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="tab-invites" class="tab-pane">
+        <header class="pane-header">
+          <h2>Davet Takip ve Sıralaması</h2>
+          <p>Sunucuya üye kazandıran yetkili ve üyelerin gerçek zamanlı davet istatistikleri.</p>
+        </header>
+
+        <div class="card">
+          <div class="card-header-flex">
+            <div>
+              <h3>En Çok Davet Edenler</h3>
+              <p class="text-sub">Davet motoru kayıtları</p>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="loadInvites()">Yenile</button>
+          </div>
+          <table class="data-table mt-3">
+            <thead>
+              <tr>
+                <th>Sıra</th>
+                <th>Davet Eden ID</th>
+                <th>Gerçek</th>
+                <th>Sahte (Fake)</th>
+                <th>Ayrılan</th>
+                <th>Bonus</th>
+                <th>Net Davet</th>
+              </tr>
+            </thead>
+            <tbody id="invites-tbody">
+              <tr><td colspan="7" class="text-muted">Davet verisi bulunmuyor.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="tab-staff-tasks" class="tab-pane">
+        <header class="pane-header">
+          <h2>Yetkili Görev ve Performans Takibi</h2>
+          <p>Haftalık ses, mesaj ve teyit kayıt hedefleri ile yetkili puanlama tablosu.</p>
+        </header>
+
+        <div class="card">
+          <div class="card-header-flex">
+            <div>
+              <h3>Haftalık Görev Durumları</h3>
+              <p class="text-sub">Bu haftanın hedef tamamlama oranları</p>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="loadStaffTasks()">Yenile</button>
+          </div>
+          <table class="data-table mt-3">
+            <thead>
+              <tr>
+                <th>Yetkili ID</th>
+                <th>Ses Süresi</th>
+                <th>Mesaj Sayısı</th>
+                <th>Kayıt Sayısı</th>
+                <th>Görev Puanı</th>
+                <th>Durum</th>
+              </tr>
+            </thead>
+            <tbody id="staff-tasks-tbody">
+              <tr><td colspan="6" class="text-muted">Bu haftaya ait görev kaydı bulunmuyor.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="tab-livechat" class="tab-pane">
+        <header class="pane-header">
+          <h2>Canlı Konsol ve Sohbet İzleme</h2>
+          <p>Sistem konsol loglarını anlık izleyin ve kanallara bot ile mesaj gönderin.</p>
+        </header>
+
+        <div class="card">
+          <div class="card-header-flex">
+            <div>
+              <h3>Canlı Sistem Konsol Çıktısı</h3>
+              <p class="text-sub">Son 100 log kaydı</p>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-secondary btn-sm" onclick="fetchConsoleLogs()">Yenile</button>
+              <button class="btn btn-secondary btn-sm" onclick="clearConsoleDisplay()">Ekranı Temizle</button>
+            </div>
+          </div>
+          <div id="live-console-box" style="margin-top: 15px; height: 260px; overflow-y: auto; background: #050505; color: #00ff66; padding: 14px; border-radius: 6px; border: 1px solid var(--border-color); font-family: monospace; font-size: 13px; line-height: 1.5;">
+            Yükleniyor...
+          </div>
+        </div>
+
+        <div class="card mt-4">
+          <div class="card-header-flex">
+            <div>
+              <h3>Canlı Kanal Mesaj Akışı</h3>
+              <p class="text-sub">Metin kanalındaki son mesajları okuyun</p>
+            </div>
+          </div>
+          <div class="form-grid-2 mt-3">
+            <div class="form-group">
+              <label>İzlenecek Kanal ID</label>
+              <input type="text" id="live-channel-id" placeholder="Metin kanalı ID">
+            </div>
+            <div class="form-group" style="display: flex; align-items: flex-end;">
+              <button type="button" class="btn btn-primary" onclick="loadChannelMessages()">Mesajları Getir</button>
+            </div>
+          </div>
+          <div id="live-chat-stream-box" style="margin-top: 15px; max-height: 280px; overflow-y: auto; background: var(--bg-card); padding: 12px; border-radius: 6px; border: 1px solid var(--border-color); font-family: sans-serif; font-size: 14px;">
+            <p class="text-muted">Kanal ID girip "Mesajları Getir" butonuna tıklayın.</p>
+          </div>
+        </div>
+
+        <div class="card mt-4">
+          <h3>Bot ile Kanala Mesaj Gönder</h3>
+          <p class="text-sub">Panel üzerinden bot kimliğiyle duyuru veya yanıt iletin.</p>
+          <form id="form-live-send" class="mt-3">
+            <div class="form-group">
+              <label>Hedef Kanal ID</label>
+              <input type="text" id="live-send-channel" required placeholder="Kanal ID">
+            </div>
+            <div class="form-group mt-2">
+              <label>İletilecek Mesaj</label>
+              <textarea id="live-send-text" rows="3" required placeholder="Mesajınızı yazın..."></textarea>
+            </div>
+            <div class="form-actions mt-3">
+              <button type="submit" class="btn btn-primary">Mesajı Gönder</button>
+            </div>
+          </form>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

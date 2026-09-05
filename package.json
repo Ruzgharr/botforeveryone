@@ -1,0 +1,29 @@
+{
+  "name": "public-bot-ecosystem",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "start": "node index.js",
+    "dashboard": "node apps/dashboard/src/index.js",
+    "moderation": "node apps/moderation/src/index.js",
+    "register": "node apps/register/src/index.js",
+    "stats": "node apps/stats/src/index.js",
+    "guard": "node apps/guard-main/src/index.js",
+    "distributor": "node apps/guard-distributor/src/index.js",
+    "voice": "node apps/voice-welcome/src/index.js",
+    "economy": "node apps/economy/src/index.js",
+    "utility": "node apps/utility/src/index.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.18.0",
+    "mongoose": "^8.12.1",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "cors": "^2.8.5"
+  }
+}

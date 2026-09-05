@@ -1,0 +1,10 @@
+{
+  "name": "@bot/database",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "src/index.js",
+  "dependencies": {
+    "mongoose": "^8.12.1",
+    "@bot/config": "*"
+  }
+}

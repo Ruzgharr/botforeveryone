@@ -1,0 +1,13 @@
+{
+  "name": "@bot/dashboard",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "src/index.js",
+  "dependencies": {
+    "@bot/config": "*",
+    "@bot/database": "*",
+    "@bot/core": "*",
+    "express": "^4.21.2",
+    "cors": "^2.8.5"
+  }
+}

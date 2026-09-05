@@ -1,0 +1,11 @@
+{
+  "name": "@bot/core",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "src/index.js",
+  "dependencies": {
+    "discord.js": "^14.18.0",
+    "@bot/config": "*",
+    "@bot/database": "*"
+  }
+}

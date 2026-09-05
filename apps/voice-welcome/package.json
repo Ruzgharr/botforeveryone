@@ -1,0 +1,12 @@
+{
+  "name": "@bot/voice-welcome",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "src/index.js",
+  "dependencies": {
+    "@bot/config": "*",
+    "@bot/database": "*",
+    "@bot/core": "*",
+    "discord.js": "^14.18.0"
+  }
+}
