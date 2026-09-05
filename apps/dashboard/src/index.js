@@ -85,6 +85,9 @@ app.get("/api/overview", async (req, res) => {
 
 app.get("/api/config/:guildId", async (req, res) => {
   try {
+    if (mongoose.connection.readyState !== 1) {
+      return res.json({ guildId: req.params.guildId, ...defaultGuildConfig });
+    }
     let config = await GuildConfig.findOne({ guildId: req.params.guildId });
     if (!config) {
       config = await GuildConfig.create({ guildId: req.params.guildId, ...defaultGuildConfig });
@@ -162,6 +165,18 @@ app.get("/api/bot-credentials", async (req, res) => {
       { serviceKey: "ECONOMY", name: "Ekonomi ve Kumarhane" },
       { serviceKey: "UTILITY", name: "Özel Oda ve Destek" }
     ];
+
+    if (mongoose.connection.readyState !== 1) {
+      return res.json(defaultServices.map((s) => ({
+        serviceKey: s.serviceKey,
+        name: s.name,
+        enabled: true,
+        activityType: "PLAYING",
+        activityText: "Public Bot Ecosystem",
+        status: "ONLINE",
+        token: ""
+      })));
+    }
 
     for (const s of defaultServices) {
       const exists = await BotCredential.findOne({ serviceKey: s.serviceKey });
