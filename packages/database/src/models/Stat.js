@@ -18,7 +18,14 @@ const StatSchema = new mongoose.Schema({
   lastVoiceChannelId: { type: String, default: null },
   lastMessageDate: { type: Date, default: null },
   xp: { type: Number, default: 0 },
-  level: { type: Number, default: 1 }
+  level: { type: Number, default: 1 },
+  cardTheme: { type: String, default: "default" },
+  cardAnimated: { type: Boolean, default: false },
+  cardFormat: { type: String, default: "gif" },
+  title: { type: String, default: "" },
+  unlockedTitles: { type: [String], default: [] },
+  badges: { type: [String], default: [] },
+  activeBadges: { type: [String], default: [] }
 }, { timestamps: true });
 
 StatSchema.index({ guildId: 1, userId: 1 }, { unique: true });

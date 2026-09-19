@@ -1,4 +1,4 @@
-import { Embeds } from "@bot/core";
+import { MessageFormatter } from "@bot/core";
 import { GuildConfig } from "@bot/database";
 
 export default {
@@ -6,7 +6,7 @@ export default {
   aliases: ["autoresponder", "otoyanit", "oto-cevap"],
   async execute({ client, message, args, config }) {
     if (!message.member.permissions.has("Administrator") && !client.hasStaffPermission(message.member, config, "moderationStaff")) {
-      return message.reply({ embeds: [Embeds.error("Yetki Yetersiz", "Otomatik yanıt sistemini yönetmek için yetkiniz bulunmuyor.", message.guild)] });
+      return message.reply(MessageFormatter.error("Yetki Yetersiz", "Otomatik yanıt sistemini yönetmek için yetkiniz bulunmuyor."));
     }
 
     const action = args[0]?.toLowerCase();
@@ -19,9 +19,10 @@ export default {
       const response = parts[1];
 
       if (!trigger || !response) {
-        return message.reply({
-          embeds: [Embeds.warn("Hatalı Format", "Lütfen tetikleyici ve yanıtı dikey çizgi (|) ile ayırarak girin.\n\n**Örnek:**\n`.otocevap ekle kurallar | Sunucu kurallarımızı #kurallar kanalından okuyabilirsiniz.`", message.guild)]
-        });
+        return message.reply(MessageFormatter.warn(
+          "Hatalı Format",
+          "Lütfen tetikleyici ve yanıtı dikey çizgi (|) ile ayırarak girin.\n\n**Örnek:**\n`.otocevap ekle kurallar | Sunucu kurallarımızı #kurallar kanalından okuyabilirsiniz.`"
+        ));
       }
 
       const existingIdx = responders.findIndex((r) => r.trigger === trigger);
@@ -37,20 +38,21 @@ export default {
         { upsert: true }
       );
 
-      return message.reply({
-        embeds: [Embeds.success("Otomatik Yanıt Eklendi", `**Tetikleyici Kelime:** \`${trigger}\`\n**Yanıt:** ${response}`, message.guild)]
-      });
+      return message.reply(MessageFormatter.success(
+        "Otomatik Yanıt Eklendi",
+        `**Tetikleyici:** \`${trigger}\`\n▫️ **Yanıt:** ${response}`
+      ));
     }
 
     if (action === "sil") {
       const trigger = args.slice(1).join(" ").trim().toLowerCase();
       if (!trigger) {
-        return message.reply({ embeds: [Embeds.warn("Eksik Bilgi", "Lütfen silinecek tetikleyici kelimeyi belirtin.", message.guild)] });
+        return message.reply(MessageFormatter.warn("Eksik Bilgi", "Lütfen silinecek tetikleyici kelimeyi belirtin."));
       }
 
       const filtered = responders.filter((r) => r.trigger !== trigger);
       if (filtered.length === responders.length) {
-        return message.reply({ embeds: [Embeds.warn("Bulunamadı", `\`${trigger}\` adında kayıtlı bir otomatik yanıt bulunamadı.`, message.guild)] });
+        return message.reply(MessageFormatter.warn("Bulunamadı", `\`${trigger}\` adında kayıtlı bir otomatik yanıt bulunamadı.`));
       }
 
       await GuildConfig.updateOne(
@@ -58,26 +60,25 @@ export default {
         { $set: { autoResponders: filtered } }
       );
 
-      return message.reply({
-        embeds: [Embeds.success("Otomatik Yanıt Silindi", `\`${trigger}\` tetikleyicisi sistemden kaldırıldı.`, message.guild)]
-      });
+      return message.reply(MessageFormatter.success(
+        "Otomatik Yanıt Silindi",
+        `\`${trigger}\` tetikleyicisi sistemden kaldırıldı.`
+      ));
     }
 
     if (action === "liste" || !action) {
       if (responders.length === 0) {
-        return message.reply({
-          embeds: [Embeds.info("Kayıtlı Yanıt Yok", "Sunucuda henüz kayıtlı bir otomatik yanıt bulunmuyor. `.otocevap ekle <Kelime> | <Yanıt>` komutu ile ekleyebilirsiniz.", message.guild)]
-        });
+        return message.reply(MessageFormatter.info(
+          "Kayıtlı Yanıt Yok",
+          "Sunucuda henüz kayıtlı bir otomatik yanıt bulunmuyor. `.otocevap ekle <Kelime> | <Yanıt>` komutu ile ekleyebilirsiniz."
+        ));
       }
 
-      const listStr = responders.map((r, i) => `**${i + 1}.** \`${r.trigger}\` ➔ ${r.response}`).join("\n");
-      const embed = Embeds.base(
+      const listStr = responders.map((r, i) => `▫️ **${i + 1}.** \`${r.trigger}\` ➔ ${r.response}`).join("\n");
+      return message.reply(MessageFormatter.info(
         "Otomatik Yanıt Listesi (Auto-Responder)",
-        `Sunucuda tanımlı **${responders.length} adet** otomatik yanıt:\n\n${listStr}`,
-        message.guild
-      ).setFooter({ text: "Auto-Responder | Public Bot Ecosystem", iconURL: message.guild.iconURL() });
-
-      return message.reply({ embeds: [embed] });
+        `Sunucuda tanımlı **${responders.length} adet** otomatik yanıt:\n\n${listStr}\n-# Auto-Responder | Public Bot Ecosystem`
+      ));
     }
   }
 };

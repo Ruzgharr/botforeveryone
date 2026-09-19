@@ -1,4 +1,4 @@
-import { Embeds } from "@bot/core";
+import { MessageFormatter } from "@bot/core";
 import { Stat } from "@bot/database";
 
 export default {
@@ -6,7 +6,7 @@ export default {
   aliases: ["statsifirla", "resetstat"],
   async execute({ client, message, args, config }) {
     if (!message.member.permissions.has("Administrator")) {
-      return message.reply({ embeds: [Embeds.error("Yetki Yetersiz", "Bu komutu yalnızca sunucu yöneticileri kullanabilir.", message.guild)] });
+      return message.reply(MessageFormatter.error("Yetki Yetersiz", "Bu komutu yalnızca sunucu yöneticileri kullanabilir."));
     }
 
     const type = (args[0] || "").toLowerCase();
@@ -18,35 +18,25 @@ export default {
           { guildId: message.guild.id, userId: targetMember.id },
           { $set: { weeklyMessages: 0, weeklyVoiceMs: 0 } }
         );
-        return message.reply({
-          embeds: [Embeds.success("Sıfırlama Tamamlandı", `${targetMember} kullanıcısının haftalık istatistikleri sıfırlandı.`, message.guild)]
-        });
+        return message.reply(MessageFormatter.success("Sıfırlama Tamamlandı", `${targetMember} kullanıcısının haftalık istatistikleri sıfırlandı.`));
       } else {
         await Stat.updateMany(
           { guildId: message.guild.id },
           { $set: { weeklyMessages: 0, weeklyVoiceMs: 0 } }
         );
-        return message.reply({
-          embeds: [Embeds.success("Genel Sıfırlama Tamamlandı", "Tüm sunucunun haftalık istatistikleri sıfırlandı.", message.guild)]
-        });
+        return message.reply(MessageFormatter.success("Genel Sıfırlama Tamamlandı", "Tüm sunucunun haftalık istatistikleri sıfırlandı."));
       }
     }
 
     if (targetMember) {
       await Stat.deleteOne({ guildId: message.guild.id, userId: targetMember.id });
-      return message.reply({
-        embeds: [Embeds.success("Sıfırlama Tamamlandı", `${targetMember} kullanıcısının tüm istatistik verileri temizlendi.`, message.guild)]
-      });
+      return message.reply(MessageFormatter.success("Sıfırlama Tamamlandı", `${targetMember} kullanıcısının tüm istatistik verileri temizlendi.`));
     }
 
-    message.reply({
-      embeds: [
-        Embeds.warn(
-          "Kullanım Rehberi",
-          `• Tek üye sıfırlamak için: \`${config.prefix || "."}statsıfırla @üye\`\n• Haftalık liderliği sıfırlamak için: \`${config.prefix || "."}statsıfırla haftalık\``,
-          message.guild
-        )
-      ]
-    });
+    return message.reply(MessageFormatter.warn(
+      "Kullanım Rehberi",
+      `▫️ Tek üye sıfırlamak için: \`${config.prefix || "."}statsıfırla @üye\`\n▫️ Haftalık liderliği sıfırlamak için: \`${config.prefix || "."}statsıfırla haftalık\``
+    ));
   }
 };
+

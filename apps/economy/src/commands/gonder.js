@@ -9,12 +9,12 @@ export default {
     const amount = parseInt(args[1], 10);
 
     if (!targetUser || targetUser.bot || targetUser.id === message.author.id || isNaN(amount) || amount <= 0) {
-      return message.reply({ embeds: [Embeds.warn("Format Hatası", "Formatı kullanın: `.gönder @kullanıcı [miktar]`", message.guild)] });
+      return message.reply(MessageFormatter.warn("Format Hatası", "Formatı kullanın: `.gönder @kullanıcı [miktar]`"));
     }
 
     let senderProfile = await Economy.findOne({ guildId: message.guild.id, userId: message.author.id });
     if (!senderProfile || senderProfile.wallet < amount) {
-      return message.reply({ embeds: [Embeds.error("Yetersiz Bakiye", "Göndermek istediğiniz miktarda bakiyeniz bulunmuyor.", message.guild)] });
+      return message.reply(MessageFormatter.error("Yetersiz Bakiye", "Göndermek istediğiniz miktarda bakiyeniz bulunmuyor."));
     }
 
     let receiverProfile = await Economy.findOne({ guildId: message.guild.id, userId: targetUser.id });

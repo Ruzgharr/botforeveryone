@@ -1,18 +1,22 @@
 import { Economy } from "@bot/database";
-import { Embeds, MessageFormatter } from "@bot/core";
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
+import { MessageFormatter, VisualCard } from "@bot/core";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } from "discord.js";
+
+const SUITS = ["♠", "♥", "♦", "♣"];
+const VALUES = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"];
 
 function calculateHand(cards) {
   let sum = 0;
   let aces = 0;
   for (const card of cards) {
-    if (card === "A") {
+    const rawVal = card.replace(/[♠♥♦♣]/g, "");
+    if (rawVal === "A") {
       aces++;
       sum += 11;
-    } else if (["K", "Q", "J", "10"].includes(card)) {
+    } else if (["K", "Q", "J", "10"].includes(rawVal)) {
       sum += 10;
     } else {
-      sum += parseInt(card, 10);
+      sum += parseInt(rawVal, 10);
     }
   }
   while (sum > 21 && aces > 0) {
@@ -23,8 +27,9 @@ function calculateHand(cards) {
 }
 
 function getRandomCard() {
-  const deck = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"];
-  return deck[Math.floor(Math.random() * deck.length)];
+  const suit = SUITS[Math.floor(Math.random() * SUITS.length)];
+  const val = VALUES[Math.floor(Math.random() * VALUES.length)];
+  return `${val}${suit}`;
 }
 
 export default {
@@ -33,12 +38,12 @@ export default {
   async execute({ client, message, args, config }) {
     const bet = parseInt(args[0], 10);
     if (isNaN(bet) || bet <= 0) {
-      return message.reply({ embeds: [Embeds.warn("Geçersiz Miktar", "Lütfen oynamak istediğiniz geçerli bir bahis miktarı girin.", message.guild)] });
+      return message.reply(MessageFormatter.warn("Geçersiz Miktar", "Lütfen oynamak istediğiniz geçerli bir bahis miktarı girin."));
     }
 
     let profile = await Economy.findOne({ guildId: message.guild.id, userId: message.author.id });
     if (!profile || profile.wallet < bet) {
-      return message.reply({ embeds: [Embeds.error("Yetersiz Bakiye", `Cüzdanınızda yeterli bakiye bulunmuyor. (Mevcut: ${profile?.wallet || 0} Coin)`, message.guild)] });
+      return message.reply(MessageFormatter.error("Yetersiz Bakiye", `Cüzdanınızda yeterli bakiye bulunmuyor. (Mevcut: ${profile?.wallet || 0} Coin)`));
     }
 
     profile.wallet -= bet;
@@ -48,23 +53,29 @@ export default {
     const dealerCards = [getRandomCard(), getRandomCard()];
 
     let playerTotal = calculateHand(playerCards);
-    let dealerTotal = calculateHand([dealerCards[0]]);
 
     const row = new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId(`bj_hit_${message.author.id}_${bet}`).setLabel("Kart Çek").setStyle(ButtonStyle.Primary),
-      new ButtonBuilder().setCustomId(`bj_stand_${message.author.id}_${bet}`).setLabel("Kal").setStyle(ButtonStyle.Secondary)
+      new ButtonBuilder().setCustomId(`bj_hit_${message.author.id}_${bet}`).setLabel("Kart Çek").setEmoji("🃏").setStyle(ButtonStyle.Primary),
+      new ButtonBuilder().setCustomId(`bj_stand_${message.author.id}_${bet}`).setLabel("Kal").setEmoji("🛑").setStyle(ButtonStyle.Secondary)
     );
 
-    const payload = MessageFormatter.render("blackjackTable", {
+    const cardBuffer = await VisualCard.renderBlackjackTable({
+      playerHand: playerCards,
+      dealerHand: dealerCards,
+      playerTotal,
+      dealerTotal: calculateHand([dealerCards[0]]),
       bet,
-      cards: playerCards.join(" - "),
-      total: playerTotal,
-      dealer: dealerCards[0],
-      title: "Blackjack Oyunu",
-      components: [row]
-    }, config, message.guild);
+      status: "playing",
+      balance: profile.wallet
+    });
 
-    const gameMessage = await message.reply(payload);
+    const attachment = new AttachmentBuilder(cardBuffer, { name: "blackjack.png" });
+
+    const gameMessage = await message.reply({
+      content: `🃏 **Blackjack (21) Masası** | Oyuncu: <@${message.author.id}> | Bahis: \`${bet.toLocaleString("tr-TR")} Coin\``,
+      files: [attachment],
+      components: [row]
+    });
 
     if (!client.activeBlackjack) client.activeBlackjack = new Map();
     client.activeBlackjack.set(message.author.id, {

@@ -1,6 +1,7 @@
-import { BaseBot, MessageFormatter } from "@bot/core";
+import { BaseBot, MessageFormatter, VisualCard } from "@bot/core";
 import { environment } from "@bot/config";
 import { Economy, GuildConfig } from "@bot/database";
+import { AttachmentBuilder } from "discord.js";
 
 import coinCmd from "./commands/coin.js";
 import gunlukCmd from "./commands/gunluk.js";
@@ -26,11 +27,20 @@ import piyangoCmd from "./commands/piyango.js";
 import kazikazanCmd from "./commands/kazikazan.js";
 import balikCmd from "./commands/balik.js";
 import madenCmd from "./commands/maden.js";
+import itemmarketCmd from "./commands/itemmarket.js";
+import kullanCmd from "./commands/kullan.js";
+import klanCmd from "./commands/klan.js";
+import klantopCmd from "./commands/klantop.js";
+import petCmd from "./commands/pet.js";
+import duelloCmd from "./commands/duello.js";
+import { registerEconomyInteractions } from "./services/EconomyInteractions.js";
 
 const client = new BaseBot({
   serviceName: "ECONOMY",
   token: environment.tokens.economy
 });
+
+registerEconomyInteractions(client);
 
 client.activeBlackjack = new Map();
 
@@ -58,6 +68,12 @@ client.registerCommand(piyangoCmd);
 client.registerCommand(kazikazanCmd);
 client.registerCommand(balikCmd);
 client.registerCommand(madenCmd);
+client.registerCommand(itemmarketCmd);
+client.registerCommand(kullanCmd);
+client.registerCommand(klanCmd);
+client.registerCommand(klantopCmd);
+client.registerCommand(petCmd);
+client.registerCommand(duelloCmd);
 
 client.on("ready", () => {
   setInterval(async () => {
@@ -87,17 +103,21 @@ client.on("ready", () => {
   }, 1000 * 60 * 10);
 });
 
+const SUITS = ["♠", "♥", "♦", "♣"];
+const VALUES = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"];
+
 function calculateHand(cards) {
   let sum = 0;
   let aces = 0;
   for (const card of cards) {
-    if (card === "A") {
+    const rawVal = card.replace(/[♠♥♦♣]/g, "");
+    if (rawVal === "A") {
       aces++;
       sum += 11;
-    } else if (["K", "Q", "J", "10"].includes(card)) {
+    } else if (["K", "Q", "J", "10"].includes(rawVal)) {
       sum += 10;
     } else {
-      sum += parseInt(card, 10);
+      sum += parseInt(rawVal, 10);
     }
   }
   while (sum > 21 && aces > 0) {
@@ -108,8 +128,9 @@ function calculateHand(cards) {
 }
 
 function getRandomCard() {
-  const deck = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"];
-  return deck[Math.floor(Math.random() * deck.length)];
+  const suit = SUITS[Math.floor(Math.random() * SUITS.length)];
+  const val = VALUES[Math.floor(Math.random() * VALUES.length)];
+  return `${val}${suit}`;
 }
 
 client.registerInteraction("bj_", async ({ client, interaction, config }) => {
@@ -134,28 +155,41 @@ client.registerInteraction("bj_", async ({ client, interaction, config }) => {
     if (playerTotal > 21) {
       client.activeBlackjack.delete(ownerId);
       const profile = await Economy.findOne({ guildId: interaction.guild.id, userId: ownerId });
-      const losePayload = MessageFormatter.render("blackjackLose", {
-        amount: bet,
-        balance: profile?.wallet || 0,
-        title: "Blackjack - Kaybettiniz (Bust)"
-      }, config, interaction.guild);
+      const bustBuffer = await VisualCard.renderBlackjackTable({
+        playerHand: game.playerCards,
+        dealerHand: game.dealerCards,
+        playerTotal,
+        dealerTotal: calculateHand(game.dealerCards),
+        bet,
+        status: "bust",
+        balance: profile?.wallet || 0
+      });
+      const attachment = new AttachmentBuilder(bustBuffer, { name: "blackjack.png" });
 
       return interaction.update({
-        ...losePayload,
+        content: `💥 **Blackjack : 21 Aşıldı (Bust)!** | <@${ownerId}> -${bet.toLocaleString("tr-TR")} Coin`,
+        files: [attachment],
         components: []
       });
     }
 
-    const tablePayload = MessageFormatter.render("blackjackTable", {
+    const profile = await Economy.findOne({ guildId: interaction.guild.id, userId: ownerId });
+    const hitBuffer = await VisualCard.renderBlackjackTable({
+      playerHand: game.playerCards,
+      dealerHand: game.dealerCards,
+      playerTotal,
+      dealerTotal: calculateHand([game.dealerCards[0]]),
       bet,
-      cards: game.playerCards.join(" - "),
-      total: playerTotal,
-      dealer: game.dealerCards[0],
-      title: "Blackjack Oyunu",
-      components: interaction.message.components
-    }, config, interaction.guild);
+      status: "playing",
+      balance: profile?.wallet || 0
+    });
+    const attachment = new AttachmentBuilder(hitBuffer, { name: "blackjack.png" });
 
-    return interaction.update(tablePayload);
+    return interaction.update({
+      content: `🃏 **Blackjack (21) Masası** | Oyuncu: <@${ownerId}> | Bahis: \`${bet.toLocaleString("tr-TR")} Coin\``,
+      files: [attachment],
+      components: interaction.message.components
+    });
   } else if (action === "stand") {
     let playerTotal = calculateHand(game.playerCards);
     let dealerTotal = calculateHand(game.dealerCards);
@@ -176,14 +210,20 @@ client.registerInteraction("bj_", async ({ client, interaction, config }) => {
         await profile.save();
       }
 
-      const winPayload = MessageFormatter.render("blackjackWin", {
-        amount: winAmount,
-        balance: profile?.wallet || 0,
-        title: "Blackjack - Kazandınız!"
-      }, config, interaction.guild);
+      const winBuffer = await VisualCard.renderBlackjackTable({
+        playerHand: game.playerCards,
+        dealerHand: game.dealerCards,
+        playerTotal,
+        dealerTotal,
+        bet,
+        status: "won",
+        balance: profile?.wallet || 0
+      });
+      const attachment = new AttachmentBuilder(winBuffer, { name: "blackjack.png" });
 
       return interaction.update({
-        ...winPayload,
+        content: `🎉 **Blackjack : Kazandınız!** | <@${ownerId}> +${winAmount.toLocaleString("tr-TR")} Coin`,
+        files: [attachment],
         components: []
       });
     } else if (playerTotal === dealerTotal) {
@@ -192,25 +232,37 @@ client.registerInteraction("bj_", async ({ client, interaction, config }) => {
         await profile.save();
       }
 
-      const pushPayload = MessageFormatter.render("blackjackPush", {
-        amount: bet,
-        balance: profile?.wallet || 0,
-        title: "Blackjack - Berabere (Push)"
-      }, config, interaction.guild);
+      const pushBuffer = await VisualCard.renderBlackjackTable({
+        playerHand: game.playerCards,
+        dealerHand: game.dealerCards,
+        playerTotal,
+        dealerTotal,
+        bet,
+        status: "push",
+        balance: profile?.wallet || 0
+      });
+      const attachment = new AttachmentBuilder(pushBuffer, { name: "blackjack.png" });
 
       return interaction.update({
-        ...pushPayload,
+        content: `🤝 **Blackjack : Berabere (Push)!** | <@${ownerId}> Bahis iade edildi.`,
+        files: [attachment],
         components: []
       });
     } else {
-      const losePayload = MessageFormatter.render("blackjackLose", {
-        amount: bet,
-        balance: profile?.wallet || 0,
-        title: "Blackjack - Krupiye Kazandı"
-      }, config, interaction.guild);
+      const loseBuffer = await VisualCard.renderBlackjackTable({
+        playerHand: game.playerCards,
+        dealerHand: game.dealerCards,
+        playerTotal,
+        dealerTotal,
+        bet,
+        status: "lost",
+        balance: profile?.wallet || 0
+      });
+      const attachment = new AttachmentBuilder(loseBuffer, { name: "blackjack.png" });
 
       return interaction.update({
-        ...losePayload,
+        content: `💥 **Blackjack : Krupiye Kazandı!** | <@${ownerId}> -${bet.toLocaleString("tr-TR")} Coin`,
+        files: [attachment],
         components: []
       });
     }

@@ -1,4 +1,4 @@
-import { Embeds } from "@bot/core";
+import { MessageFormatter } from "@bot/core";
 
 export default {
   name: "ses",
@@ -6,14 +6,15 @@ export default {
   async execute({ client, message, args, config }) {
     const targetMember = message.mentions.members.first() || (args[0] ? await message.guild.members.fetch(args[0]).catch(() => null) : message.member);
     if (!targetMember) {
-      return message.reply({ embeds: [Embeds.warn("Kullanıcı Bulunamadı", "Belirtilen kullanıcı sunucuda bulunamadı.", message.guild)] });
+      return message.reply(MessageFormatter.warn("Kullanıcı Bulunamadı", "Belirtilen kullanıcı sunucuda bulunamadı."));
     }
 
     const voiceState = targetMember.voice;
     if (!voiceState || !voiceState.channel) {
-      return message.reply({
-        embeds: [Embeds.info("Ses Durumu", `${targetMember} kullanıcısı şu anda herhangi bir ses kanalında bulunmuyor.`, message.guild)]
-      });
+      return message.reply(MessageFormatter.info(
+        "Ses Durumu",
+        `${targetMember} kullanıcısı şu anda herhangi bir ses kanalında bulunmuyor.`
+      ));
     }
 
     const channel = voiceState.channel;
@@ -38,20 +39,24 @@ export default {
       ? membersInChannel.map((m) => `<@${m.id}>`).join(", ")
       : `${membersInChannel.first(6).map((m) => `<@${m.id}>`).join(", ")} ve ${membersInChannel.size - 6} kişi daha`;
 
-    const description = [
-      `• **Kanal:** ${channel.name} (\`${channel.id}\`)`,
-      `• **Odada Kalma Süresi:** ${durationStr}`,
-      `• **Mikrofon Durumu:** ${micStatus}`,
-      `• **Kulaklık Durumu:** ${deafStatus}`,
-      `• **Ekran Yayını:** ${streamStatus}`,
-      `• **Kamera Durumu:** ${videoStatus}`,
-      `• **Odadaki Üyeler (${membersInChannel.size}):** ${memberList || "Yalnızca siz"}`
+    const content = [
+      `### 🎙️ ${targetMember.displayName} - Ses Detayları`,
+      `▫️ **Kanal:** <#${channel.id}> (\`${channel.name}\`)`,
+      `▫️ **Odada Kalma Süresi:** \`${durationStr}\``,
+      `▫️ **Mikrofon:** ${micStatus} | **Kulaklık:** ${deafStatus}`,
+      `▫️ **Yayın:** ${streamStatus} | **Kamera:** ${videoStatus}`,
+      "",
+      `▫️ **Odadaki Diğer Üyeler (${membersInChannel.size}):**`,
+      `  ${memberList || "Yalnızca siz"}`,
+      "",
+      `-# Anlık ses kanalı durumu Discord API'si üzerinden alınmıştır.`
     ].join("\n");
 
-    message.reply({
-      embeds: [
-        Embeds.info(`${targetMember.displayName} - Ses Detayları`, description, message.guild)
-      ]
+    return message.reply({
+      content,
+      embeds: [],
+      components: []
     });
   }
 };
+

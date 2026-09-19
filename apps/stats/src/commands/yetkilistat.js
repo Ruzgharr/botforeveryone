@@ -1,5 +1,5 @@
 import { Stat, UserAccount, Penalty, StaffTask } from "@bot/database";
-import { Embeds } from "@bot/core";
+import { MessageFormatter } from "@bot/core";
 
 function formatDuration(ms) {
   if (!ms || ms <= 0) return "0 dk";
@@ -15,14 +15,14 @@ export default {
   aliases: ["ystat", "staffstat", "yetkilibilgi"],
   async execute({ client, message, args, config }) {
     if (!client.hasStaffPermission(message.member, config, "staffRoles")) {
-      return message.reply({ embeds: [Embeds.error("Yetki Yetersiz", "Yetkili istatistiklerini görüntülemek için yetkiniz bulunmuyor.", message.guild)] });
+      return message.reply(MessageFormatter.error("Yetki Yetersiz", "Yetkili istatistiklerini görüntülemek için yetkiniz bulunmuyor."));
     }
 
     const targetMember = message.mentions.members.first()
       || (args[0] ? await message.guild.members.fetch(args[0]).catch(() => null) : message.member);
 
     if (!targetMember || targetMember.user.bot) {
-      return message.reply({ embeds: [Embeds.warn("Hata", "Geçerli bir yetkili üye belirtmelisiniz.", message.guild)] });
+      return message.reply(MessageFormatter.warn("Hata", "Geçerli bir yetkili üye belirtmelisiniz."));
     }
 
     const now = new Date();
@@ -43,23 +43,28 @@ export default {
     const taskMsg = (task?.currentMessages || 0).toLocaleString("tr-TR");
     const taskCompleted = task?.completed ? "✅ Tamamlandı" : "⏳ Devam Ediyor";
 
-    const embed = Embeds.base(`Yetkili Performans Raporu: ${targetMember.displayName}`, null, message.guild)
-      .setThumbnail(targetMember.user.displayAvatarURL({ dynamic: true, size: 256 }))
-      .addFields(
-        { name: "Yetkili Üye", value: `${targetMember} (\`${targetMember.id}\`)`, inline: true },
-        { name: "En Yüksek Yetki Rolü", value: `${targetMember.roles.highest}`, inline: true },
-        { name: "Toplam Kayıt Sayısı", value: `📋 **${regCount} üye** teyit edildi`, inline: true },
-        { name: "Toplam Ceza İşlemi", value: `⚖️ **${penaltyCount} adet** ceza verildi`, inline: true },
-        { name: "Genel Ses Süresi", value: `🎙️ **${voiceStr}**`, inline: true },
-        { name: "Genel Mesaj Sayısı", value: `💬 **${msgCount} mesaj**`, inline: true },
-        {
-          name: `Haftalık Görev Durumu (${year}/${weekNumber}. Hafta)`,
-          value: `• Ses İlerlemesi: **${taskVoice}**\n• Mesaj İlerlemesi: **${taskMsg}**\n• Durum: **${taskCompleted}**`,
-          inline: false
-        }
-      )
-      .setFooter({ text: "Yetkili Denetim ve Performans Sistemi | Public Bot Ecosystem", iconURL: message.guild.iconURL() });
+    const content = [
+      `### 🛡️ Yetkili Performans Raporu: ${targetMember.displayName}`,
+      `▫️ **Yetkili:** ${targetMember} (\`${targetMember.id}\`)`,
+      `▫️ **En Yüksek Rol:** ${targetMember.roles.highest}`,
+      `▫️ **Kayıt Sayısı:** 📋 **${regCount} üye** teyit edildi`,
+      `▫️ **Ceza İşlemi:** ⚖️ **${penaltyCount} adet** ceza uygulandı`,
+      `▫️ **Genel Ses Süresi:** 🎙️ **${voiceStr}**`,
+      `▫️ **Genel Mesaj:** 💬 **${msgCount} mesaj**`,
+      "",
+      `▫️ **Haftalık Görev Durumu (${year}/${weekNumber}. Hafta):**`,
+      `  • Ses: **${taskVoice}**`,
+      `  • Mesaj: **${taskMsg}**`,
+      `  • Görev Durumu: **${taskCompleted}**`,
+      "",
+      `-# Yetkili Denetim & Performans Sistemi | Public Bot Ecosystem`
+    ].join("\n");
 
-    await message.reply({ embeds: [embed] });
+    return message.reply({
+      content,
+      embeds: [],
+      components: []
+    });
   }
 };
+

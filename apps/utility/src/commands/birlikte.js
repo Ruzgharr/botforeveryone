@@ -1,5 +1,5 @@
 import { Stat } from "@bot/database";
-import { Embeds } from "@bot/core";
+import { MessageFormatter } from "@bot/core";
 
 function formatDuration(ms) {
   if (!ms || ms <= 0) return "0 dakika";
@@ -18,13 +18,11 @@ export default {
       || (args[0] ? await message.guild.members.fetch(args[0]).catch(() => null) : null);
 
     if (!targetMember) {
-      return message.reply({
-        embeds: [Embeds.warn("Eksik Bilgi", "Lütfen birlikte ses sürenizi sorgulayacağınız üyeyi etiketleyin.", message.guild)]
-      });
+      return message.reply(MessageFormatter.warn("Eksik Bilgi", "Lütfen birlikte ses sürenizi sorgulayacağınız üyeyi etiketleyin."));
     }
 
     if (targetMember.id === message.author.id) {
-      return message.reply({ embeds: [Embeds.warn("Uyarı", "Kendinizle olan birliktelik sürenizi sorgulayamazsınız.", message.guild)] });
+      return message.reply(MessageFormatter.warn("Uyarı", "Kendinizle olan birliktelik sürenizi sorgulayamazsınız."));
     }
 
     const [stat1, stat2] = await Promise.all([
@@ -44,16 +42,25 @@ export default {
       ? `🟢 Şu anda ikiniz de <#${message.member.voice.channelId}> kanalındasınız!`
       : "⚪ Şu anda aynı ses kanalında değilsiniz.";
 
-    const embed = Embeds.base(
-      `Ses Birlikteliği: ${message.member.displayName} & ${targetMember.displayName}`,
-      `İki üyenin sunucudaki ses aktifliği ve ortak vakit analizi:\n\n`
-      + `• **Tahmini Birlikte Geçen Süre:** 🎙️ **${durationStr}**\n`
-      + `• **${message.member.displayName} Toplam Ses:** ${formatDuration(voice1)}\n`
-      + `• **${targetMember.displayName} Toplam Ses:** ${formatDuration(voice2)}\n\n`
-      + `**Anlık Durum:**\n${currentStatus}`,
-      message.guild
-    ).setFooter({ text: "Ses Birlikteliği Analizörü | Public Bot Ecosystem", iconURL: message.guild.iconURL() });
+    const content = [
+      `### 🎙️ Ses Birlikteliği Analizi`,
+      `**${message.member.displayName}** & **${targetMember.displayName}**`,
+      "",
+      `▫️ **Tahmini Birlikte Geçen Süre:** 🎙️ **${durationStr}**`,
+      `▫️ **${message.member.displayName} Toplam Ses:** ${formatDuration(voice1)}`,
+      `▫️ **${targetMember.displayName} Toplam Ses:** ${formatDuration(voice2)}`,
+      "",
+      `▫️ **Anlık Durum:**`,
+      `  ${currentStatus}`,
+      "",
+      `-# Ses birlikteliği eş zamanlı ses kanalı oturumlarından hesaplanır.`
+    ].join("\n");
 
-    await message.reply({ embeds: [embed] });
+    return message.reply({
+      content,
+      embeds: [],
+      components: []
+    });
   }
 };
+

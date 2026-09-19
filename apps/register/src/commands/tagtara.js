@@ -1,11 +1,11 @@
-import { Embeds } from "@bot/core";
+import { MessageFormatter } from "@bot/core";
 
 export default {
   name: "tagtara",
   aliases: ["tag-tara", "tagsenkron", "tag-senkron"],
   async execute({ client, message, args, config }) {
     if (!client.hasStaffPermission(message.member, config, "registerStaff")) {
-      return message.reply({ embeds: [Embeds.error("Yetki Yetersiz", "Bu komutu kullanmak için yetkiniz bulunmuyor.", message.guild)] });
+      return message.reply(MessageFormatter.error("Yetki Yetersiz", "Bu komutu kullanmak için yetkiniz bulunmuyor."));
     }
 
     const tag = config.tag;
@@ -13,14 +13,14 @@ export default {
     const tagRoleId = config.roles?.tagRole;
 
     if (!tag && !secondaryTag) {
-      return message.reply({ embeds: [Embeds.warn("Ayar Eksik", "Sunucu için herhangi bir tag tanımlanmamış. Panelden ayarlayınız.", message.guild)] });
+      return message.reply(MessageFormatter.warn("Ayar Eksik", "Sunucu için herhangi bir tag tanımlanmamış. Panelden ayarlayınız."));
     }
 
     if (!tagRoleId) {
-      return message.reply({ embeds: [Embeds.warn("Ayar Eksik", "Sunucu için tag rolü tanımlanmamış. Panelden ayarlayınız.", message.guild)] });
+      return message.reply(MessageFormatter.warn("Ayar Eksik", "Sunucu için tag rolü tanımlanmamış. Panelden ayarlayınız."));
     }
 
-    const statusMsg = await message.reply({ embeds: [Embeds.info("Tag Taraması Başlatıldı", "Sunucudaki tüm üyeler taranıyor, lütfen bekleyin...", message.guild)] });
+    const statusMsg = await message.reply(MessageFormatter.info("Tag Taraması Başlatıldı", "Sunucudaki tüm üyeler taranıyor, lütfen bekleyin..."));
 
     const members = await message.guild.members.fetch();
     let addedCount = 0;
@@ -42,16 +42,9 @@ export default {
       }
     }
 
-    statusMsg.edit({
-      embeds: [
-        Embeds.success(
-          "Tag Taraması Tamamlandı",
-          `Tarama başarıyla sonuçlandı:\n\n` +
-          `• Tagı olup rolü verilen üye sayısı: **${addedCount}**\n` +
-          `• Tagı bulunmayıp rolü alınan üye sayısı: **${removedCount}**`,
-          message.guild
-        )
-      ]
-    });
+    statusMsg.edit(MessageFormatter.success(
+      "Tag Taraması Tamamlandı",
+      `Tarama başarıyla sonuçlandı:\n\n▫️ Tagı olup rolü verilen: **${addedCount}**\n▫️ Tagı bulunmayıp rolü alınan: **${removedCount}**\n-# Tag Senkronizasyon Sistemi`
+    ));
   }
 };

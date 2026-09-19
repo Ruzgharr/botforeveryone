@@ -1,4 +1,4 @@
-import { Embeds } from "@bot/core";
+import { MessageFormatter } from "@bot/core";
 
 export default {
   name: "yetkililer",
@@ -6,7 +6,7 @@ export default {
   async execute({ client, message, args, config }) {
     const staffRoleIds = config.roles?.staffRoles || [];
     if (staffRoleIds.length === 0) {
-      return message.reply({ embeds: [Embeds.warn("Ayar Hatası", "Sistemde yetkili rolleri henüz tanımlanmamış.", message.guild)] });
+      return message.reply(MessageFormatter.warn("Ayar Hatası", "Sistemde yetkili rolleri henüz tanımlanmamış."));
     }
 
     await message.guild.members.fetch().catch(() => null);
@@ -17,29 +17,35 @@ export default {
     });
 
     if (staffMembers.size === 0) {
-      return message.reply({ embeds: [Embeds.info("Yetkili Bulunamadı", "Sunucuda yetkili rolüne sahip üye bulunmuyor.", message.guild)] });
+      return message.reply(MessageFormatter.info("Yetkili Bulunamadı", "Sunucuda yetkili rolüne sahip üye bulunmuyor."));
     }
 
     const inVoice = staffMembers.filter((m) => m.voice?.channelId);
     const notInVoice = staffMembers.filter((m) => !m.voice?.channelId);
 
     const voiceList = inVoice.size > 0
-      ? inVoice.map((m) => `• <@${m.id}> (<#${m.voice.channelId}>)`).slice(0, 15).join("\n")
-      : "Şu anda seste yetkili bulunmuyor.";
+      ? inVoice.map((m) => `  • <@${m.id}> (<#${m.voice.channelId}>)`).slice(0, 15).join("\n")
+      : "  • Şu anda seste yetkili bulunmuyor.";
 
-    const extraVoiceCount = inVoice.size > 15 ? `\n...ve ${inVoice.size - 15} yetkili daha` : "";
+    const extraVoiceCount = inVoice.size > 15 ? `\n  • ...ve ${inVoice.size - 15} yetkili daha` : "";
 
-    const description = [
-      `• **Toplam Yetkili Sayısı:** \`${staffMembers.size}\` kişi`,
-      `• **Sesteki Yetkililer:** \`${inVoice.size}\` kişi`,
-      `• **Seste Olmayan Yetkililer:** \`${notInVoice.size}\` kişi`,
+    const content = [
+      `### 🛡️ Yetkili Canlı Aktivite Tablosu`,
+      `▫️ **Toplam Yetkili:** \`${staffMembers.size}\` kişi`,
+      `▫️ **Sesteki Yetkililer:** \`${inVoice.size}\` kişi`,
+      `▫️ **Seste Olmayan Yetkililer:** \`${notInVoice.size}\` kişi`,
       "",
-      "### 🎙️ Sesteki Yetkili Listesi",
-      voiceList + extraVoiceCount
+      `▫️ **Sesteki Yetkili Listesi:**`,
+      voiceList + extraVoiceCount,
+      "",
+      `-# Yetkili denetimi ve ses takibi anlık olarak yürütülmektedir.`
     ].join("\n");
 
-    message.reply({
-      embeds: [Embeds.info("Yetkili Canlı Aktivite Tablosu", description, message.guild)]
+    return message.reply({
+      content,
+      embeds: [],
+      components: []
     });
   }
 };
+

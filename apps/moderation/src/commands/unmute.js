@@ -6,12 +6,12 @@ export default {
   aliases: ["susturmakaldır", "susturmakaldir"],
   async execute({ client, message, args, config }) {
     if (!client.hasStaffPermission(message.member, config, "moderationStaff")) {
-      return message.reply({ embeds: [Embeds.error("Yetki Yetersiz", "Bu komutu kullanmak için yetkiniz bulunmuyor.", message.guild)] });
+      return message.reply(MessageFormatter.error("Yetki Yetersiz", "Bu komutu kullanmak için yetkiniz bulunmuyor."));
     }
 
     const targetUser = message.mentions.members.first() || (args[0] ? await message.guild.members.fetch(args[0]).catch(() => null) : null);
     if (!targetUser) {
-      return message.reply({ embeds: [Embeds.warn("Eksik Bilgi", "Lütfen susturulması kaldırılacak kullanıcıyı etiketleyin veya ID girin.", message.guild)] });
+      return message.reply(MessageFormatter.warn("Eksik Bilgi", "Lütfen susturulması kaldırılacak kullanıcıyı etiketleyin veya ID girin."));
     }
 
     const muteRoleId = config.roles?.chatMute;

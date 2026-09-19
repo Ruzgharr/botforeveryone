@@ -1,29 +1,56 @@
-import mongoose from "mongoose";
+import "./models/GuildConfig.js";
+import "./models/Penalty.js";
+import "./models/UserAccount.js";
+import "./models/Stat.js";
+import "./models/StaffTask.js";
+import "./models/Economy.js";
+import "./models/Backup.js";
+import "./models/VoiceBot.js";
+import "./models/Ticket.js";
+import "./models/BotCredential.js";
+import "./models/StaffKpi.js";
+import "./models/MarketItem.js";
+import "./models/ShopItem.js";
+import "./models/ForceBan.js";
+import "./models/InviteRecord.js";
+import "./models/ChatMessage.js";
+import "./models/BattlePass.js";
+import "./models/UserBattlePass.js";
+import "./models/Clan.js";
+import "./models/Pet.js";
 
-export * from "./models/GuildConfig.js";
-export * from "./models/Penalty.js";
-export * from "./models/UserAccount.js";
-export * from "./models/Stat.js";
-export * from "./models/StaffTask.js";
-export * from "./models/Economy.js";
-export * from "./models/Backup.js";
-export * from "./models/VoiceBot.js";
-export * from "./models/Ticket.js";
-export * from "./models/BotCredential.js";
-export * from "./models/StaffKpi.js";
-export * from "./models/MarketItem.js";
-export * from "./models/ShopItem.js";
-export * from "./models/ForceBan.js";
-export * from "./models/InviteRecord.js";
+import { DatabaseManager } from "./DatabaseManager.js";
+import { DatabaseMigrator } from "./DatabaseMigrator.js";
+import { PostgresDriver } from "./PostgresDriver.js";
+import { SqliteDriver } from "./SqliteDriver.js";
 
-export async function connectDatabase(uri) {
-  if (mongoose.connection.readyState === 1) return mongoose.connection;
-  await mongoose.connect(uri);
-  return mongoose.connection;
+export { DatabaseManager, DatabaseMigrator, PostgresDriver, SqliteDriver };
+
+export const GuildConfig = DatabaseManager.getModel("GuildConfig");
+export const Penalty = DatabaseManager.getModel("Penalty");
+export const UserAccount = DatabaseManager.getModel("UserAccount");
+export const Stat = DatabaseManager.getModel("Stat");
+export const StaffTask = DatabaseManager.getModel("StaffTask");
+export const Economy = DatabaseManager.getModel("Economy");
+export const Backup = DatabaseManager.getModel("Backup");
+export const VoiceBot = DatabaseManager.getModel("VoiceBot");
+export const Ticket = DatabaseManager.getModel("Ticket");
+export const BotCredential = DatabaseManager.getModel("BotCredential");
+export const StaffKpi = DatabaseManager.getModel("StaffKpi");
+export const MarketItem = DatabaseManager.getModel("MarketItem");
+export const ShopItem = DatabaseManager.getModel("ShopItem");
+export const ForceBan = DatabaseManager.getModel("ForceBan");
+export const InviteRecord = DatabaseManager.getModel("InviteRecord");
+export const ChatMessage = DatabaseManager.getModel("ChatMessage");
+export const BattlePass = DatabaseManager.getModel("BattlePass");
+export const UserBattlePass = DatabaseManager.getModel("UserBattlePass");
+export const Clan = DatabaseManager.getModel("Clan");
+export const Pet = DatabaseManager.getModel("Pet");
+
+export async function connectDatabase(uri, options = {}) {
+  return await DatabaseManager.connect(uri, options);
 }
 
 export async function disconnectDatabase() {
-  if (mongoose.connection.readyState !== 0) {
-    await mongoose.disconnect();
-  }
+  return await DatabaseManager.disconnect();
 }

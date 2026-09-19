@@ -1,4 +1,4 @@
-import { Embeds } from "@bot/core";
+import { MessageFormatter } from "@bot/core";
 
 export default {
   name: "afk",
@@ -19,8 +19,12 @@ export default {
       await message.member.setNickname(`[AFK] ${message.member.displayName}`).catch(() => null);
     }
 
-    message.reply({
-      embeds: [Embeds.info("AFK Modu Aktif", `Başarıyla AFK moduna geçtiniz.\nSebep: **${reason}**`, message.guild)]
-    });
+    const payload = MessageFormatter.render("afkSet", {
+      user: message.author,
+      reason,
+      title: "AFK Moduna Geçildi"
+    }, config, message.guild);
+
+    message.reply(payload);
   }
 };

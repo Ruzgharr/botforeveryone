@@ -1,4 +1,5 @@
-import { Embeds } from "@bot/core";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } from "discord.js";
+import { MessageFormatter, VisualCard } from "@bot/core";
 import { Stat } from "@bot/database";
 
 function createProgressBar(current, max, length = 10) {
@@ -12,12 +13,17 @@ export default {
   name: "me",
   aliases: ["profil", "ben"],
   async execute({ client, message, args, config }) {
+    const isExplicitAnimated = args.some((a) => ["video", "anim", "hareketli", "--video", "gif", "mp4"].includes(a.toLowerCase()));
+    const format = args.some((a) => a.toLowerCase() === "mp4") ? "mp4" : "gif";
+
     const targetMember = message.mentions.members.first() || (args[0] ? await message.guild.members.fetch(args[0]).catch(() => null) : message.member);
     if (!targetMember) {
-      return message.reply({ embeds: [Embeds.warn("Kullanıcı Bulunamadı", "Belirtilen kullanıcı bulunamadı.", message.guild)] });
+      return message.reply(MessageFormatter.warn("Kullanıcı Bulunamadı", "Belirtilen kullanıcı bulunamadı."));
     }
 
     const stat = await Stat.findOne({ guildId: message.guild.id, userId: targetMember.id });
+    const isAnimated = isExplicitAnimated || Boolean(stat?.cardAnimated);
+    const theme = stat?.cardTheme || "sakura";
 
     const totalMsgs = stat?.totalMessages || 0;
     const totalVoiceMs = stat?.totalVoiceMs || 0;
@@ -39,31 +45,98 @@ export default {
     const topRoles = targetMember.roles.cache
       .filter((r) => r.id !== message.guild.id)
       .sort((a, b) => b.position - a.position)
-      .first(3)
+      .first(4)
       .map((r) => `<@&${r.id}>`)
       .join(" ") || "Rol yok";
 
-    const description = [
-      `### 👤 ${targetMember.displayName}`,
-      `**Seviye:** ${level} | **XP:** ${xp} / ${requiredXp}`,
-      `\`[${progressBar}]\` %${percentNum}`,
-      "",
-      "**📊 Aktivite Özeti**",
-      `• **Toplam Mesaj:** \`${totalMsgs}\` mesaj`,
-      `• **Toplam Ses:** \`${voiceHours} saat ${voiceMinutes} dakika\``,
-      "",
-      "**📅 Tarih Bilgileri**",
-      `• **Sunucuya Katılım:** \`${joinedDate}\``,
-      `• **Hesap Kuruluşu:** \`${createdDate}\``,
-      "",
-      "**🏷️ Başlıca Roller**",
-      topRoles
-    ].join("\n");
+    const activeTitle = stat?.title ? ` ${stat.title}` : "";
+    const activeBadgesList = (stat?.activeBadges && stat.activeBadges.length > 0)
+      ? stat.activeBadges.map((b) => `\`${b}\``).join(" ")
+      : "";
 
-    message.reply({
-      embeds: [
-        Embeds.info(`${targetMember.user.username} - Kullanıcı Profili`, description, message.guild)
-      ]
+    const content = [
+      `### 👤 ${targetMember.displayName}${activeTitle} Profili`,
+      `▫️ **Seviye:** ⭐ Seviye ${level} | **XP:** ${xp.toLocaleString("tr-TR")} / ${requiredXp.toLocaleString("tr-TR")}`,
+      `▫️ **İlerleme:** \`[${progressBar}]\` %${percentNum}`,
+      `▫️ **Aktif Kart Teması:** \`${theme.toUpperCase()}\`${isAnimated ? " 🌸 (Canlı Video / Hareketli)" : ""}`,
+      activeBadgesList ? `▫️ **Kuşanılan Rozetler:** ${activeBadgesList}` : null,
+      "",
+      `▫️ **Aktivite Verileri:**`,
+      `  • Toplam Mesaj: **${totalMsgs.toLocaleString("tr-TR")} mesaj**`,
+      `  • Toplam Ses: **${voiceHours} saat ${voiceMinutes} dakika**`,
+      "",
+      `▫️ **Tarih Bilgileri:**`,
+      `  • Sunucuya Katılım: \`${joinedDate}\``,
+      `  • Hesap Oluşturma: \`${createdDate}\``,
+      "",
+      `▫️ **Öne Çıkan Roller:**`,
+      `  ${topRoles}`,
+      "",
+      `-# Veriler sunucu veri tabanından anlık olarak derlenmiştir.`
+    ].filter((l) => l !== null && l !== undefined).join("\n");
+
+    let attachment = null;
+    let fileName = null;
+    try {
+      if (isAnimated) {
+        const ext = format === "mp4" ? "mp4" : "gif";
+        fileName = `profile-card.${ext}`;
+        const animBuffer = await VisualCard.renderAnimatedUserStatCard({
+          user: targetMember.user,
+          periodText: "Profil",
+          voiceHours,
+          messageCount: totalMsgs,
+          level,
+          rank: 1,
+          theme,
+          format,
+          title: stat?.title || "",
+          badges: stat?.activeBadges || []
+        });
+        attachment = new AttachmentBuilder(animBuffer, { name: fileName });
+      } else {
+        fileName = "profile-card.png";
+        const cardBuffer = await VisualCard.renderUserStatCard({
+          user: targetMember.user,
+          periodText: "Profil",
+          voiceHours,
+          messageCount: totalMsgs,
+          level,
+          rank: 1,
+          theme,
+          title: stat?.title || "",
+          badges: stat?.activeBadges || []
+        });
+        attachment = new AttachmentBuilder(cardBuffer, { name: fileName });
+      }
+    } catch {}
+
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId(`stats_user_period:${targetMember.id}:all`)
+        .setLabel("📊 İstatistik")
+        .setStyle(ButtonStyle.Primary),
+      new ButtonBuilder()
+        .setCustomId(`stats_level_view:${targetMember.id}`)
+        .setLabel("⭐ Seviye Detayı")
+        .setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder()
+        .setCustomId(`stats_anim_view:${targetMember.id}`)
+        .setLabel("🎬 Canlı Kart")
+        .setStyle(ButtonStyle.Success)
+    );
+
+    const payload = MessageFormatter.v2(
+      content,
+      [row],
+      false,
+      attachment && fileName ? `attachment://${fileName}` : null
+    );
+
+    return message.reply({
+      ...payload,
+      files: attachment ? [attachment] : []
     });
   }
 };
+

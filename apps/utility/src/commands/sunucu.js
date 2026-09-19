@@ -1,5 +1,5 @@
-import { Embeds } from "@bot/core";
 import { ChannelType } from "discord.js";
+import { UtilityUI } from "../services/UtilityUI.js";
 
 export default {
   name: "sunucu",
@@ -22,27 +22,23 @@ export default {
     const boostTier = guild.premiumTier || 0;
     const createdTimestamp = Math.floor(guild.createdTimestamp / 1000);
 
-    const embed = Embeds.info(
-      `${guild.name} - Sunucu Bilgileri`,
-      `• **Sunucu Sahibi:** ${owner ? `${owner.user.tag} (<@${owner.id}>)` : "Bilinmiyor"}\n` +
-      `• **Kuruluş Tarihi:** <t:${createdTimestamp}:F> (<t:${createdTimestamp}:R>)\n` +
-      `• **Sunucu ID:** \`${guild.id}\`\n\n` +
-      `**Üye Dağılımı:**\n` +
-      `• Toplam: **${totalMembers}** (İnsan: **${humanCount}** | Bot: **${botCount}**)\n\n` +
-      `**Kanal ve Roller:**\n` +
-      `• Kanallar: **${guild.channels.cache.size}** (Yazı: ${textChannels} | Ses: ${voiceChannels} | Kategori: ${categories})\n` +
-      `• Rol Sayısı: **${roleCount}**\n` +
-      `• Emoji Sayısı: **${emojiCount}**\n\n` +
-      `**Takviye (Boost) Durumu:**\n` +
-      `• Seviye: **Seviye ${boostTier}**\n` +
-      `• Takviye Sayısı: **${boostCount} Boost**`,
-      guild
-    );
+    const payload = UtilityUI.formatServerPayload({
+      guild,
+      owner,
+      totalMembers,
+      humanCount,
+      botCount,
+      textChannels,
+      voiceChannels,
+      categories,
+      roleCount,
+      emojiCount,
+      boostTier,
+      boostCount,
+      createdTimestamp
+    });
 
-    if (guild.iconURL()) {
-      embed.setThumbnail(guild.iconURL({ size: 1024, dynamic: true }));
-    }
-
-    message.reply({ embeds: [embed] });
+    return message.reply(payload);
   }
 };
+

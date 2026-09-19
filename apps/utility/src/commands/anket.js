@@ -1,19 +1,20 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
-import { Embeds } from "@bot/core";
+import { MessageFormatter } from "@bot/core";
 
 export default {
   name: "anket",
   aliases: ["poll", "oylama"],
   async execute({ client, message, args, config }) {
     if (!client.hasStaffPermission(message.member, config, "staffRoles")) {
-      return message.reply({ embeds: [Embeds.error("Yetki Yetersiz", "Oylama veya anket başlatmak için yetkiniz bulunmuyor.", message.guild)] });
+      return message.reply(MessageFormatter.error("Yetki Yetersiz", "Oylama veya anket başlatmak için yetkiniz bulunmuyor."));
     }
 
     const rawInput = args.join(" ").trim();
     if (!rawInput) {
-      return message.reply({
-        embeds: [Embeds.warn("Hatalı Kullanım", "Lütfen bir soru veya seçenekli bir anket girin.\n\n**Örnekler:**\n`.anket Bu akşam etkinlik yapalım mı?`\n`.anket Hangi oyunu oynayalım? | Valorant | League of Legends | CS2`", message.guild)]
-      });
+      return message.reply(MessageFormatter.warn(
+        "Hatalı Kullanım",
+        `Lütfen bir soru veya seçenekli bir anket girin.\n\n▫️ Örnekler:\n  • \`${config.prefix || "."}anket Bu akşam etkinlik yapalım mı?\`\n  • \`${config.prefix || "."}anket Hangi oyunu oynayalım? | Valorant | League of Legends | CS2\``
+      ));
     }
 
     const parts = rawInput.split("|").map((s) => s.trim()).filter(Boolean);
@@ -63,10 +64,16 @@ export default {
       buttons.push(row);
     }
 
-    const embed = Embeds.info("📊 SUNUCU ANKETİ & OYLAMA", `**Soru:** ${question}\n\nAşağıdaki butonlara tıklayarak oyunuzu kullanabilirsiniz. Her üye tek bir oy hakkına sahiptir.`, message.guild)
-      .setFooter({ text: `Oylamayı Başlatan: ${message.author.username}`, iconURL: message.author.displayAvatarURL() });
+    const content = [
+      `### 📊 SUNUCU ANKETİ & OYLAMA`,
+      `▫️ **Soru:** ${question}`,
+      "",
+      `▫️ Aşağıdaki butonlara tıklayarak oyunuzu kullanabilirsiniz. Her üyenin tek oy hakkı vardır.`,
+      "",
+      `-# Oylamayı Başlatan: ${message.author.username}`
+    ].join("\n");
 
-    const pollMessage = await message.channel.send({ embeds: [embed], components: buttons });
+    const pollMessage = await message.channel.send({ content, embeds: [], components: buttons });
 
     if (!client.activePolls) {
       client.activePolls = new Map();
@@ -82,3 +89,4 @@ export default {
     });
   }
 };
+

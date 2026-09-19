@@ -4,3 +4,10 @@ node_modules/
 .system_generated/
 .DS_Store
 Thumbs.db
+data/
+scratch/
+*.sqlite
+*.db
+*.tmp
+.vscode/
+.idea/

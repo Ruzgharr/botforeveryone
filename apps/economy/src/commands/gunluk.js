@@ -1,10 +1,11 @@
 import { Economy } from "@bot/database";
-import { Embeds, MessageFormatter } from "@bot/core";
+import { MessageFormatter } from "@bot/core";
+import { EconomyUI } from "../services/EconomyUI.js";
 
 export default {
   name: "günlük",
   aliases: ["gunluk", "daily"],
-  async execute({ message, config }) {
+  async execute({ message }) {
     let profile = await Economy.findOne({ guildId: message.guild.id, userId: message.author.id });
     if (!profile) {
       profile = await Economy.create({ guildId: message.guild.id, userId: message.author.id });
@@ -14,9 +15,7 @@ export default {
     if (profile.lastDaily && Date.now() - profile.lastDaily.getTime() < cooldownMs) {
       const remainingMs = cooldownMs - (Date.now() - profile.lastDaily.getTime());
       const remainingHours = Math.ceil(remainingMs / (1000 * 60 * 60));
-      return message.reply({
-        embeds: [Embeds.warn("Bekleme Süresi", `Günlük ödülünüzü zaten aldınız. Tekrar almak için **${remainingHours} saat** beklemelisiniz.`, message.guild)]
-      });
+      return message.reply(MessageFormatter.warn("Bekleme Süresi", `Günlük ödülünüzü zaten aldınız. Tekrar almak için **${remainingHours} saat** beklemelisiniz.`));
     }
 
     const reward = 250;
@@ -24,12 +23,12 @@ export default {
     profile.lastDaily = new Date();
     await profile.save();
 
-    const payload = MessageFormatter.render("dailyReward", {
-      user: message.author,
-      amount: reward,
-      title: "Günlük Ödül"
-    }, config, message.guild);
+    const payload = EconomyUI.formatDailySuccessPayload({
+      targetUser: message.author,
+      reward,
+      balance: profile.wallet
+    });
 
-    message.reply(payload);
+    return message.reply(payload);
   }
 };

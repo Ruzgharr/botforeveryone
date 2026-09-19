@@ -1,21 +1,22 @@
-import { Embeds } from "@bot/core";
+import { MessageFormatter } from "@bot/core";
 
 export default {
   name: "rolsüzver",
   aliases: ["rolsuzver", "rolsuz-ver", "unreg-ver"],
   async execute({ client, message, args, config }) {
     if (!message.member.permissions.has("Administrator")) {
-      return message.reply({ embeds: [Embeds.error("Yetki Yetersiz", "Bu komutu yalnızca sunucu yöneticileri kullanabilir.", message.guild)] });
+      return message.reply(MessageFormatter.error("Yetki Yetersiz", "Bu komutu yalnızca sunucu yöneticileri kullanabilir."));
     }
 
     const unregRoles = config.roles?.unregistered || [];
     if (unregRoles.length === 0) {
-      return message.reply({ embeds: [Embeds.warn("Ayar Hatası", "Kayıtsız rolü sistemde ayarlanmamış.", message.guild)] });
+      return message.reply(MessageFormatter.warn("Ayar Hatası", "Kayıtsız rolü sistemde ayarlanmamış."));
     }
 
-    const sent = await message.reply({
-      embeds: [Embeds.info("Tarama Başlatıldı", "Rolsüz üyeler taranıyor ve kayıtsız rolü tanımlanıyor, lütfen bekleyin...", message.guild)]
-    });
+    const sent = await message.reply(MessageFormatter.info(
+      "Tarama Başlatıldı",
+      "Rolsüz üyeler taranıyor ve kayıtsız rolü tanımlanıyor, lütfen bekleyin..."
+    ));
 
     await message.guild.members.fetch().catch(() => null);
 
@@ -33,14 +34,9 @@ export default {
       } catch {}
     }
 
-    sent.edit({
-      embeds: [
-        Embeds.success(
-          "İşlem Tamamlandı",
-          `• **Taranan Rolsüz Üye:** ${membersWithoutRoles.size} kişi\n• **Rol Verilen Üye:** ${assignedCount} kişi\n• **Verilen Roller:** ${unregRoles.map((r) => `<@&${r}>`).join(", ")}`,
-          message.guild
-        )
-      ]
-    });
+    sent.edit(MessageFormatter.success(
+      "İşlem Tamamlandı",
+      `Taranan Rolsüz Üye: **${membersWithoutRoles.size}** kişi\n▫️ **Rol Verilen Üye:** \`${assignedCount}\` kişi\n▫️ **Verilen Roller:** ${unregRoles.map((r) => `<@&${r}>`).join(", ")}`
+    ));
   }
 };

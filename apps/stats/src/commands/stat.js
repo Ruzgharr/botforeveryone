@@ -1,55 +1,87 @@
+import { AttachmentBuilder } from "discord.js";
 import { Stat } from "@bot/database";
-import { MessageFormatter } from "@bot/core";
-import { StatCardGenerator } from "../services/StatCardGenerator.js";
-
-function formatDuration(ms) {
-  if (!ms || ms <= 0) return "0 dk";
-  const minutes = Math.floor(ms / (1000 * 60));
-  const hours = Math.floor(minutes / 60);
-  const remainingMinutes = minutes % 60;
-  if (hours === 0) return `${remainingMinutes} dk`;
-  return `${hours} sa ${remainingMinutes} dk`;
-}
+import { VisualCard } from "@bot/core";
+import { StatsUI } from "../services/StatsUI.js";
 
 export default {
   name: "stat",
-  aliases: ["istatistik", "me"],
+  aliases: ["istatistik"],
   async execute({ client, message, args, config }) {
-    const targetUser = message.mentions.users.first() || (args[0] ? await client.users.fetch(args[0]).catch(() => null) : message.author);
+    const explicitAnimated = args.some((a) => ["video", "anim", "hareketli", "--video", "gif", "mp4"].includes(a.toLowerCase()));
+    const cleanArgs = args.filter((a) => !["video", "anim", "hareketli", "--video", "gif", "mp4"].includes(a.toLowerCase()));
+
+    const allThemes = Object.keys(VisualCard.CARD_THEMES || {});
+    const explicitThemeArg = cleanArgs.find((a) => allThemes.includes(a.toLowerCase().trim().replace(/^tema_/, "")));
+    const remainingArgs = cleanArgs.filter((a) => a !== explicitThemeArg);
+
+    const mentionedUser = message.mentions.users.first();
+    const idArg = remainingArgs.find((a) => /^\d{17,20}$/.test(a.trim()));
+    let targetUser = mentionedUser;
+    if (!targetUser && idArg) {
+      targetUser = await client.users.fetch(idArg).catch(() => null);
+    }
+    if (!targetUser) {
+      targetUser = message.author;
+    }
+
+    const extraArgs = remainingArgs.filter((a) => {
+      const clean = a.replace(/[<@!>]/g, "").trim();
+      return clean !== targetUser.id && !message.mentions.users.has(clean);
+    });
+    const extraText = extraArgs.length > 0 ? extraArgs.join(" ").trim() : null;
 
     const stat = await Stat.findOne({ guildId: message.guild.id, userId: targetUser.id });
-    const totalVoice = formatDuration(stat?.totalVoiceMs || 0);
-    const dailyVoice = formatDuration(stat?.dailyVoiceMs || 0);
-    const weeklyVoice = formatDuration(stat?.weeklyVoiceMs || 0);
+    const selectedTheme = explicitThemeArg ? explicitThemeArg.toLowerCase().trim().replace(/^tema_/, "") : (stat?.cardTheme || "sakura");
+    const isAnimated = explicitAnimated || Boolean(stat?.cardAnimated);
+    const format = args.some((a) => a.toLowerCase() === "mp4") ? "mp4" : (stat?.cardFormat || "gif");
+    const ext = isAnimated ? (format === "mp4" ? "mp4" : "gif") : "png";
+    const fileName = `stat-card.${ext}`;
 
-    const totalMsgs = stat?.totalMessages || 0;
-    const dailyMsgs = stat?.dailyMessages || 0;
-    const weeklyMsgs = stat?.weeklyMessages || 0;
-
-    const payload = MessageFormatter.render("userStats", {
-      user: targetUser,
-      totalVoice,
-      weeklyVoice,
-      dailyVoice,
-      totalMsgs,
-      weeklyMsgs,
-      dailyMsgs,
-      title: `${targetUser.tag} - Aktivite Verileri`
-    }, config, message.guild);
-
-    const hours = ((stat?.totalVoiceMs || 0) / (1000 * 60 * 60)).toFixed(1);
-    const xp = stat?.xp || 0;
-    const level = stat?.level || 1;
-    const nextLevelXp = level * level * 100;
-    const cardAttachment = StatCardGenerator.createCard({
-      username: targetUser.username || targetUser.tag,
-      level,
-      xp,
-      nextLevelXp,
-      voiceHours: hours,
-      messages: totalMsgs
+    const payload = StatsUI.formatUserStatPayload({
+      targetUser,
+      stat,
+      period: "all",
+      mediaUrl: `attachment://${fileName}`,
+      extraText
     });
 
-    message.reply({ ...payload, files: [cardAttachment] });
+    const hours = Math.round((stat?.totalVoiceMs || 0) / (1000 * 60 * 60));
+
+    let attachment = null;
+    if (isAnimated) {
+      const animBuffer = await VisualCard.renderAnimatedUserStatCard({
+        user: targetUser,
+        periodText: "Genel",
+        voiceHours: hours,
+        messageCount: stat?.totalMessages || 0,
+        level: stat?.level || 1,
+        rank: 1,
+        theme: selectedTheme,
+        format,
+        title: stat?.title || "",
+        badges: stat?.activeBadges || []
+      });
+      attachment = new AttachmentBuilder(animBuffer, { name: fileName });
+    } else {
+      const cardBuffer = await VisualCard.renderUserStatCard({
+        user: targetUser,
+        periodText: "Genel",
+        voiceHours: hours,
+        messageCount: stat?.totalMessages || 0,
+        level: stat?.level || 1,
+        rank: 1,
+        theme: selectedTheme,
+        title: stat?.title || "",
+        badges: stat?.activeBadges || []
+      });
+      attachment = new AttachmentBuilder(cardBuffer, { name: fileName });
+    }
+
+    const replyOptions = { ...payload, files: [attachment] };
+    if (extraText) {
+      replyOptions.content = extraText;
+    }
+
+    return message.reply(replyOptions);
   }
 };

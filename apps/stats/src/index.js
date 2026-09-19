@@ -1,7 +1,7 @@
-import { BaseBot } from "@bot/core";
+import { BaseBot, VisualCard } from "@bot/core";
 import { environment } from "@bot/config";
 import { Stat, StaffTask } from "@bot/database";
-import { Collection } from "discord.js";
+import { Collection, AttachmentBuilder } from "discord.js";
 
 import statCmd from "./commands/stat.js";
 import topstatCmd from "./commands/topstat.js";
@@ -16,11 +16,20 @@ import seviyeCmd from "./commands/seviye.js";
 import topseviyeCmd from "./commands/topseviye.js";
 import yetkilistatCmd from "./commands/yetkilistat.js";
 import grafikCmd from "./commands/grafik.js";
+import temaCmd from "./commands/tema.js";
+import biletCmd from "./commands/bilet.js";
+import rozetCmd from "./commands/rozet.js";
+import unvanCmd from "./commands/unvan.js";
+import { registerStatsInteractions } from "./services/StatsInteractions.js";
+import { BattlePassService } from "./services/BattlePassService.js";
+import { BadgeService } from "./services/BadgeService.js";
 
 const client = new BaseBot({
   serviceName: "STATS",
   token: environment.tokens.stats
 });
+
+registerStatsInteractions(client);
 
 client.voiceSessions = new Collection();
 
@@ -37,6 +46,10 @@ client.registerCommand(seviyeCmd);
 client.registerCommand(topseviyeCmd);
 client.registerCommand(yetkilistatCmd);
 client.registerCommand(grafikCmd);
+client.registerCommand(temaCmd);
+client.registerCommand(biletCmd);
+client.registerCommand(rozetCmd);
+client.registerCommand(unvanCmd);
 
 client.on("ready", async () => {
   for (const guild of client.guilds.cache.values()) {
@@ -87,11 +100,31 @@ client.on("messageCreate", async (message) => {
     const currentLvl = stat.level || 1;
     const requiredXp = currentLvl * currentLvl * 100;
     if (stat.xp >= requiredXp) {
-      await Stat.updateOne({ _id: stat._id }, { $inc: { level: 1 } });
+      const nextLevel = currentLvl + 1;
+      await Stat.updateOne({ _id: stat._id }, { $set: { level: nextLevel } });
       const rewards = config.leveling.roleRewards || [];
-      const reward = rewards.find((r) => r.level === currentLvl + 1);
+      const reward = rewards.find((r) => r.level === nextLevel);
+      let rewardRoleName = null;
       if (reward?.roleId && message.member) {
+        const role = message.guild.roles.cache.get(reward.roleId);
+        if (role) rewardRoleName = role.name;
         await message.member.roles.add(reward.roleId).catch(() => null);
+      }
+
+      try {
+        const cardBuffer = await VisualCard.renderLevelUpCard({
+          user: message.author,
+          newLevel: nextLevel,
+          rewardRole: rewardRoleName,
+          theme: stat.cardTheme || "sakura"
+        });
+        const attachment = new AttachmentBuilder(cardBuffer, { name: "levelup.png" });
+        await message.channel.send({
+          content: `🎉 Tebrikler <@${message.author.id}>! Seviye atladınız! Yeni Seviyeniz: **${nextLevel}**`,
+          files: [attachment]
+        }).catch(() => null);
+      } catch (err) {
+        client.logger.error("Level up kart render hatası:", err);
       }
     }
   }
@@ -101,6 +134,8 @@ client.on("messageCreate", async (message) => {
     { $inc: { currentMessages: 1 } },
     { upsert: true }
   );
+
+  BattlePassService.recordProgress(message.guild.id, message.author.id, "message", 1).catch(() => null);
 });
 
 client.on("voiceStateUpdate", async (oldState, newState) => {
@@ -127,6 +162,10 @@ client.on("voiceStateUpdate", async (oldState, newState) => {
       const year = now.getFullYear();
       const durationMinutes = Math.floor(duration / 60000);
       const voiceXp = durationMinutes * (config.leveling?.voiceXpPerMinute || 20);
+
+      if (durationMinutes > 0) {
+        BattlePassService.recordProgress(member.guild.id, member.id, "voice_minute", durationMinutes).catch(() => null);
+      }
 
       const updatedStat = await Stat.findOneAndUpdate(
         { guildId: member.guild.id, userId: member.id },
@@ -227,7 +266,7 @@ async function runWeeklyRewards() {
         const logChannel = guild.channels.cache.get(logChannelId);
         if (logChannel) {
           logChannel.send({
-            content: `Haftalik odul: <@${member.id}> bu haftanin en aktif ${i + 1}. uyesi! <@&${reward.roleId}> rolu verildi.`
+            content: `Haftalık ödül: <@${member.id}> bu haftanın en aktif ${i + 1}. üyesi! <@&${reward.roleId}> rolü verildi.`
           }).catch(() => null);
         }
       }

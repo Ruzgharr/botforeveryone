@@ -1,4 +1,4 @@
-import { Embeds } from "@bot/core";
+import { MessageFormatter } from "@bot/core";
 import { MarketItem } from "@bot/database";
 
 export default {
@@ -15,20 +15,29 @@ export default {
     const btcVal = btcItem * market.btcPrice;
     const totalVal = goldVal + btcVal;
 
-    const embed = Embeds.success(
-      "Dinamik Sunucu Borsası ve Emtia Piyasası",
-      `Anlık Piyasa Fiyatları:\n` +
-      `• Altın (GOLD): **${market.goldPrice} Coin**\n` +
-      `• Kripto (BTC): **${market.btcPrice} Coin**\n\n` +
-      `Sizin Portföyünüz:\n` +
-      `• Altın: **${goldItem} Adet** (${goldVal} Coin)\n` +
-      `• BTC: **${btcItem} Adet** (${btcVal} Coin)\n` +
-      `• Toplam Portföy Değeri: **${totalVal} Coin**\n\n` +
-      `Alım yapmak için: \`.al altın <adet>\` veya \`.al btc <adet>\`\n` +
-      `Satış yapmak için: \`.sat altın <adet>\` veya \`.sat btc <adet>\``,
-      message.guild
-    );
+    const content = [
+      `### 📈 Dinamik Sunucu Borsası & Emtia Piyasası`,
+      `▫️ Piyasa Fiyatları:`,
+      `  • Altın (GOLD): **${market.goldPrice.toLocaleString("tr-TR")} Coin**`,
+      `  • Bitcoin (BTC): **${market.btcPrice.toLocaleString("tr-TR")} Coin**`,
+      "",
+      `▫️ Sizin Portföyünüz:`,
+      `  • Altın: **${goldItem} Adet** (${goldVal.toLocaleString("tr-TR")} Coin)`,
+      `  • BTC: **${btcItem} Adet** (${btcVal.toLocaleString("tr-TR")} Coin)`,
+      `  • Toplam Portföy Değeri: **${totalVal.toLocaleString("tr-TR")} Coin**`,
+      "",
+      `▫️ Hızlı Komutlar:`,
+      `  • Alım: \`${config.prefix || "."}al altın <adet>\` | \`${config.prefix || "."}al btc <adet>\``,
+      `  • Satış: \`${config.prefix || "."}sat altın <adet>\` | \`${config.prefix || "."}sat btc <adet>\``,
+      "",
+      `-# Fiyatlar sunucu piyasa dinamiklerine göre güncellenmektedir.`
+    ].join("\n");
 
-    message.reply({ embeds: [embed] });
+    return message.reply({
+      content,
+      embeds: [],
+      components: []
+    });
   }
 };
+

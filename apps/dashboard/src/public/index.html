@@ -18,7 +18,7 @@
         <div class="brand-badge"></div>
         <div class="brand-text">
           <span class="brand-title">Ecosystem</span>
-          <span class="brand-sub">Next-Gen Public</span>
+          <span class="brand-sub">Yönetim Konsolu</span>
         </div>
       </div>
 
@@ -83,6 +83,26 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"></path></svg>
           <span>Ekonomi ve Borsa</span>
         </button>
+        <button class="nav-btn" data-tab="tab-battlepass">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+          <span>Sezon Bileti ve Görevler</span>
+        </button>
+        <button class="nav-btn" data-tab="tab-clans">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          <span>Klanlar ve Loncalar</span>
+        </button>
+        <button class="nav-btn" data-tab="tab-badges-titles">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
+          <span>Rozetler ve Unvanlar</span>
+        </button>
+        <button class="nav-btn" data-tab="tab-pets">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a5 5 0 0 1 5 5v3a5 5 0 0 1-10 0V7a5 5 0 0 1 5-5z"></path><path d="M4.5 10.5C3.12 10.5 2 11.62 2 13s1.12 2.5 2.5 2.5c.34 0 .66-.07.96-.2L7 17v4a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-4l1.54-1.7c.3.13.62.2.96.2 1.38 0 2.5-1.12 2.5-2.5s-1.12-2.5-2.5-2.5c-.34 0-.66.07-.96.2L17 11V7a5 5 0 0 0-10 0v4l-1.54-.8c-.3-.13-.62-.2-.96-.2z"></path></svg>
+          <span>Anime Ruh Hayvanları</span>
+        </button>
+        <button class="nav-btn" data-tab="tab-casino">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 8h.01"></path><path d="M8 8h.01"></path><path d="M8 16h.01"></path><path d="M16 16h.01"></path><path d="M12 12h.01"></path></svg>
+          <span>Kumarhane ve Düello</span>
+        </button>
         <button class="nav-btn" data-tab="tab-backups">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
           <span>Sunucu Yedekleri</span>
@@ -98,6 +118,10 @@
         <button class="nav-btn" data-tab="tab-livechat">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
           <span>Canlı Konsol ve Sohbet</span>
+        </button>
+        <button class="nav-btn" data-tab="tab-git-update">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="18" r="3"></circle><circle cx="6" cy="6" r="3"></circle><path d="M13 6h3a2 2 0 0 1 2 2v7"></path><line x1="6" y1="9" x2="6" y2="21"></line></svg>
+          <span>GitHub Güncelleme</span>
         </button>
       </nav>
       <div style="padding: 16px; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 8px;">
@@ -157,6 +181,25 @@
           <h2>Bot Yönetimi ve Tokenlar</h2>
           <p>Sistemdeki tüm botların token, client ID ve durum (presence) ayarlarını belirleyin.</p>
         </header>
+
+        <div class="card mb-4">
+          <div class="card-header-flex">
+            <div>
+              <h3>👑 Bot Sahipleri ve Geliştirici Yetkilendirmesi</h3>
+              <p class="text-sub">Tüm bot komutlarını yetki engeline takılmadan çalıştırabilecek kullanıcı ID'leri</p>
+            </div>
+          </div>
+          <div class="form-grid-2 mt-3">
+            <div class="form-group" style="grid-column: span 2;">
+              <label>Bot Sahibi Kullanıcı ID'leri (Virgülle ayırın)</label>
+              <input type="text" id="bot-owners-input" placeholder="Örn: 1261311189577896027, 987654321012345678">
+            </div>
+          </div>
+          <div class="form-actions mt-3" style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="btn btn-secondary btn-sm" onclick="assignSelfAsBotOwner()">⚡ Kendimi Bot Sahibi Yap</button>
+            <button class="btn btn-primary btn-sm" onclick="saveBotOwnersList()">Bot Sahiplerini Kaydet</button>
+          </div>
+        </div>
 
         <div id="bot-credentials-list" class="bot-cards-grid">
           <div class="card"><p class="text-muted">Bot verileri yükleniyor...</p></div>
@@ -295,33 +338,37 @@
           </div>
 
           <div class="card card-warning-zone">
-            <h3>Veritabanı Sağlayıcısı (Database Provider)</h3>
-            <p class="text-sub">Kullanmak istediğiniz veritabanı motorunu seçin.</p>
+            <div class="flex-between">
+              <h3>Veritabanı Sağlayıcısı (Database Provider)</h3>
+              <span id="db-active-badge" class="badge badge-success">Aktif: MONGODB</span>
+            </div>
+            <p class="text-sub">Kullanmak istediğiniz veritabanı motorunu seçin, anında test edin veya tek tıkla geçiş yapın.</p>
 
             <div class="form-grid-2 mt-3">
               <div class="form-group">
                 <label>Veritabanı Türü</label>
                 <select id="cfg-db-provider" class="select-styled">
-                  <option value="MONGODB">MongoDB (Varsayılan)</option>
                   <option value="POSTGRESQL">PostgreSQL</option>
-                  <option value="MYSQL">MySQL</option>
-                  <option value="MARIADB">MariaDB</option>
-                  <option value="SQLITE">SQLite (Yerel Dosya)</option>
+                  <option value="MONGODB">MongoDB</option>
+                  <option value="SQLITE">SQLite (better-sqlite3)</option>
                 </select>
               </div>
               <div class="form-group">
                 <label>Bağlantı Adresi (URI / Host)</label>
-                <input type="text" id="cfg-db-uri" placeholder="mongodb://127.0.0.1:27017/db veya postgres://...">
+                <input type="text" id="cfg-db-uri" placeholder="postgresql://..., mongodb://... veya ./data/bot_ecosystem.sqlite">
               </div>
             </div>
 
-            <div class="alert-box alert-danger mt-3">
-              <strong>DİKKAT:</strong> Veritabanı sağlayıcısını değiştirdiğinizde eski veritabanındaki veriler otomatik olarak yeni motora aktarılmaz. Önceki siciller, cezalar, görev puanları ve kullanıcı istatistikleri sıfırlanır.
+            <div class="checkbox-row mt-3">
+              <input type="checkbox" id="cfg-db-migrate" checked>
+              <label for="cfg-db-migrate">Mevcut tüm verileri yeni veritabanına otomatik aktar (Veri Kaybı Yaşanmaz)</label>
             </div>
 
-            <div class="checkbox-row mt-3">
-              <input type="checkbox" id="cfg-db-confirm">
-              <label for="cfg-db-confirm">Veritabanı değişikliğinde verilerin sıfırlanacağını onaylıyorum.</label>
+            <div id="db-feedback-box" class="alert-box mt-3" style="display:none;"></div>
+
+            <div class="flex-end gap-2 mt-3">
+              <button type="button" id="btn-db-test" class="btn btn-secondary">🔌 Bağlantıyı Test Et</button>
+              <button type="button" id="btn-db-switch" class="btn btn-primary">⚡ Tek Tıkla Geçiş Yap</button>
             </div>
           </div>
 
@@ -452,13 +499,14 @@
               <tr>
                 <th>Komut</th>
                 <th>Kategori</th>
-                <th>Özel Tetikleyici (Alias)</th>
+                <th>Özel İsim (Ad)</th>
+                <th>Ek Kısayollar (Aliaslar)</th>
                 <th>Çalışma Modu</th>
                 <th>Durum</th>
               </tr>
             </thead>
             <tbody id="commands-tbody">
-              <tr><td colspan="5" class="text-muted">Komutlar yükleniyor...</td></tr>
+              <tr><td colspan="6" class="text-muted">Komutlar yükleniyor...</td></tr>
             </tbody>
           </table>
           <div class="form-actions mt-4">
@@ -948,6 +996,507 @@
             </div>
           </div>
         </div>
+
+        <div class="card mt-4">
+          <div class="card-header-flex">
+            <div>
+              <h3>🛒 Eşya Pazarı ve Fiyat Editörü (.itemmarket)</h3>
+              <p class="text-sub">Macera aletleri, koruma kalkanları ve iksirlerin fiyatlarını ve aktiflik durumunu belirleyin.</p>
+            </div>
+            <div class="header-actions">
+              <button type="button" class="btn btn-secondary" onclick="loadMarketItems()">Yenile</button>
+              <button type="button" class="btn btn-primary" onclick="saveMarketItemPrices()">Fiyatları Kaydet</button>
+            </div>
+          </div>
+
+          <div class="form-grid-2 mt-3 mb-3">
+            <div class="form-group">
+              <label>Pazar Genel İndirim Oranı (%)</label>
+              <input type="number" id="eco-discount-input" min="0" max="90" placeholder="0" title="Tüm market eşyalarına uygulanacak indirim yüzdesi">
+              <span class="help-text">Etkinlik günlerinde tüm eşyaları indirimli satmak için yüzde girin (örn: %20).</span>
+            </div>
+            <div class="form-group flex-center-end">
+              <button type="button" class="btn btn-secondary mt-3" onclick="resetDefaultPrices()">Varsayılan Fiyatlara Dön</button>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Eşya</th>
+                  <th>Kategori</th>
+                  <th>Varsayılan Fiyat</th>
+                  <th>Özel Fiyat (Coin)</th>
+                  <th>Satış Durumu</th>
+                </tr>
+              </thead>
+              <tbody id="market-items-tbody">
+                <tr>
+                  <td colspan="5" class="text-center text-muted">Eşyalar yükleniyor...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-battlepass" class="tab-pane">
+        <header class="pane-header">
+          <h2>Sezon Bileti ve Görev Yönetimi (Battle Pass)</h2>
+          <p>Sezon parametrelerini, kademe ödüllerini ve XP hedeflerini yapılandırın.</p>
+        </header>
+
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <span class="metric-label">Aktif Sezon</span>
+            <span id="bp-metric-season" class="metric-value">-</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Sistem Durumu</span>
+            <span id="bp-metric-status" class="metric-value">-</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Toplam Katılımcı</span>
+            <span id="bp-metric-participants" class="metric-value">0</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Kademeler</span>
+            <span id="bp-metric-tiers" class="metric-value">10 Seviye</span>
+          </div>
+        </div>
+
+        <div class="card mt-4">
+          <div class="card-header-flex">
+            <div>
+              <h3>Sezon Yapılandırması ve Başlatma</h3>
+              <p class="text-sub">Aktif sezonun adını, durumunu ve yeni sezon başlatma işlemlerini yönetin.</p>
+            </div>
+            <div class="header-actions">
+              <button type="button" class="btn btn-secondary" onclick="loadBattlePassData()">Yenile</button>
+              <button type="button" class="btn btn-primary" onclick="saveBattlePassSettings()">Ayarları Kaydet</button>
+            </div>
+          </div>
+
+          <div class="form-grid-2 mt-3">
+            <div class="form-group">
+              <label>Sezon Başlığı</label>
+              <input type="text" id="bp-season-name" placeholder="1. Sezon: Kuruluş">
+            </div>
+            <div class="form-group">
+              <label>Sezon Durumu</label>
+              <select id="bp-season-status">
+                <option value="true">Aktif</option>
+                <option value="false">Pasif (Kapalı)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-actions mt-3" style="display: flex; gap: 8px; justify-content: flex-end;">
+            <button type="button" class="btn btn-secondary" onclick="startNewBattlePassSeason()">Yeni Sezon Başlat</button>
+          </div>
+        </div>
+
+        <div class="card mt-4">
+          <div class="card-header-flex">
+            <div>
+              <h3>Kademe ve Seviye Ödülleri (1 - 10)</h3>
+              <p class="text-sub">Kullanıcıların her kademede kazanacağı ücretsiz ve VIP ödülleri belirleyin.</p>
+            </div>
+            <div class="header-actions">
+              <button type="button" class="btn btn-primary" onclick="saveBattlePassTiers()">Kademeleri Kaydet</button>
+            </div>
+          </div>
+
+          <div class="table-responsive mt-3">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Kademe</th>
+                  <th>Gereken XP</th>
+                  <th>Ücretsiz Ödül (Coin)</th>
+                  <th>VIP Bilet Ödülü (Coin)</th>
+                </tr>
+              </thead>
+              <tbody id="bp-tiers-tbody">
+                <tr>
+                  <td colspan="4" class="text-center text-muted">Kademeler yükleniyor...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-clans" class="tab-pane">
+        <header class="pane-header">
+          <h2>Klan ve Lonca Yönetimi</h2>
+          <p>Klan kurma ücreti, klan üye sınırları ve sunucudaki loncaların listesi.</p>
+        </header>
+
+        <div class="card">
+          <div class="card-header-flex">
+            <div>
+              <h3>Klan Sistemi Parametreleri</h3>
+              <p class="text-sub">Kullanıcıların .klan kur komutuyla lonca açma gereksinimlerini belirleyin.</p>
+            </div>
+            <div class="header-actions">
+              <button type="button" class="btn btn-secondary" onclick="loadClansData()">Yenile</button>
+              <button type="button" class="btn btn-primary" onclick="saveClanSettings()">Klan Ayarlarını Kaydet</button>
+            </div>
+          </div>
+
+          <div class="form-grid-3 mt-3">
+            <div class="form-group">
+              <label>Klan Sistemi</label>
+              <select id="clan-system-enabled">
+                <option value="true">Aktif</option>
+                <option value="false">Devre Dışı</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Klan Kurma Ücreti (Coin)</label>
+              <input type="number" id="clan-creation-cost" min="0" placeholder="10000">
+            </div>
+            <div class="form-group">
+              <label>Maksimum Üye Sayısı</label>
+              <input type="number" id="clan-max-members" min="1" max="100" placeholder="25">
+            </div>
+          </div>
+        </div>
+
+        <div class="card mt-4">
+          <div class="card-header-flex">
+            <div>
+              <h3>Panelden Klan Kur</h3>
+              <p class="text-sub">Yönetici yetkisiyle doğrudan yeni bir klan oluşturun.</p>
+            </div>
+          </div>
+
+          <div class="form-grid-2 mt-3">
+            <div class="form-group">
+              <label>Klan Adı</label>
+              <input type="text" id="clan-new-name" placeholder="Örn: Asil Muhafızlar">
+            </div>
+            <div class="form-group">
+              <label>Klan Tagı (Etiket)</label>
+              <input type="text" id="clan-new-tag" placeholder="Örn: ASL">
+            </div>
+            <div class="form-group">
+              <label>Lider Discord Kullanıcı ID</label>
+              <input type="text" id="clan-new-leader" placeholder="Örn: 1261311189577896027">
+            </div>
+            <div class="form-group">
+              <label>Klan Açıklaması</label>
+              <input type="text" id="clan-new-desc" placeholder="Örn: Sunucunun en güçlü loncası.">
+            </div>
+          </div>
+
+          <div class="form-actions mt-3" style="display: flex; justify-content: flex-end;">
+            <button type="button" class="btn btn-primary" onclick="createClanFromPanel()">Klanı Oluştur</button>
+          </div>
+        </div>
+
+        <div class="card mt-4">
+          <div class="card-header-flex">
+            <div>
+              <h3>Kayıtlı Klanlar ve Loncalar</h3>
+              <p class="text-sub">Sunucuda oluşturulmuş tüm klanların canlı verileri ve sıralaması.</p>
+            </div>
+          </div>
+
+          <div class="table-responsive mt-3">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Klan Adı ve Tag</th>
+                  <th>Lider ID</th>
+                  <th>Üye Sayısı</th>
+                  <th>Seviye ve XP</th>
+                  <th>Ortak Kasa</th>
+                  <th>İşlemler</th>
+                </tr>
+              </thead>
+              <tbody id="clans-tbody">
+                <tr>
+                  <td colspan="6" class="text-center text-muted">Klanlar yükleniyor...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-badges-titles" class="tab-pane">
+        <header class="pane-header">
+          <h2>Rozetler ve Unvanlar</h2>
+          <p>Profil ve stat kartlarında sergilenen başarımlar, unvanlar ve yetkili atamaları.</p>
+        </header>
+
+        <div class="card">
+          <div class="card-header-flex">
+            <div>
+              <h3>Rozet ve Unvan Sistemi Parametreleri</h3>
+              <p class="text-sub">Kullanıcıların .rozet ve .unvan komutlarını kullanabilmesini yönetin.</p>
+            </div>
+            <div class="header-actions">
+              <button type="button" class="btn btn-secondary" onclick="loadBadgesData()">Yenile</button>
+              <button type="button" class="btn btn-primary" onclick="saveBadgeSettings()">Rozet Ayarlarını Kaydet</button>
+            </div>
+          </div>
+
+          <div class="form-grid-2 mt-3">
+            <div class="form-group">
+              <label>Rozet ve Unvan Sistemi</label>
+              <select id="badge-system-enabled">
+                <option value="true">Aktif</option>
+                <option value="false">Devre Dışı</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mt-4">
+          <div class="card-header-flex">
+            <div>
+              <h3>Kullanıcıya Rozet ve Unvan Tanımla</h3>
+              <p class="text-sub">Doğrudan belirli bir kullanıcıya rozet verin, silin veya özel unvan atayın.</p>
+            </div>
+          </div>
+
+          <div class="form-grid-3 mt-3">
+            <div class="form-group">
+              <label>Kullanıcı Discord ID</label>
+              <input type="text" id="badge-target-user" placeholder="Örn: 1261311189577896027">
+            </div>
+            <div class="form-group">
+              <label>Rozet Seçimi</label>
+              <select id="badge-select-id">
+                <option value="milyarder">💰 Milyarder (100.000+ Coin)</option>
+                <option value="ses_sampiyonu">🎙️ Ses Şampiyonu (50+ Saat Ses)</option>
+                <option value="mesaj_ustasi">💬 Mesaj Ustası (1.000+ Mesaj)</option>
+                <option value="seviye_zirvesi">🏆 Seviye Zirvesi (Seviye 20+)</option>
+                <option value="sakura_ustasi">🌸 Sakura Ustası (Sakura Paketi)</option>
+                <option value="sadik_uye">⭐ Sadık Üye (Sunucuda 30+ Gün)</option>
+                <option value="kumarbaz">🎲 Kumarbaz (Kumar Tutkunu)</option>
+                <option value="gorev_avcisi">📜 Görev Avcısı (Battle Pass Seviye 10+)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Unvan Seçimi</label>
+              <select id="badge-select-title">
+                <option value="[🌸 Sakura Efendisi]">[🌸 Sakura Efendisi]</option>
+                <option value="[👑 Sunucu Ağası]">[👑 Sunucu Ağası]</option>
+                <option value="[💎 Elmas Muhafız]">[💎 Elmas Muhafız]</option>
+                <option value="[⚔️ Gladyatör]">[⚔️ Gladyatör]</option>
+                <option value="[🎙️ Gece Kuşu]">[🎙️ Gece Kuşu]</option>
+                <option value="[🎰 Şans Baronu]">[🎰 Şans Baronu]</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-actions mt-3" style="display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;">
+            <button type="button" class="btn btn-primary" onclick="assignBadge('add')">Rozet Ver</button>
+            <button type="button" class="btn btn-danger" onclick="assignBadge('remove')">Rozet Sil</button>
+            <button type="button" class="btn btn-secondary" onclick="assignTitle('add')">Unvan Ata</button>
+            <button type="button" class="btn btn-danger" onclick="assignTitle('remove')">Unvan Kaldır</button>
+          </div>
+        </div>
+
+        <div class="card mt-4">
+          <div class="card-header-flex">
+            <div>
+              <h3>Son Rozet ve Unvan Sahipleri</h3>
+              <p class="text-sub">Sunucuda rozet ve unvan kuşanmış üyelerin özeti.</p>
+            </div>
+          </div>
+
+          <div class="table-responsive mt-3">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Kullanıcı ID</th>
+                  <th>Aktif Unvan</th>
+                  <th>Aktif Kuşanılan Rozetler</th>
+                  <th>Tüm Rozetler</th>
+                </tr>
+              </thead>
+              <tbody id="badges-users-tbody">
+                <tr>
+                  <td colspan="4" class="text-center text-muted">Rozet sahipleri yükleniyor...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-pets" class="tab-pane">
+        <header class="pane-header">
+          <h2>Anime Ruh Hayvanları</h2>
+          <p>Yoldaş pet sistemi, maden, balık, ses XP ve kumar şansı bonusları yönetimi.</p>
+        </header>
+
+        <div class="card">
+          <div class="card-header-flex">
+            <div>
+              <h3>Pet Sistemi Parametreleri</h3>
+              <p class="text-sub">Pet sahiplenme ve besleme maliyetlerini yapılandırın.</p>
+            </div>
+            <div class="header-actions">
+              <button type="button" class="btn btn-secondary" onclick="loadPetsData()">Yenile</button>
+              <button type="button" class="btn btn-primary" onclick="savePetSettings()">Pet Ayarlarını Kaydet</button>
+            </div>
+          </div>
+
+          <div class="form-grid-3 mt-3">
+            <div class="form-group">
+              <label>Pet Sistemi</label>
+              <select id="pet-system-enabled">
+                <option value="true">Aktif</option>
+                <option value="false">Devre Dışı</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Taban Pet Fiyatı (Coin)</label>
+              <input type="number" id="pet-base-price" min="100" placeholder="5000">
+            </div>
+            <div class="form-group">
+              <label>Yemek / Besleme Ücreti (Coin)</label>
+              <input type="number" id="pet-feed-cost" min="10" placeholder="200">
+            </div>
+          </div>
+        </div>
+
+        <div class="card mt-4">
+          <div class="card-header-flex">
+            <div>
+              <h3>Ruh Hayvanı Türleri ve Bonus Yetenekleri</h3>
+              <p class="text-sub">Sistemde tanımlı 5 ana pet türü ve sağladığı pasif avantajlar.</p>
+            </div>
+          </div>
+
+          <div class="system-specs-grid mt-3">
+            <div class="spec-box">
+              <span class="spec-label">🦊 Dokuz Kuyruklu Tilki (Kitsune)</span>
+              <span class="spec-val">Kumarhanede ekstra %10 kazanma şansı</span>
+            </div>
+            <div class="spec-box">
+              <span class="spec-label">🐉 Ejderha Ruh (Dragon)</span>
+              <span class="spec-val">Madencilikte %25 ekstra coin getirisi</span>
+            </div>
+            <div class="spec-box">
+              <span class="spec-label">🐱 Şans Kedisi (Cat)</span>
+              <span class="spec-val">Balıkçılıkta %25 ekstra gelir getirisi</span>
+            </div>
+            <div class="spec-box">
+              <span class="spec-label">🦉 Bilge Baykuş (Owl)</span>
+              <span class="spec-val">Ses odalarında %25 daha fazla XP</span>
+            </div>
+            <div class="spec-box">
+              <span class="spec-label">🐺 Gölge Kurt (Wolf)</span>
+              <span class="spec-val">Sohbet mesajlarında %20 daha fazla XP</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mt-4">
+          <div class="card-header-flex">
+            <div>
+              <h3>Kayıtlı Ruh Hayvanları</h3>
+              <p class="text-sub">Sunucu genelinde sahiplenilmiş aktif petlerin listesi.</p>
+            </div>
+          </div>
+
+          <div class="table-responsive mt-3">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Sahip ID</th>
+                  <th>Pet Adı</th>
+                  <th>Tür</th>
+                  <th>Seviye ve XP</th>
+                  <th>Enerji (Tokluk)</th>
+                  <th>Aktiflik</th>
+                </tr>
+              </thead>
+              <tbody id="pets-tbody">
+                <tr>
+                  <td colspan="6" class="text-center text-muted">Petler yükleniyor...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-casino" class="tab-pane">
+        <header class="pane-header">
+          <h2>Kumarhane ve Düello</h2>
+          <p>Bahis limitleri, kazı kazan maliyetleri ve zar düellosu arena ayarları.</p>
+        </header>
+
+        <div class="card">
+          <div class="card-header-flex">
+            <div>
+              <h3>Kumarhane ve Bahis Limitleri</h3>
+              <p class="text-sub">Rulet, slot, blackjack, kazı kazan ve düello sınırlarını belirleyin.</p>
+            </div>
+            <div class="header-actions">
+              <button type="button" class="btn btn-secondary" onclick="loadCasinoData()">Yenile</button>
+              <button type="button" class="btn btn-primary" onclick="saveCasinoSettings()">Casino Ayarlarını Kaydet</button>
+            </div>
+          </div>
+
+          <div class="form-grid-2 mt-3">
+            <div class="form-group">
+              <label>Kumarhane Sistemi</label>
+              <select id="casino-system-enabled">
+                <option value="true">Aktif</option>
+                <option value="false">Devre Dışı</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Minimum Bahis (Coin)</label>
+              <input type="number" id="casino-min-bet" min="1" placeholder="10">
+            </div>
+            <div class="form-group">
+              <label>Maksimum Bahis (Coin)</label>
+              <input type="number" id="casino-max-bet" min="10" placeholder="50000">
+            </div>
+            <div class="form-group">
+              <label>Kazı Kazan Kart Ücreti (Coin)</label>
+              <input type="number" id="casino-kazikazan-cost" min="1" placeholder="50">
+            </div>
+          </div>
+        </div>
+
+        <div class="card mt-4">
+          <div class="card-header-flex">
+            <div>
+              <h3>Canlı Zar Düellosu Kuralları</h3>
+              <p class="text-sub">.duello @kullanici &lt;miktar&gt; komutuyla başlatılan karşılıklı bahis arenası.</p>
+            </div>
+          </div>
+          <div class="system-specs-grid mt-3">
+            <div class="spec-box">
+              <span class="spec-label">Davet Süresi:</span>
+              <span class="spec-val">60 Saniye (Zaman aşımı sonrası otomatik iptal)</span>
+            </div>
+            <div class="spec-box">
+              <span class="spec-label">Oyun Mekaniği:</span>
+              <span class="spec-val">İki oyuncu da 1-6 arası zar atar, yüksek atan tüm havuzu kazanır</span>
+            </div>
+            <div class="spec-box">
+              <span class="spec-label">Beraberlik Durumu:</span>
+              <span class="spec-val">İki oyuncunun da bahsi kesintisiz anında iade edilir</span>
+            </div>
+            <div class="spec-box">
+              <span class="spec-label">Güvenlik:</span>
+              <span class="spec-val">Kullanıcı bakiyesi teklif anında ve kabul anında çift doğrulanır</span>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section id="tab-backups" class="tab-pane">
@@ -1072,7 +1621,11 @@
           <div class="card-header-flex">
             <div>
               <h3>Canlı Kanal Mesaj Akışı</h3>
-              <p class="text-sub">Metin kanalındaki son mesajları okuyun</p>
+              <p class="text-sub">Metin kanalındaki anlık, düzenlenen ve silinen mesajları izleyin</p>
+            </div>
+            <div class="checkbox-row" style="margin-top: 0;">
+              <input type="checkbox" id="live-auto-refresh" onchange="toggleLiveAutoRefresh(this.checked)">
+              <label for="live-auto-refresh" style="font-size: 13px; cursor: pointer;">⚡ Canlı Akış (3sn Otomatik Yenile)</label>
             </div>
           </div>
           <div class="form-grid-2 mt-3">
@@ -1080,11 +1633,16 @@
               <label>İzlenecek Kanal ID</label>
               <input type="text" id="live-channel-id" placeholder="Metin kanalı ID">
             </div>
-            <div class="form-group" style="display: flex; align-items: flex-end;">
+            <div class="form-group" style="display: flex; align-items: flex-end; gap: 8px;">
               <button type="button" class="btn btn-primary" onclick="loadChannelMessages()">Mesajları Getir</button>
             </div>
           </div>
-          <div id="live-chat-stream-box" style="margin-top: 15px; max-height: 280px; overflow-y: auto; background: var(--bg-card); padding: 12px; border-radius: 6px; border: 1px solid var(--border-color); font-family: sans-serif; font-size: 14px;">
+          <div style="display: flex; gap: 8px; margin-top: 12px;">
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-msg-filter-all" onclick="filterLiveMessages('all')" style="border-color: var(--primary);">Tümü</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-msg-filter-edited" onclick="filterLiveMessages('edited')">✏️ Düzenlenenler</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-msg-filter-deleted" onclick="filterLiveMessages('deleted')">🗑️ Silinenler</button>
+          </div>
+          <div id="live-chat-stream-box" style="margin-top: 12px; max-height: 320px; overflow-y: auto; background: var(--bg-card); padding: 12px; border-radius: 6px; border: 1px solid var(--border-color); font-family: sans-serif; font-size: 14px;">
             <p class="text-muted">Kanal ID girip "Mesajları Getir" butonuna tıklayın.</p>
           </div>
         </div>
@@ -1105,6 +1663,74 @@
               <button type="submit" class="btn btn-primary">Mesajı Gönder</button>
             </div>
           </form>
+        </div>
+      </section>
+
+      <section id="tab-git-update" class="tab-pane">
+        <header class="pane-header">
+          <h2>GitHub'dan Çek ve Güvenli Güncelleme</h2>
+          <p>Hiçbir veriyi sıfırlamadan, tam proje yedeği alarak GitHub'dan en güncel kodları çeker ve botları günceller.</p>
+        </header>
+
+        <div class="card mb-4">
+          <div class="card-header-flex">
+            <div>
+              <h3>Mevcut Repo ve Sürüm Bilgisi</h3>
+              <p class="text-sub">Sistemin bağlı olduğu GitHub repoları ve aktif commit</p>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="loadGitStatus()">Durumu Yenile</button>
+          </div>
+          <div class="system-specs-grid mt-3">
+            <div class="spec-box"><span class="spec-label">Aktif Dal (Branch):</span><span id="git-branch" class="spec-val">-</span></div>
+            <div class="spec-box"><span class="spec-label">Aktif Commit:</span><span id="git-commit" class="spec-val">-</span></div>
+            <div class="spec-box"><span class="spec-label">Bekleyen Güncelleme:</span><span id="git-behind" class="spec-val">-</span></div>
+            <div class="spec-box"><span class="spec-label">Yerel Durum:</span><span id="git-local-changes" class="spec-val">-</span></div>
+          </div>
+          <div class="mt-3" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <button id="btn-git-update" class="btn btn-primary" onclick="triggerGitUpdate()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              GitHub'dan Çek ve Güncelle
+            </button>
+            <span class="text-dim" style="font-size: 13px;">🔒 Otomatik tam sistem yedeği alınır. .env, SQLite, veritabanı ve yerel ayarlarınız asla sıfırlanmaz.</span>
+          </div>
+        </div>
+
+        <div class="card mb-4">
+          <div class="card-header-flex">
+            <div>
+              <h3>Canlı Güncelleme Akışı ve İlerleme</h3>
+              <p class="text-sub">Güvenli güncelleme adımlarının işlem konsolu</p>
+            </div>
+          </div>
+          <div id="git-update-logs" style="margin-top: 15px; height: 220px; overflow-y: auto; background: #08070d; color: #a5b4fc; padding: 14px; border-radius: 6px; border: 1px solid var(--border-color); font-family: monospace; font-size: 13px; line-height: 1.6;">
+            Güncelleme başlatıldığında adımlar burada canlı olarak listelenecektir.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header-flex">
+            <div>
+              <h3>Otomatik Sistem Yedekleri (.system_generated/backups)</h3>
+              <p class="text-sub">Her güncelleme öncesinde güvenle alınan tam sistem snapshotları</p>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="loadSystemBackups()">Yedekleri Yenile</button>
+          </div>
+          <div class="table-container mt-3">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Yedek Adı</th>
+                  <th>Oluşturulma Tarihi</th>
+                  <th>Yedeklenen Dosya</th>
+                  <th>Commit Hash</th>
+                  <th>İşlem</th>
+                </tr>
+              </thead>
+              <tbody id="system-backups-tbody">
+                <tr><td colspan="4" class="text-muted">Yedekler yükleniyor...</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
     </main>

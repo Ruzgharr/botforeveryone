@@ -1,5 +1,5 @@
 import { ShopItem } from "@bot/database";
-import { Embeds } from "@bot/core";
+import { MessageFormatter, VisualCard } from "@bot/core";
 
 export default {
   name: "market",
@@ -7,8 +7,24 @@ export default {
   async execute({ client, message, args, config }) {
     let items = await ShopItem.find({ guildId: message.guild.id, active: true });
 
-    if (items.length === 0) {
-      const defaultItems = [
+    const themesList = VisualCard.getThemesList().filter(t => t.price > 0);
+    for (const t of themesList) {
+      const exists = items.some(i => i.itemKey === `tema_${t.id}`);
+      if (!exists) {
+        await ShopItem.create({
+          guildId: message.guild.id,
+          itemKey: `tema_${t.id}`,
+          name: `${t.name} Kart Teması`,
+          description: `${t.desc} : Özel Anime Arka Plan Görseli`,
+          price: t.price,
+          type: "THEME",
+          roleId: ""
+        }).catch(() => null);
+      }
+    }
+
+    if (!items.some(i => i.type === "ROLE")) {
+      const defaultRoles = [
         {
           guildId: message.guild.id,
           itemKey: "vip",
@@ -38,26 +54,54 @@ export default {
         }
       ];
 
-      for (const itm of defaultItems) {
+      for (const itm of defaultRoles) {
         await ShopItem.create(itm).catch(() => null);
       }
-      items = await ShopItem.find({ guildId: message.guild.id, active: true });
     }
 
-    const itemRows = items.map((itm) => {
-      return `• **${itm.name}** (\`${itm.itemKey}\`)\n  └ Fiyat: **${itm.price} Coin** | Tür: \`${itm.type}\`\n  └ *${itm.description || "Açıklama yok"}*`;
+    items = await ShopItem.find({ guildId: message.guild.id, active: true });
+
+    const roleItems = items.filter(i => i.type === "ROLE");
+    const themeItems = items.filter(i => i.type === "THEME");
+    const themeSets = VisualCard.getThemeSetsList();
+
+    const roleRows = roleItems.map(itm => {
+      return `▫️ **${itm.name}** (\`${itm.itemKey}\`)\n  • Fiyat: **${itm.price.toLocaleString("tr-TR")} Coin**\n  • *${itm.description || "Açıklama yok"}*`;
+    }).join("\n\n") || "Mevcut rol ürünü yok.";
+
+    const themeRows = themeItems.map(itm => {
+      return `▫️ **${itm.name}** (\`${itm.itemKey}\`)\n  • Fiyat: **${itm.price.toLocaleString("tr-TR")} Coin** | Kod: \`.satınal ${itm.itemKey}\``;
+    }).join("\n");
+
+    const setRows = themeSets.map(s => {
+      const themeTags = s.themes.map(tKey => `\`tema_${tKey}\``).join(", ");
+      return `▫️ **${s.name}** (${s.badge})\n  • Gereken Parçalar: ${themeTags}\n  • Tamamlama Bonusu: **+${s.rewardBonus.toLocaleString("tr-TR")} Coin**`;
     }).join("\n\n");
 
-    const description = [
-      "Sunucu mağazasında coinlerinizle satın alabileceğiniz roller ve ürünler:",
+    const content = [
+      `### 🏪 Sunucu Mağazası & Koleksiyon Merkezi`,
+      `Coinlerinizle rol ve anime kart temalarını tek tek satın alabilirsiniz. Parçaları toplayarak paket koleksiyonlarını tamamlayın!`,
       "",
-      itemRows,
+      `🎭 **Roller ve Ayrıcalıklar:**`,
+      roleRows,
       "",
-      `Satın almak için: \`${config.prefix || "."}satınal <ürün_kodu>\``
+      `🎨 **Anime Kart Temaları (Tekil Satış - 15 Farklı Tema):**`,
+      themeRows,
+      "",
+      `📦 **Paket Koleksiyonu Rehberi (Parçaları Tek Tek Toplayın):**`,
+      setRows,
+      "",
+      `▫️ Satın almak için: \`${config.prefix || "."}satınal <ürün_kodu>\` (Örn: \`.satınal tema_sunset\`)`,
+      `▫️ Sahip olduğunuz temaları seçmek için: \`.tema <tema-adı>\``,
+      "",
+      `-# Satın aldığınız ürünler ve temalar anında envanterinize tanımlanır.`
     ].join("\n");
 
-    message.reply({
-      embeds: [Embeds.info("🏪 Sunucu Mağazası", description, message.guild)]
+    return message.reply({
+      content,
+      embeds: [],
+      components: []
     });
   }
 };
+

@@ -6,19 +6,19 @@ export default {
   aliases: ["i", "nick", "setnick"],
   async execute({ client, message, args, config }) {
     if (!client.hasStaffPermission(message.member, config, "registerStaff")) {
-      return message.reply({ embeds: [Embeds.error("Yetki Yetersiz", "İsim değiştirme yetkiniz bulunmuyor.", message.guild)] });
+      return message.reply(MessageFormatter.error("Yetki Yetersiz", "İsim değiştirme yetkiniz bulunmuyor."));
     }
 
     const targetMember = message.mentions.members.first() || (args[0] ? await message.guild.members.fetch(args[0]).catch(() => null) : null);
     if (!targetMember) {
-      return message.reply({ embeds: [Embeds.warn("Eksik Bilgi", "Lütfen bir kullanıcı belirtin.", message.guild)] });
+      return message.reply(MessageFormatter.warn("Eksik Bilgi", "Lütfen bir kullanıcı belirtin."));
     }
 
     const name = args[1];
     const age = parseInt(args[2], 10);
 
     if (!name) {
-      return message.reply({ embeds: [Embeds.warn("Eksik Bilgi", `Formatı kullanın: \`${config.prefix || "."}isim @kullanıcı İsim [Yaş]\``, message.guild)] });
+      return message.reply(MessageFormatter.warn("Eksik Bilgi", `Formatı kullanın: \`${config.prefix || "."}isim @kullanıcı İsim [Yaş]\``));
     }
 
     const tag = config.tag ? `${config.tag} ` : "";

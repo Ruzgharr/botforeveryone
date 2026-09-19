@@ -1,4 +1,4 @@
-import { Embeds } from "@bot/core";
+import { MessageFormatter } from "@bot/core";
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
 
 const STATIONS = [
@@ -12,18 +12,21 @@ const STATIONS = [
 export default {
   name: "radyo",
   aliases: ["radio", "istasyon"],
-  async execute({ client, message, args }) {
+  async execute({ client, message, args, config }) {
     const sub = args[0]?.toLowerCase();
 
     if (!sub || sub === "liste") {
-      const listStr = STATIONS.map((s) => `**${s.id}.** 📻 **${s.name}** \`[${s.genre}]\``).join("\n");
-      const embed = Embeds.base(
-        "📻 Canlı Radyo İstasyonları",
-        `Aşağıdaki istasyonlardan dilediğinizi seçip \`.radyo oyna <No>\` komutu ile dinleyebilirsiniz:\n\n${listStr}`,
-        message.guild
-      ).setFooter({ text: "Radyo Modülü | Public Bot Ecosystem", iconURL: message.guild.iconURL() });
+      const listStr = STATIONS.map((s) => `▫️ **${s.id}.** 📻 **${s.name}** \`[${s.genre}]\``).join("\n");
+      const content = [
+        "### 📻 Canlı Radyo İstasyonları",
+        `Aşağıdaki istasyonlardan dilediğinizi seçip \`${config?.prefix || "."}radyo oyna <No>\` komutu ile dinleyebilirsiniz:`,
+        "",
+        listStr,
+        "",
+        "-# 7/24 Canlı Radyo | Public Bot Ecosystem"
+      ].join("\n");
 
-      return message.reply({ embeds: [embed] });
+      return message.reply({ content, embeds: [] });
     }
 
     if (sub === "oyna" || sub === "çal") {
@@ -31,16 +34,22 @@ export default {
       const station = STATIONS.find((s) => s.id === stationId);
 
       if (!station) {
-        return message.reply({
-          embeds: [Embeds.warn("Geçersiz İstasyon", "Lütfen listedeki geçerli bir istasyon numarası girin (1-5 arası). İstasyonları görmek için: `.radyo liste`", message.guild)]
-        });
+        return message.reply(
+          MessageFormatter.warn(
+            "Geçersiz İstasyon",
+            `Lütfen listedeki geçerli bir istasyon numarası girin (1-5 arası).\n\n▫️ İstasyon listesi için: \`${config?.prefix || "."}radyo liste\``
+          )
+        );
       }
 
       const voiceChannel = message.member.voice?.channel;
       if (!voiceChannel) {
-        return message.reply({
-          embeds: [Embeds.warn("Seste Değilsiniz", "Radyo başlatabilmek için lütfen öncelikle bir ses kanalına bağlanın.", message.guild)]
-        });
+        return message.reply(
+          MessageFormatter.warn(
+            "Seste Değilsiniz",
+            "Radyo başlatabilmek için lütfen öncelikle bir ses kanalına bağlanın."
+          )
+        );
       }
 
       if (!client.activeRadio) {
@@ -60,22 +69,36 @@ export default {
           .setStyle(ButtonStyle.Danger)
       );
 
-      const embed = Embeds.success(
-        "📻 Canlı Radyo Başlatıldı",
-        `**İstasyon:** ${station.name}\n**Tür:** ${station.genre}\n**Kanal:** ${voiceChannel}\n\nİstasyon akışı başarıyla bağlandı. Keyifli dinlemeler!`,
-        message.guild
-      ).setFooter({ text: "7/24 Kesintisiz Radyo | Public Bot Ecosystem", iconURL: message.guild.iconURL() });
+      const content = [
+        "### 📻 Canlı Radyo Başlatıldı",
+        `▫️ **İstasyon:** **${station.name}** \`[${station.genre}]\``,
+        `▫️ **Kanal:** ${voiceChannel}`,
+        "",
+        "Canlı radyo akışı başarıyla bağlandı. Keyifli dinlemeler!",
+        "",
+        "-# 7/24 Kesintisiz Radyo | Public Bot Ecosystem"
+      ].join("\n");
 
-      return message.reply({ embeds: [embed], components: [row] });
+      return message.reply({ content, embeds: [], components: [row] });
     }
 
     if (sub === "durdur" || sub === "kapat") {
       if (!client.activeRadio?.has(message.guild.id)) {
-        return message.reply({ embeds: [Embeds.warn("Radyo Çalmıyor", "Bu sunucuda şu anda çalan bir radyo bulunmuyor.", message.guild)] });
+        return message.reply(
+          MessageFormatter.warn(
+            "Radyo Çalmıyor",
+            "Bu sunucuda şu anda çalan bir radyo yayını bulunmuyor."
+          )
+        );
       }
 
       client.activeRadio.delete(message.guild.id);
-      return message.reply({ embeds: [Embeds.info("Radyo Durduruldu", "Canlı radyo akışı başarıyla sonlandırıldı.", message.guild)] });
+      return message.reply(
+        MessageFormatter.success(
+          "Radyo Durduruldu",
+          "Canlı radyo akışı başarıyla sonlandırıldı."
+        )
+      );
     }
   }
 };

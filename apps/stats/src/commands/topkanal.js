@@ -1,5 +1,5 @@
 import { Stat } from "@bot/database";
-import { Embeds } from "@bot/core";
+import { MessageFormatter } from "@bot/core";
 
 export default {
   name: "topkanal",
@@ -7,7 +7,7 @@ export default {
   async execute({ client, message, args, config }) {
     const stats = await Stat.find({ guildId: message.guild.id });
     if (!stats || stats.length === 0) {
-      return message.reply({ embeds: [Embeds.info("Veri Bulunamadı", "Sunucuda henüz kanal aktivite verisi kaydedilmemiş.", message.guild)] });
+      return message.reply(MessageFormatter.info("Veri Bulunamadı", "Sunucuda henüz kanal aktivite verisi kaydedilmemiş."));
     }
 
     const textTotals = new Map();
@@ -37,28 +37,34 @@ export default {
       .slice(0, 5);
 
     const textRows = sortedText.length > 0
-      ? sortedText.map(([chId, count], idx) => `**${idx + 1}.** <#${chId}>: \`${count}\` mesaj`).join("\n")
-      : "Henüz metin kanalı aktivitesi yok.";
+      ? sortedText.map(([chId, count], idx) => `  • **${idx + 1}.** <#${chId}>: **${count.toLocaleString("tr-TR")}** mesaj`).join("\n")
+      : "  • Henüz metin kanalı aktivitesi yok.";
 
     const voiceRows = sortedVoice.length > 0
       ? sortedVoice.map(([chId, ms], idx) => {
           const mins = Math.floor(ms / 60000);
           const hrs = Math.floor(mins / 60);
           const timeStr = hrs > 0 ? `${hrs} sa ${mins % 60} dk` : `${mins} dk`;
-          return `**${idx + 1}.** <#${chId}>: \`${timeStr}\``;
+          return `  • **${idx + 1}.** <#${chId}>: **${timeStr}**`;
         }).join("\n")
-      : "Henüz ses kanalı aktivitesi yok.";
+      : "  • Henüz ses kanalı aktivitesi yok.";
 
-    const description = [
-      "### 💬 En Aktif Metin Kanalları",
+    const content = [
+      `### 📊 ${message.guild.name} - Kanal Aktivite Sıralaması`,
+      `▫️ **En Aktif Metin Kanalları:**`,
       textRows,
       "",
-      "### 🎙️ En Aktif Ses Kanalları",
-      voiceRows
+      `▫️ **En Aktif Ses Kanalları:**`,
+      voiceRows,
+      "",
+      `-# Kanal aktivite verileri botun sunucuda aktif olduğu sürece toplanmaktadır.`
     ].join("\n");
 
-    message.reply({
-      embeds: [Embeds.info("📊 Sunucu Kanal Aktivite Sıralaması", description, message.guild)]
+    return message.reply({
+      content,
+      embeds: [],
+      components: []
     });
   }
 };
+

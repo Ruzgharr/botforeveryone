@@ -1,13 +1,14 @@
 import { InviteRecord } from "@bot/database";
-import { Embeds } from "@bot/core";
+import { MessageFormatter } from "@bot/core";
+import { RegisterUI } from "../services/RegisterUI.js";
 
 export default {
   name: "davet",
   aliases: ["invites", "davetlerim", "davetsayısı", "davetsayisi"],
-  async execute({ client, message, args, config }) {
+  async execute({ client, message, args }) {
     const targetUser = message.mentions.users.first() || (args[0] ? await client.users.fetch(args[0]).catch(() => null) : message.author);
     if (!targetUser) {
-      return message.reply({ embeds: [Embeds.warn("Kullanıcı Bulunamadı", "Belirtilen kullanıcı bulunamadı.", message.guild)] });
+      return message.reply(MessageFormatter.warn("Kullanıcı Bulunamadı", "Belirtilen kullanıcı bulunamadı."));
     }
 
     const record = await InviteRecord.findOne({ guildId: message.guild.id, userId: targetUser.id });
@@ -18,17 +19,15 @@ export default {
     const leaves = record?.leaves || 0;
     const total = Math.max(0, regular + bonus - leaves);
 
-    const description = [
-      `### 📨 ${targetUser.username} Davet İstatistikleri`,
-      `• **Toplam Geçerli Davet:** \`${total}\``,
-      `• **Gerçek Katılanlar:** \`${regular}\``,
-      `• **Ayrılanlar:** \`${leaves}\``,
-      `• **Sahte / Şüpheli Hesaplar:** \`${fake}\``,
-      `• **Yönetici Bonusu:** \`${bonus}\``
-    ].join("\n");
-
-    message.reply({
-      embeds: [Embeds.info("Davet Bilgileri", description, message.guild)]
+    const payload = RegisterUI.formatDavetPayload({
+      targetUser,
+      total,
+      regular,
+      fake,
+      bonus,
+      leaves
     });
+
+    return message.reply(payload);
   }
 };

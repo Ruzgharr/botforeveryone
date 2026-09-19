@@ -1,12 +1,12 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
-import { Embeds } from "@bot/core";
+import { MessageFormatter } from "@bot/core";
 
 export default {
   name: "cekilis",
   aliases: ["giveaway", "lottery"],
   async execute({ client, message, args, config }) {
     if (!client.hasStaffPermission(message.member, config, "staffRoles")) {
-      return message.reply({ embeds: [Embeds.error("Yetki Yetersiz", "Çekiliş başlatmak için yetkiniz bulunmuyor.", message.guild)] });
+      return message.reply(MessageFormatter.error("Yetki Yetersiz", "Çekiliş başlatmak için yetkiniz bulunmuyor."));
     }
 
     const durationStr = args[0];
@@ -14,7 +14,10 @@ export default {
     const prize = args.slice(2).join(" ");
 
     if (!durationStr || !prize) {
-      return message.reply({ embeds: [Embeds.warn("Hatalı Kullanım", "Lütfen süreyi ve ödülü belirtin. Örnek: `.cekilis 30s 1 Nitro Classic`", message.guild)] });
+      return message.reply(MessageFormatter.warn(
+        "Hatalı Kullanım",
+        `Lütfen süreyi ve ödülü belirtin.\n\n▫️ Örnek: \`${config.prefix || "."}cekilis 30s 1 Nitro Classic\``
+      ));
     }
 
     let durationMs = 30000;
@@ -29,17 +32,19 @@ export default {
       new ButtonBuilder().setCustomId("giveaway_join").setLabel("Katıl (0)").setEmoji("🎉").setStyle(ButtonStyle.Primary)
     );
 
-    const embed = Embeds.info(
-      `🎉 ÇEKİLİŞ: ${prize}`,
-      `Aşağıdaki butona tıklayarak çekilişe katılabilirsiniz!\n\n` +
-      `• **Ödül:** ${prize}\n` +
-      `• **Kazanan Sayısı:** ${winnersCount}\n` +
-      `• **Bitiş Zamanı:** <t:${endTimestamp}:R>\n` +
-      `• **Başlatan:** ${message.author}`,
-      message.guild
-    );
+    const content = [
+      `### 🎉 ÇEKİLİŞ: ${prize}`,
+      `Aşağıdaki butona tıklayarak çekilişe katılabilirsiniz!`,
+      "",
+      `▫️ **Ödül:** ${prize}`,
+      `▫️ **Kazanan Sayısı:** ${winnersCount}`,
+      `▫️ **Bitiş Zamanı:** <t:${endTimestamp}:R>`,
+      `▫️ **Başlatan:** ${message.author}`,
+      "",
+      `-# Bol şanslar dileriz!`
+    ].join("\n");
 
-    const giveawayMsg = await message.channel.send({ embeds: [embed], components: [row] });
+    const giveawayMsg = await message.channel.send({ content, embeds: [], components: [row] });
 
     if (!client.giveaways) {
       client.giveaways = new Map();
@@ -79,19 +84,24 @@ export default {
     collector.on("end", async () => {
       const candidates = Array.from(participants);
       if (candidates.length === 0) {
-        return message.channel.send({
-          embeds: [Embeds.warn("Çekiliş Sona Erdi", `**Ödül:** ${prize}\nYeterli katılım olmadığı için kazanan belirlenemedi.`, message.guild)]
-        });
+        return message.channel.send(MessageFormatter.warn(
+          "Çekiliş Sona Erdi",
+          `▫️ **Ödül:** ${prize}\n▫️ Yeterli katılım olmadığı için kazanan belirlenemedi.`
+        ));
       }
 
       const shuffled = candidates.sort(() => Math.random() - 0.5);
       const winners = shuffled.slice(0, Math.min(winnersCount, shuffled.length)).map((id) => `<@${id}>`);
 
-      const winEmbed = Embeds.success(
-        "🎉 Çekiliş Sonuçlandı!",
-        `**Ödül:** ${prize}\n**Kazananlar:** ${winners.join(", ")}\n\nTebrikler! Lütfen yetkililerle iletişime geçin.`,
-        message.guild
-      );
+      const winContent = [
+        `### 🎉 Çekiliş Sonuçlandı!`,
+        `▫️ **Ödül:** ${prize}`,
+        `▫️ **Kazananlar:** ${winners.join(", ")}`,
+        "",
+        `Tebrikler! Lütfen ödülünüz için yetkililerle iletişime geçin.`,
+        "",
+        `-# Çekiliş Sistemi | Public Bot Ecosystem`
+      ].join("\n");
 
       await giveawayMsg.edit({ components: [] }).catch(() => null);
       const gData = client.giveaways?.get(giveawayMsg.id);
@@ -99,7 +109,8 @@ export default {
         gData.ended = true;
         gData.lastWinners = winners;
       }
-      message.channel.send({ content: winners.join(" "), embeds: [winEmbed] });
+      message.channel.send({ content: `${winners.join(" ")}\n\n${winContent}`, embeds: [], components: [] });
     });
   }
 };
+

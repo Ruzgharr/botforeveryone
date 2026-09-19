@@ -1,32 +1,33 @@
 import { Penalty } from "@bot/database";
-import { Embeds, MessageFormatter } from "@bot/core";
+import { MessageFormatter } from "@bot/core";
 import { parseDuration } from "../services/PenaltyWatcher.js";
 import { recordStaffKpi, checkGraduatedPunishment } from "../services/PunishmentHelper.js";
+import { ModerationUI } from "../services/ModerationUI.js";
 
 export default {
   name: "jail",
   aliases: ["karantina", "cezalı", "cezali"],
   async execute({ client, message, args, config }) {
     if (!client.hasStaffPermission(message.member, config, "moderationStaff")) {
-      return message.reply({ embeds: [Embeds.error("Yetki Yetersiz", "Bu komutu kullanmak için yetkiniz bulunmuyor.", message.guild)] });
+      return message.reply(MessageFormatter.error("Yetki Yetersiz", "Bu komutu kullanmak için yetkiniz bulunmuyor."));
     }
 
     const targetUser = message.mentions.members.first() || (args[0] ? await message.guild.members.fetch(args[0]).catch(() => null) : null);
     if (!targetUser) {
-      return message.reply({ embeds: [Embeds.warn("Eksik Bilgi", "Lütfen cezalandırılacak kullanıcıyı etiketleyin veya ID girin.", message.guild)] });
+      return message.reply(MessageFormatter.warn("Eksik Bilgi", "Lütfen cezalandırılacak kullanıcıyı etiketleyin veya ID girin."));
     }
 
     if (targetUser.id === message.author.id) {
-      return message.reply({ embeds: [Embeds.error("İşlem Başarısız", "Kendinizi cezalandıramazsınız.", message.guild)] });
+      return message.reply(MessageFormatter.error("İşlem Başarısız", "Kendinizi cezalandıramazsınız."));
     }
 
     if (targetUser.roles.highest.position >= message.member.roles.highest.position && !message.member.permissions.has("Administrator")) {
-      return message.reply({ embeds: [Embeds.error("İşlem Başarısız", "Sizden üst veya eşit yetkideki birine ceza veremezsiniz.", message.guild)] });
+      return message.reply(MessageFormatter.error("İşlem Başarısız", "Sizden üst veya eşit yetkideki birine ceza veremezsiniz."));
     }
 
     const jailRoleId = config.roles?.jail;
     if (!jailRoleId) {
-      return message.reply({ embeds: [Embeds.error("Ayar Hatası", "Jail rolü henüz sistemde tanımlı değil. Panelden ayarlayınız.", message.guild)] });
+      return message.reply(MessageFormatter.error("Ayar Hatası", "Jail rolü henüz sistemde tanımlı değil. Panelden ayarlayınız."));
     }
 
     const durationMs = parseDuration(args[1]);
@@ -59,15 +60,10 @@ export default {
     if (logChannelId) {
       const logChannel = message.guild.channels.cache.get(logChannelId);
       if (logChannel) {
-        logChannel.send({
-          embeds: [
-            Embeds.warn(
-              `Ceza #${caseCount} - Jail`,
-              `**Kullanıcı:** ${targetUser} (${targetUser.id})\n**Yetkili:** ${message.author} (${message.author.id})\n**Sebep:** ${reason}\n**Ceza Puanı:** +20`,
-              message.guild
-            )
-          ]
-        });
+        logChannel.send(MessageFormatter.warn(
+          `Ceza #${caseCount} - Jail`,
+          `**Kullanıcı:** ${targetUser} (\`${targetUser.id}\`)\n▫️ **Yetkili:** ${message.author} (\`${message.author.id}\`)\n▫️ **Sebep:** ${reason}\n▫️ **Ceza Puanı:** \`+20\`\n-# Ecosystem Moderasyon Log Sistemi`
+        ));
       }
     }
 
@@ -78,6 +74,8 @@ export default {
       points: 20,
       title: "Karantina (Jail) Cezası"
     }, config, message.guild);
+
+    payload.components = [ModerationUI.buildPunishActionRow("JAIL", targetUser.id, caseCount)];
 
     message.reply(payload);
 

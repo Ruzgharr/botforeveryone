@@ -1,5 +1,3 @@
-import { Embeds } from "@bot/core";
-
 export default {
   name: "itiraf",
   aliases: ["confess", "confession", "anonim"],
@@ -15,14 +13,22 @@ export default {
       return;
     }
 
-    const embed = Embeds.base("🤫 Anonim Bir İtiraf Geldi", null, message.guild)
-      .setDescription(`"${confession}"`)
-      .setFooter({ text: "Anonim İtiraf Kutusu | Gönderenin Kimliği Tamamen Gizlidir", iconURL: message.guild.iconURL() });
+    const content = [
+      `### 🤫 Anonim Bir İtiraf Geldi!`,
+      `"${confession}"`,
+      "",
+      `-# Anonim İtiraf Kutusu | Gönderenin kimliği tamamen gizlidir.`
+    ].join("\n");
 
     const targetChannel = (config.channels?.confessionChannel
       ? message.guild.channels.cache.get(config.channels.confessionChannel)
       : null) || message.channel;
 
-    await targetChannel.send({ embeds: [embed] });
+    await targetChannel.send({
+      content,
+      embeds: [],
+      components: []
+    });
   }
 };
+

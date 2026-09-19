@@ -1,23 +1,24 @@
 import { ForceBan, Penalty } from "@bot/database";
-import { Embeds } from "@bot/core";
+import { MessageFormatter } from "@bot/core";
 
 export default {
   name: "forceban",
   aliases: ["akıllıban", "akilliban", "kalıcıban", "kaliciban"],
   async execute({ client, message, args, config }) {
     if (!message.member.permissions.has("Administrator")) {
-      return message.reply({ embeds: [Embeds.error("Yetki Yetersiz", "Bu komut yalnızca sunucu yöneticileri tarafından kullanılabilir.", message.guild)] });
+      return message.reply(MessageFormatter.error("Yetki Yetersiz", "Bu komut yalnızca sunucu yöneticileri tarafından kullanılabilir."));
     }
 
     const targetUser = message.mentions.users.first() || (args[0] ? await client.users.fetch(args[0]).catch(() => null) : null);
     if (!targetUser) {
-      return message.reply({
-        embeds: [Embeds.warn("Eksik Bilgi", `Lütfen kalıcı ban atılacak kullanıcıyı belirtin: \`${config.prefix || "."}forceban <ID/@üye> [sebep]\``, message.guild)]
-      });
+      return message.reply(MessageFormatter.warn(
+        "Eksik Bilgi",
+        `Lütfen kalıcı ban atılacak kullanıcıyı belirtin: \`${config.prefix || "."}forceban <ID/@üye> [sebep]\``
+      ));
     }
 
     if (targetUser.id === message.author.id) {
-      return message.reply({ embeds: [Embeds.error("Geçersiz İşlem", "Kendinize kalıcı ban uygulayamazsınız.", message.guild)] });
+      return message.reply(MessageFormatter.error("Geçersiz İşlem", "Kendinize kalıcı ban uygulayamazsınız."));
     }
 
     const reason = args.slice(1).join(" ") || "Sunucu güvenliğini tehlikeye atan eylem (Kalıcı Karaliste)";
@@ -46,26 +47,16 @@ export default {
     if (logChannelId) {
       const logChannel = message.guild.channels.cache.get(logChannelId);
       if (logChannel) {
-        logChannel.send({
-          embeds: [
-            Embeds.error(
-              `Kalıcı Yasaklama (ForceBan) - Ceza #${caseCount}`,
-              `• **Kullanıcı:** ${targetUser} (\`${targetUser.id}\`)\n• **Yetkili:** ${message.author} (\`${message.author.id}\`)\n• **Sebep:** ${reason}\n• **Durum:** Bu kullanıcının yasağı af edilse dahi bot tarafından anında tekrar banlanacaktır.`,
-              message.guild
-            )
-          ]
-        });
+        logChannel.send(MessageFormatter.error(
+          `Kalıcı Yasaklama (ForceBan) - Ceza #${caseCount}`,
+          `**Kullanıcı:** ${targetUser} (\`${targetUser.id}\`)\n▫️ **Yetkili:** ${message.author} (\`${message.author.id}\`)\n▫️ **Sebep:** ${reason}\n▫️ **Ceza Puanı:** \`+100\`\n-# Bu kullanıcının yasağı kaldırılsa dahi bot tarafından anında tekrar banlanacaktır.`
+        ));
       }
     }
 
-    message.reply({
-      embeds: [
-        Embeds.success(
-          "Kalıcı Yasaklama Uygulandı",
-          `${targetUser} (\`${targetUser.id}\`) kullanıcısı kalıcı karalisteye eklendi ve sunucudan kalıcı olarak yasaklandı.`,
-          message.guild
-        )
-      ]
-    });
+    message.reply(MessageFormatter.success(
+      "Kalıcı Yasaklama Uygulandı",
+      `${targetUser} (\`${targetUser.id}\`) kullanıcısı kalıcı karalisteye eklendi ve sunucudan kalıcı olarak yasaklandı.\n▫️ **Sebep:** \`${reason}\``
+    ));
   }
 };

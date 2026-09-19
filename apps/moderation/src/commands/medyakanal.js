@@ -1,4 +1,4 @@
-import { Embeds } from "@bot/core";
+import { MessageFormatter } from "@bot/core";
 import { GuildConfig } from "@bot/database";
 
 export default {
@@ -6,7 +6,7 @@ export default {
   aliases: ["galeri", "medya", "onlymedia"],
   async execute({ client, message, args, config }) {
     if (!message.member.permissions.has("Administrator") && !client.hasStaffPermission(message.member, config, "moderationStaff")) {
-      return message.reply({ embeds: [Embeds.error("Yetki Yetersiz", "Medya kanalı ayarlarını yönetmek için yetkiniz bulunmuyor.", message.guild)] });
+      return message.reply(MessageFormatter.error("Yetki Yetersiz", "Medya kanalı ayarlarını yönetmek için yetkiniz bulunmuyor."));
     }
 
     const targetChannel = message.mentions.channels.first()
@@ -30,13 +30,15 @@ export default {
     );
 
     if (isAlreadyMedia) {
-      return message.reply({
-        embeds: [Embeds.success("Medya Kanalı Kaldırıldı", `${targetChannel} artık normal bir metin kanalı olarak çalışacak (Yazı engeli kaldırıldı).`, message.guild)]
-      });
+      return message.reply(MessageFormatter.success(
+        "Medya Kanalı Kaldırıldı",
+        `${targetChannel} artık normal bir metin kanalı olarak çalışacak (Yazı engeli kaldırıldı).`
+      ));
     } else {
-      return message.reply({
-        embeds: [Embeds.success("Medya Kanalı Ayarlandı", `${targetChannel} artık sadece resim, video ve bağlantı (medya) kabul edecek. Düz metin mesajları otomatik temizlenecektir.`, message.guild)]
-      });
+      return message.reply(MessageFormatter.success(
+        "Medya Kanalı Ayarlandı",
+        `${targetChannel} artık sadece resim, video ve bağlantı (medya) kabul edecek. Düz metin mesajları otomatik temizlenecektir.`
+      ));
     }
   }
 };

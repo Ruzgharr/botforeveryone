@@ -1,31 +1,33 @@
-import { Embeds } from "@bot/core";
+import { MessageFormatter } from "@bot/core";
 
 export default {
   name: "odapanel",
   aliases: ["jtcpanel", "ozelodapanel"],
   async execute({ client, message, config }) {
     if (!message.member.permissions.has("Administrator") && !client.hasStaffPermission(message.member, config, "staffRoles")) {
-      return message.reply({ embeds: [Embeds.error("Yetki Yetersiz", "Bu paneli göndermek için Yönetici yetkisine sahip olmalısınız.", message.guild)] });
+      return message.reply(MessageFormatter.error("Yetki Yetersiz", "Bu paneli göndermek için Yönetici yetkisine sahip olmalısınız."));
     }
 
     const generatorId = config.channels?.customVoiceChannel;
     const channelMention = generatorId ? `<#${generatorId}>` : "`Henüz panelden ayarlanmadı`";
 
-    const embed = Embeds.info(
-      "🔊 Özel Ses Odası (JTC) Sistemi",
-      `Sunucumuzda kendinize ait özel ses odası oluşturmak ve yönetmek için ${channelMention} kanalına bağlanmanız yeterlidir.\n\n`
-      + "**Oda Yöneticisi Özellikleri ve Butonlar:**\n"
-      + "✏️ **İsim Değiştir:** Açılan pencere üzerinden odanıza dilediğiniz yeni ismi verebilirsiniz.\n"
-      + "👥 **Kişi Limiti:** Odanızın üye kapasitesini sınırsız, 2, 5 veya 10 kişi olarak değiştirebilirsiniz.\n"
-      + "🔒 **Odayı Kilitle:** Odanızı diğer tüm üyelere kapatarak yalnızca izin verdiklerinizin girmesini sağlarsınız.\n"
-      + "🔓 **Kilidi Aç:** Oda kilidini kaldırarak sunucu üyelerinin tekrar odaya katılabilmesini sağlarsınız.\n"
-      + "🚫 **Odadan At:** Menüden seçeceğiniz kullanıcıyı anında ses odasından düşürür ve tekrar girişini engeller.\n"
-      + "🗑️ **Odayı Kapat:** Odanızı ve mesaj geçmişini doğrudan silebilirsiniz.\n\n"
-      + "*Not: Odadaki tüm üyeler ayrıldığında oda otomatik olarak silinir.*",
-      message.guild
-    ).setFooter({ text: "Join to Create | Public Bot Ecosystem", iconURL: message.guild.iconURL() });
+    const content = [
+      `### 🔊 Özel Ses Odası (JTC) Sistemi`,
+      `Sunucumuzda kendinize ait özel ses odası oluşturmak ve yönetmek için ${channelMention} kanalına bağlanmanız yeterlidir.`,
+      "",
+      `▫️ **Oda Yöneticisi Özellikleri:**`,
+      `  • ✏️ **İsim Değiştir:** Açılan formdan odanıza yeni isim verebilirsiniz.`,
+      `  • 👥 **Kişi Limiti:** Odanızın üye kapasitesini sınırlandırabilirsiniz.`,
+      `  • 🔒 **Odayı Kilitle:** Odanızı diğer tüm üyelere kapatabilirsiniz.`,
+      `  • 🔓 **Kilidi Aç:** Oda kilidini kaldırarak katılıma açabilirsiniz.`,
+      `  • 🚫 **Odadan At:** İstemediğiniz kullanıcıyı anında ses odasından çıkarabilirsiniz.`,
+      `  • 🗑️ **Odayı Kapat:** Odanızı ve geçmişini silebilirsiniz.`,
+      "",
+      `-# Odadaki tüm üyeler ayrıldığında oda otomatik olarak silinir.`
+    ].join("\n");
 
-    await message.channel.send({ embeds: [embed] });
+    await message.channel.send({ content, embeds: [], components: [] });
     await message.delete().catch(() => null);
   }
 };
+

@@ -1,19 +1,20 @@
 import { Penalty } from "@bot/database";
-import { Embeds } from "@bot/core";
+import { MessageFormatter } from "@bot/core";
 
 export default {
   name: "uyarisil",
   aliases: ["warn-sil", "unwarn", "uyarıkaldır"],
   async execute({ client, message, args, config }) {
     if (!client.hasStaffPermission(message.member, config, "moderationStaff")) {
-      return message.reply({ embeds: [Embeds.error("Yetki Yetersiz", "Uyarı silme işlemi için yetkiniz bulunmuyor.", message.guild)] });
+      return message.reply(MessageFormatter.error("Yetki Yetersiz", "Uyarı silme işlemi için yetkiniz bulunmuyor."));
     }
 
     const input = args[0];
     if (!input) {
-      return message.reply({
-        embeds: [Embeds.warn("Hatalı Kullanım", "Lütfen silinecek uyarının Ceza ID numarasını veya kullanıcıyı belirtin.\n\n**Örnekler:**\n`.uyarisil 42`\n`.uyarisil @üye`", message.guild)]
-      });
+      return message.reply(MessageFormatter.warn(
+        "Hatalı Kullanım",
+        "Lütfen silinecek uyarının Ceza ID numarasını veya kullanıcıyı belirtin.\n\n**Örnekler:**\n`.uyarisil 42`\n`.uyarisil @üye`"
+      ));
     }
 
     let targetPenalty = null;
@@ -35,9 +36,7 @@ export default {
     }
 
     if (!targetPenalty) {
-      return message.reply({
-        embeds: [Embeds.warn("Uyarı Bulunamadı", "Belirtilen kriterlere uyan aktif bir uyarı kaydı bulunamadı.", message.guild)]
-      });
+      return message.reply(MessageFormatter.warn("Uyarı Bulunamadı", "Belirtilen kriterlere uyan aktif bir uyarı kaydı bulunamadı."));
     }
 
     await Penalty.updateOne(
@@ -51,12 +50,9 @@ export default {
       }
     );
 
-    const embed = Embeds.success(
+    message.reply(MessageFormatter.success(
       "Uyarı Kaldırıldı",
-      `Ceza **#${targetPenalty.caseId}** numaralı uyarı <@${targetPenalty.userId}> kullanıcısının aktif sicilinden başarıyla silindi.`,
-      message.guild
-    );
-
-    await message.reply({ embeds: [embed] });
+      `Ceza **#${targetPenalty.caseId}** numaralı uyarı <@${targetPenalty.userId}> kullanıcısının aktif sicilinden başarıyla silindi.`
+    ));
   }
 };

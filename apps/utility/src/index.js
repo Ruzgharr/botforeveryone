@@ -1,4 +1,4 @@
-import { BaseBot, Embeds, MessageFormatter } from "@bot/core";
+import { BaseBot, MessageFormatter } from "@bot/core";
 import { environment } from "@bot/config";
 import { Ticket } from "@bot/database";
 import { ChannelType, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle, Collection, ModalBuilder, TextInputBuilder, TextInputStyle, UserSelectMenuBuilder } from "discord.js";
@@ -21,11 +21,14 @@ import birlikteCmd from "./commands/birlikte.js";
 import oneriCmd from "./commands/oneri.js";
 import itirafCmd from "./commands/itiraf.js";
 import dogumgunuCmd from "./commands/dogumgunu.js";
+import { registerUtilityInteractions } from "./services/UtilityInteractions.js";
 
 const client = new BaseBot({
   serviceName: "UTILITY",
   token: environment.tokens.utility
 });
+
+registerUtilityInteractions(client);
 
 client.activeCustomRooms = new Collection();
 client.giveaways = new Collection();
@@ -147,38 +150,38 @@ client.registerInteraction("jtc_", async ({ interaction, config }) => {
   if (action === "modal" && parts[2] === "rename") {
     const channelId = parts[3];
     const channel = interaction.guild.channels.cache.get(channelId);
-    if (!channel) return interaction.reply({ content: "Oda bulunamadı.", ephemeral: true });
+    if (!channel) return interaction.reply({ content: "### ❌ Hata\nOda bulunamadı.", embeds: [], ephemeral: true });
 
     const newName = interaction.fields.getTextInputValue("room_name_input");
     await channel.setName(newName).catch(() => null);
-    return interaction.reply({ content: `Oda ismi başarıyla **${newName}** olarak değiştirildi.`, ephemeral: true });
+    return interaction.reply({ content: `### ✅ Başarılı\nOda ismi başarıyla **${newName}** olarak değiştirildi.`, embeds: [], ephemeral: true });
   }
 
   if (action === "userkick") {
     const channelId = parts[2];
     const channel = interaction.guild.channels.cache.get(channelId);
-    if (!channel) return interaction.reply({ content: "Oda bulunamadı.", ephemeral: true });
+    if (!channel) return interaction.reply({ content: "### ❌ Hata\nOda bulunamadı.", embeds: [], ephemeral: true });
 
     const targetUserId = interaction.values?.[0];
-    if (!targetUserId) return interaction.reply({ content: "Kullanıcı seçilmedi.", ephemeral: true });
+    if (!targetUserId) return interaction.reply({ content: "### ⚠️ Uyarı\nKullanıcı seçilmedi.", embeds: [], ephemeral: true });
 
     const targetMember = interaction.guild.members.cache.get(targetUserId);
     if (targetMember && targetMember.voice?.channelId === channelId) {
       await targetMember.voice.disconnect().catch(() => null);
     }
     await channel.permissionOverwrites.edit(targetUserId, { Connect: false }).catch(() => null);
-    return interaction.reply({ content: `<@${targetUserId}> odadan çıkarıldı ve odaya girişi engellendi.`, ephemeral: true });
+    return interaction.reply({ content: `### 🚪 Kullanıcı Uzaklaştırıldı\n<@${targetUserId}> odadan çıkarıldı ve odaya girişi engellendi.`, embeds: [], ephemeral: true });
   }
 
   const channelId = parts[2];
   const channel = interaction.guild.channels.cache.get(channelId);
   if (!channel) {
-    return interaction.reply({ content: "Oda bulunamadı.", ephemeral: true });
+    return interaction.reply({ content: "### ❌ Hata\nOda bulunamadı.", embeds: [], ephemeral: true });
   }
 
   const ownerId = client.activeCustomRooms.get(channelId);
   if (interaction.user.id !== ownerId && !interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
-    return interaction.reply({ content: "Bu odayı yönetmek için oda sahibi olmalısınız.", ephemeral: true });
+    return interaction.reply({ content: "### ⛔ Yetkisiz İşlem\nBu odayı yönetmek için oda sahibi olmalısınız.", embeds: [], ephemeral: true });
   }
 
   if (action === "lock") {
@@ -200,7 +203,8 @@ client.registerInteraction("jtc_", async ({ interaction, config }) => {
     const nextLimit = currentLimit === 0 ? 2 : currentLimit === 2 ? 5 : currentLimit === 5 ? 10 : 0;
     await channel.setUserLimit(nextLimit).catch(() => null);
     return interaction.reply({
-      content: nextLimit === 0 ? "Kişi limiti kaldırıldı (Sınırsız)." : `Oda kişi limiti ${nextLimit} kişi olarak ayarlandı.`,
+      content: nextLimit === 0 ? "### 👥 Kişi Limiti\nOda kişi limiti kaldırıldı (Sınırsız)." : `### 👥 Kişi Limiti\nOda kişi limiti **${nextLimit} kişi** olarak ayarlandı.`,
+      embeds: [],
       ephemeral: true
     });
   } else if (action === "rename") {
@@ -221,7 +225,7 @@ client.registerInteraction("jtc_", async ({ interaction, config }) => {
   } else if (action === "kick") {
     const otherMembers = channel.members.filter((m) => m.id !== interaction.user.id && !m.user.bot);
     if (otherMembers.size === 0) {
-      return interaction.reply({ content: "Odanızda çıkarılabilecek başka bir kullanıcı bulunmuyor.", ephemeral: true });
+      return interaction.reply({ content: "### ⚠️ Uyarı\nOdanızda çıkarılabilecek başka bir kullanıcı bulunmuyor.", embeds: [], ephemeral: true });
     }
 
     const selectRow = new ActionRowBuilder().addComponents(
@@ -234,6 +238,7 @@ client.registerInteraction("jtc_", async ({ interaction, config }) => {
     return interaction.reply({
       content: "Lütfen odadan çıkarmak istediğiniz kullanıcıyı seçin:",
       components: [selectRow],
+      embeds: [],
       ephemeral: true
     });
   } else if (action === "delete") {
@@ -264,7 +269,7 @@ client.registerInteraction("ticket_", async ({ interaction, config }) => {
     }).catch(() => null);
 
     if (!channel) {
-      return interaction.reply({ content: "Destek kanalı oluşturulurken bir hata meydana geldi.", ephemeral: true });
+      return interaction.reply({ content: "### ❌ Hata\nDestek kanalı oluşturulurken bir hata meydana geldi.", embeds: [], ephemeral: true });
     }
 
     await Ticket.create({
@@ -279,15 +284,18 @@ client.registerInteraction("ticket_", async ({ interaction, config }) => {
       new ButtonBuilder().setCustomId(`ticket_close_${channel.id}`).setLabel("Talebi Kapat").setStyle(ButtonStyle.Danger)
     );
 
+    const ticketContent = [
+      `### 🎫 Destek Talebi #${ticketCount}`,
+      `▫️ **Talep Sahibi:** ${interaction.user}`,
+      "",
+      "Hoş geldiniz! Lütfen yetkililerimize iletmek istediğiniz durumu detaylı şekilde açıklayınız. En kısa sürede sizinle ilgilenilecektir.",
+      "",
+      "-# Talebi sonlandırmak için aşağıdaki butonu kullanabilirsiniz."
+    ].join("\n");
+
     channel.send({
-      content: `${interaction.user}`,
-      embeds: [
-        Embeds.info(
-          `Destek Talebi #${ticketCount}`,
-          "Hoş geldiniz! Lütfen yetkililerimize iletmek istediğiniz durumu detaylı şekilde açıklayınız. En kısa sürede dönüş yapılacaktır.",
-          interaction.guild
-        )
-      ],
+      content: ticketContent,
+      embeds: [],
       components: [row]
     });
 
@@ -338,7 +346,15 @@ client.registerInteraction("ticket_", async ({ interaction, config }) => {
       const opener = await interaction.guild.members.fetch(ticket.openerId).catch(() => null);
       if (opener) {
         opener.send({
-          content: `Destek talebiniz (#${ticket.ticketId}) kapatıldı. Hizmeti nasıl değerlendirdiniz?`,
+          content: [
+            `### 🎫 Destek Talebi #${ticket.ticketId} Kapatıldı`,
+            "Destek talebiniz yetkili ekibimiz tarafından başarıyla kapatıldı.",
+            "",
+            "Aldığınız destek hizmetini nasıl değerlendirirsiniz? Lütfen aşağıdaki butonları kullanarak puanlayınız:",
+            "",
+            "-# Geri bildiriminiz bizim için değerlidir."
+          ].join("\n"),
+          embeds: [],
           components: [ratingRow]
         }).catch(() => null);
       }
@@ -362,7 +378,8 @@ client.registerInteraction("rules_accept", async ({ interaction, config }) => {
   }
 
   interaction.reply({
-    content: "Sunucu kurallarını onayladınız. Sohbet kanallarına erişiminiz açılmıştır.",
+    content: "### ✅ Kurallar Onaylandı\nSunucu kurallarını onayladınız. Kanallara erişiminiz açılmıştır.\n\n-# Keyifli vakit geçirmenizi dileriz!",
+    embeds: [],
     ephemeral: true
   });
 });
@@ -371,16 +388,16 @@ client.registerInteraction("btnrole_", async ({ interaction }) => {
   const roleId = interaction.customId.replace("btnrole_", "");
   const role = interaction.guild.roles.cache.get(roleId);
   if (!role) {
-    return interaction.reply({ content: "Rol bulunamadı veya silinmiş.", ephemeral: true });
+    return interaction.reply({ content: "### ❌ Hata\nRol bulunamadı veya silinmiş.", embeds: [], ephemeral: true });
   }
 
   const member = interaction.member;
   if (member.roles.cache.has(roleId)) {
     await member.roles.remove(roleId).catch(() => null);
-    return interaction.reply({ content: `❌ **${role.name}** rolü üzerinizden başarıyla kaldırıldı.`, ephemeral: true });
+    return interaction.reply({ content: `### ❌ Rol Kaldırıldı\n▫️ **${role.name}** rolü üzerinizden başarıyla kaldırıldı.`, embeds: [], ephemeral: true });
   } else {
     await member.roles.add(roleId).catch(() => null);
-    return interaction.reply({ content: `✅ **${role.name}** rolü üzerinize başarıyla tanımlandı.`, ephemeral: true });
+    return interaction.reply({ content: `### ✅ Rol Tanımlandı\n▫️ **${role.name}** rolü üzerinize başarıyla tanımlandı.`, embeds: [], ephemeral: true });
   }
 });
 
@@ -388,12 +405,12 @@ client.registerInteraction("poll_opt_", async ({ interaction }) => {
   if (!client.activePolls) return;
   const pollData = client.activePolls.get(interaction.message.id);
   if (!pollData) {
-    return interaction.reply({ content: "Bu oylama artık aktif değil veya süresi dolmuş.", ephemeral: true });
+    return interaction.reply({ content: "### ⚠️ Bilgi\nBu oylama artık aktif değil veya süresi dolmuş.", embeds: [], ephemeral: true });
   }
 
   const optIdx = parseInt(interaction.customId.replace("poll_opt_", ""), 10);
   if (isNaN(optIdx) || !pollData.options[optIdx]) {
-    return interaction.reply({ content: "Geçersiz seçenek.", ephemeral: true });
+    return interaction.reply({ content: "### ❌ Hata\nGeçersiz seçenek.", embeds: [], ephemeral: true });
   }
 
   const userId = interaction.user.id;
@@ -402,14 +419,14 @@ client.registerInteraction("poll_opt_", async ({ interaction }) => {
   if (prevOptIdx === optIdx) {
     pollData.options[optIdx].votes.delete(userId);
     pollData.voters.delete(userId);
-    await interaction.reply({ content: "Oyunuzu geri çektiniz.", ephemeral: true });
+    await interaction.reply({ content: "### 🗳️ Oy Geri Çekildi\nOyunuzu geri çektiniz.", embeds: [], ephemeral: true });
   } else {
     if (prevOptIdx !== undefined && pollData.options[prevOptIdx]) {
       pollData.options[prevOptIdx].votes.delete(userId);
     }
     pollData.options[optIdx].votes.add(userId);
     pollData.voters.set(userId, optIdx);
-    await interaction.reply({ content: `Oyunuz kaydedildi: **${pollData.options[optIdx].label}**`, ephemeral: true });
+    await interaction.reply({ content: `### 🗳️ Oyunuz Kaydedildi\nOyunuz kaydedildi: **${pollData.options[optIdx].label}**`, embeds: [], ephemeral: true });
   }
 
   const newRows = interaction.message.components.map((row) => {
@@ -437,51 +454,64 @@ client.registerInteraction("suggest_vote_", async ({ interaction }) => {
 
   const suggestion = client.activeSuggestions?.get(messageId);
   if (!suggestion) {
-    return interaction.reply({ content: "Bu öneri oturumu artık aktif değil.", ephemeral: true });
+    return interaction.reply({ content: "### ⚠️ Bilgi\nBu öneri oturumu artık aktif değil.", embeds: [], ephemeral: true });
   }
 
   const userId = interaction.user.id;
 
+  if (!suggestion.yesVotes && suggestion.yes) suggestion.yesVotes = suggestion.yes;
+  if (!suggestion.noVotes && suggestion.no) suggestion.noVotes = suggestion.no;
+  if (!suggestion.yesVotes) suggestion.yesVotes = new Set();
+  if (!suggestion.noVotes) suggestion.noVotes = new Set();
+
   if (vote === "yes") {
-    suggestion.no.delete(userId);
-    if (suggestion.yes.has(userId)) {
-      suggestion.yes.delete(userId);
-      await interaction.reply({ content: "Olumlu oyunuz geri alındı.", ephemeral: true });
+    suggestion.noVotes.delete(userId);
+    if (suggestion.yesVotes.has(userId)) {
+      suggestion.yesVotes.delete(userId);
+      await interaction.reply({ content: "### 💡 Oy Geri Alındı\nOlumlu oyunuz geri alındı.", embeds: [], ephemeral: true });
     } else {
-      suggestion.yes.add(userId);
-      await interaction.reply({ content: "Olumlu oy verdiniz.", ephemeral: true });
+      suggestion.yesVotes.add(userId);
+      await interaction.reply({ content: "### 💡 Oy Kaydedildi\nOlumlu oyunuz kaydedildi (Katılıyorum).", embeds: [], ephemeral: true });
     }
   } else if (vote === "no") {
-    suggestion.yes.delete(userId);
-    if (suggestion.no.has(userId)) {
-      suggestion.no.delete(userId);
-      await interaction.reply({ content: "Olumsuz oyunuz geri alındı.", ephemeral: true });
+    suggestion.yesVotes.delete(userId);
+    if (suggestion.noVotes.has(userId)) {
+      suggestion.noVotes.delete(userId);
+      await interaction.reply({ content: "### 💡 Oy Geri Alındı\nOlumsuz oyunuz geri alındı.", embeds: [], ephemeral: true });
     } else {
-      suggestion.no.add(userId);
-      await interaction.reply({ content: "Olumsuz oy verdiniz.", ephemeral: true });
+      suggestion.noVotes.add(userId);
+      await interaction.reply({ content: "### 💡 Oy Kaydedildi\nOlumsuz oyunuz kaydedildi (Katılmıyorum).", embeds: [], ephemeral: true });
     }
   } else {
-    return interaction.reply({ content: "Geçersiz oy seçeneği.", ephemeral: true });
+    return interaction.reply({ content: "### ❌ Hata\nGeçersiz oy seçeneği.", embeds: [], ephemeral: true });
   }
 
-  const embed = interaction.message.embeds[0];
-  if (!embed) return;
-  const { EmbedBuilder } = await import("discord.js");
-  const updatedEmbed = EmbedBuilder.from(embed)
-    .setFooter({ text: `Evet: ${suggestion.yes.size} | Hayır: ${suggestion.no.size}` });
-  await interaction.message.edit({ embeds: [updatedEmbed] }).catch(() => null);
+  const updatedRow = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId("suggest_vote_yes")
+      .setLabel(`Katılıyorum (${suggestion.yesVotes.size})`)
+      .setEmoji("👍")
+      .setStyle(ButtonStyle.Success),
+    new ButtonBuilder()
+      .setCustomId("suggest_vote_no")
+      .setLabel(`Katılmıyorum (${suggestion.noVotes.size})`)
+      .setEmoji("👎")
+      .setStyle(ButtonStyle.Danger)
+  );
+
+  await interaction.message.edit({ components: [updatedRow] }).catch(() => null);
 });
 
 client.registerInteraction("radio_stop", async ({ interaction }) => {
   const entry = client.activeRadio?.get(interaction.guildId);
   if (!entry) {
-    return interaction.reply({ content: "Şu an çalan bir radyo yok.", ephemeral: true });
+    return interaction.reply({ content: "### ⚠️ Bilgi\nŞu an bu sunucuda çalan bir radyo yayını yok.", embeds: [], ephemeral: true });
   }
   if (entry.connection) {
     entry.connection.destroy();
   }
   client.activeRadio.delete(interaction.guildId);
-  return interaction.reply({ content: "Radyo durduruldu.", ephemeral: true });
+  return interaction.reply({ content: "### ⏹️ Radyo Durduruldu\nCanlı radyo akışı başarıyla sonlandırıldı.", embeds: [], ephemeral: true });
 });
 
 client.registerInteraction("jtc_setpassword", async ({ interaction }) => {
@@ -490,7 +520,7 @@ client.registerInteraction("jtc_setpassword", async ({ interaction }) => {
   const ownerId = client.activeCustomRooms?.get(channelId);
 
   if (interaction.user.id !== ownerId && !interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
-    return interaction.reply({ content: "Bu odanın şifresini yalnızca oda sahibi belirleyebilir.", ephemeral: true });
+    return interaction.reply({ content: "### ⛔ Yetkisiz İşlem\nBu odanın şifresini yalnızca oda sahibi belirleyebilir.", embeds: [], ephemeral: true });
   }
 
   const modal = new ModalBuilder()
@@ -517,10 +547,10 @@ client.registerInteraction("jtc_modal_setpassword_", async ({ interaction }) => 
 
   if (password.length === 0) {
     client.roomPasswords.delete(channelId);
-    return interaction.reply({ content: "Oda şifresi kaldırıldı.", ephemeral: true });
+    return interaction.reply({ content: "### 🔓 Şifre Kaldırıldı\nOda şifresi başarıyla kaldırıldı.", embeds: [], ephemeral: true });
   }
   client.roomPasswords.set(channelId, password);
-  return interaction.reply({ content: `Oda şifresi **${password}** olarak ayarlandı.`, ephemeral: true });
+  return interaction.reply({ content: `### 🔐 Şifre Belirlendi\nOda şifresi başarıyla **${password}** olarak ayarlandı.`, embeds: [], ephemeral: true });
 });
 
 client.registerInteraction("ticket_rate_", async ({ interaction }) => {
@@ -529,23 +559,23 @@ client.registerInteraction("ticket_rate_", async ({ interaction }) => {
   const ticketId = parseInt(parts[3], 10);
 
   if (isNaN(stars) || isNaN(ticketId)) {
-    return interaction.reply({ content: "Geçersiz değerlendirme.", ephemeral: true });
+    return interaction.reply({ content: "### ❌ Hata\nGeçersiz değerlendirme.", embeds: [], ephemeral: true });
   }
 
   const ticket = await Ticket.findOne({ ticketId }).catch(() => null);
   if (!ticket) {
-    return interaction.reply({ content: "Talep bulunamadı.", ephemeral: true });
+    return interaction.reply({ content: "### ❌ Hata\nTalep bulunamadı.", embeds: [], ephemeral: true });
   }
 
   if (ticket.rating) {
-    return interaction.reply({ content: "Bu talebi zaten değerlendirdiniz.", ephemeral: true });
+    return interaction.reply({ content: "### ⚠️ Uyarı\nBu talebi zaten daha önce değerlendirdiniz.", embeds: [], ephemeral: true });
   }
 
   ticket.rating = stars;
   await ticket.save().catch(() => null);
 
   const starText = "⭐".repeat(stars);
-  await interaction.reply({ content: `Değerlendirmeniz kaydedildi: ${starText}`, ephemeral: true });
+  await interaction.reply({ content: `### 🌟 Değerlendirme Alındı\n▫️ Puanınız: **${starText}** (${stars}/5)\nGeri bildiriminiz için teşekkür ederiz!`, embeds: [], ephemeral: true });
   await interaction.message.edit({ components: [] }).catch(() => null);
 });
 

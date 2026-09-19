@@ -88,6 +88,15 @@ export class DistributorPool {
     }
   }
 
+  async stop() {
+    for (const client of this.clients) {
+      try {
+        await client.destroy();
+      } catch {}
+    }
+    this.clients = [];
+  }
+
   async restoreLatestBackup(guildId) {
     const backup = await Backup.findOne({ guildId }).sort({ createdAt: -1 });
     if (!backup) {

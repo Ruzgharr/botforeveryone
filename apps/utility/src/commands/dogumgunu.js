@@ -1,5 +1,5 @@
 import { UserAccount } from "@bot/database";
-import { Embeds } from "@bot/core";
+import { MessageFormatter } from "@bot/core";
 
 const MONTH_NAMES = [
   "", "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
@@ -20,13 +20,10 @@ export default {
         currentBday = `Kayıtlı Doğum Gününüz: **${existing.birthday.day} ${MONTH_NAMES[existing.birthday.month]}**`;
       }
 
-      return message.reply({
-        embeds: [Embeds.warn(
-          "Hatalı Format",
-          `${currentBday}\n\nDoğum gününüzü kaydetmek için gün ve ay numarasını belirtin.\n**Örnek:** \`.dogumgunu 23 4\` (23 Nisan)`,
-          message.guild
-        )]
-      });
+      return message.reply(MessageFormatter.warn(
+        "Hatalı Format",
+        `${currentBday}\n\n▫️ Doğum gününüzü kaydetmek için gün ve ay numarasını belirtin.\n▫️ Örnek: \`.dogumgunu 23 4\` (23 Nisan)`
+      ));
     }
 
     await UserAccount.updateOne(
@@ -35,12 +32,10 @@ export default {
       { upsert: true }
     );
 
-    const embed = Embeds.success(
-      "🎂 Doğum Gününüz Kaydedildi",
-      `Doğum gününüz **${day} ${MONTH_NAMES[month]}** olarak başarıyla kaydedildi. O gün geldiğinde sunucumuzda otomatik olarak kutlanacaktır!`,
-      message.guild
-    );
-
-    await message.reply({ embeds: [embed] });
+    return message.reply(MessageFormatter.success(
+      "Doğum Gününüz Kaydedildi",
+      `▫️ Doğum gününüz **${day} ${MONTH_NAMES[month]}** olarak başarıyla kaydedildi.\n▫️ O gün geldiğinde sunucumuzda otomatik olarak kutlanacaktır!`
+    ));
   }
 };
+

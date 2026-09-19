@@ -6,7 +6,7 @@ const ShopItemSchema = new mongoose.Schema({
   name: { type: String, required: true },
   description: { type: String, default: "" },
   price: { type: Number, required: true },
-  type: { type: String, enum: ["ROLE", "COSMETIC", "BADGE"], default: "ROLE" },
+  type: { type: String, enum: ["ROLE", "COSMETIC", "BADGE", "THEME"], default: "ROLE" },
   roleId: { type: String, default: "" },
   active: { type: Boolean, default: true }
 }, { timestamps: true });

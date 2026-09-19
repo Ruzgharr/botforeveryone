@@ -1,5 +1,5 @@
 import { Stat } from "@bot/database";
-import { Embeds } from "@bot/core";
+import { MessageFormatter } from "@bot/core";
 
 export default {
   name: "topseviye",
@@ -10,21 +10,29 @@ export default {
       .limit(10);
 
     if (!topStats || topStats.length === 0) {
-      return message.reply({ embeds: [Embeds.warn("Kayıt Yok", "Sunucuda henüz seviye kaydı bulunan üye bulunmuyor.", message.guild)] });
+      return message.reply(MessageFormatter.warn("Kayıt Yok", "Sunucuda henüz seviye kaydı bulunan üye bulunmuyor."));
     }
 
-    const medals = ["🥇", "🥈", "🥉", "4.", "5.", "6.", "7.", "8.", "9.", "10."];
+    const medals = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"];
     const lines = topStats.map((s, idx) => {
       const badge = medals[idx] || `${idx + 1}.`;
-      return `${badge} <@${s.userId}> : **Seviye ${s.level || 1}** (${(s.xp || 0).toLocaleString("tr-TR")} XP)`;
+      return `▫️ ${badge} <@${s.userId}> : **Seviye ${s.level || 1}** (${(s.xp || 0).toLocaleString("tr-TR")} XP)`;
     });
 
-    const embed = Embeds.base(
-      "🏆 Seviye ve Deneyim Lider Tablosu",
-      `Aşağıda sunucunun en yüksek seviyeye ulaşmış ilk 10 üyesi listelenmektedir:\n\n${lines.join("\n")}`,
-      message.guild
-    ).setFooter({ text: "Seviye Sıralaması | Public Bot Ecosystem", iconURL: message.guild.iconURL() });
+    const content = [
+      `### 🏆 ${message.guild.name} - Seviye Lider Tablosu`,
+      `Sunucunun en yüksek seviyeye ulaşmış ilk 10 üyesi:`,
+      "",
+      lines.join("\n"),
+      "",
+      `-# Aktif olarak mesaj yazarak ve seste vakit geçirerek XP kazanabilirsiniz.`
+    ].join("\n");
 
-    await message.reply({ embeds: [embed] });
+    return message.reply({
+      content,
+      embeds: [],
+      components: []
+    });
   }
 };
+

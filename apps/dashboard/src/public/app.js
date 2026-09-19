@@ -1,66 +1,61 @@
 let currentGuildId = localStorage.getItem("dash_guildId") || "default";
 
 const messageCatalog = [
-  { key: "jailPunish", cat: "mod", title: "Karantina (Jail) Cezası", default: "{user} kullanıcısı {staff} tarafından karantinaya (jail) gönderildi. Sebep: {reason} | Ceza Puanı: +{points}" },
-  { key: "jailLift", cat: "mod", title: "Karantina Kaldırma (Af)", default: "{user} kullanıcısının karantina cezası {staff} tarafından kaldırıldı." },
-  { key: "mutePunish", cat: "mod", title: "Yazı Susturma (Chat Mute)", default: "{user} kullanıcısı {staff} tarafından metin kanallarında susturuldu. Sebep: {reason}" },
-  { key: "muteLift", cat: "mod", title: "Yazı Susturma Kaldırma", default: "{user} kullanıcısının metin susturması {staff} tarafından kaldırıldı." },
-  { key: "vmutePunish", cat: "mod", title: "Ses Susturma (Voice Mute)", default: "{user} kullanıcısı {staff} tarafından ses kanallarında susturuldu. Sebep: {reason}" },
-  { key: "vmuteLift", cat: "mod", title: "Ses Susturma Kaldırma", default: "{user} kullanıcısının ses susturması {staff} tarafından kaldırıldı." },
-  { key: "banPunish", cat: "mod", title: "Yasaklama (Ban)", default: "{user} kullanıcısı {staff} tarafından sunucudan yasaklandı. Sebep: {reason}" },
-  { key: "banLift", cat: "mod", title: "Yasak Kaldırma (Unban)", default: "{user} kullanıcısının sunucu yasağı {staff} tarafından kaldırıldı." },
-  { key: "sicilClean", cat: "mod", title: "Sicil Temiz Bildirimi", default: "{user} adına kayıtlı herhangi bir ceza bulunmuyor. Toplam Ceza Puanı: 0" },
-  { key: "sicilRecord", cat: "mod", title: "Sicil Geçmişi Listesi", default: "{user} kullanıcısının sicil kaydı:\nToplam Ceza Puanı: {points}\n\n{records}" },
-  { key: "penaltyPoints", cat: "mod", title: "Ceza Puanı Sorgulama", default: "{user} adlı kullanıcının aktif ceza puanı: {points} / {limit}" },
-  { key: "snipeEmpty", cat: "mod", title: "Snipe Boş Bildirimi", default: "Bu kanalda son silinen herhangi bir mesaj bulunmuyor." },
-  { key: "snipeMessage", cat: "mod", title: "Snipe Mesaj Yanıtı", default: "Yazar: <@{authorId}>\nİçerik: {content}\nZaman: {time}" },
-
-  { key: "registerWelcome", cat: "reg", title: "Kayıt Hoş Geldin Mesajı", default: "Aramıza hoş geldin {user}! Kayıt olmak için ses teyit odalarına bağlanabilirsiniz." },
-  { key: "registerSuccess", cat: "reg", title: "Kayıt Başarılı Bildirimi", default: "{user} kullanıcısı {staff} tarafından {gender} olarak başarıyla kayıt edildi." },
-  { key: "suspiciousAlert", cat: "reg", title: "Şüpheli Hesap Karantinası", default: "{user} hesabınız 7 günden yeni olduğu için güvenlik nedeniyle şüpheli karantinasına alındı." },
-  { key: "serverStats", cat: "reg", title: "Sunucu Sayım / İstatistik", default: "Toplam Üye: {total}\nTaglı Üye: {tagged}\nSesteki Üye: {voice}\nTakviye Sayısı: {boosts}" },
-  { key: "nameChanged", cat: "reg", title: "İsim Güncelleme Mesajı", default: "{user} kullanıcısının ismi {name} olarak güncellendi ve sicile işlendi." },
-  { key: "nameHistory", cat: "reg", title: "İsim Geçmişi Listesi", default: "{user} kullanıcısının geçmiş isimleri (Toplam {count}):\n\n{records}" },
-
-  { key: "coinBalance", cat: "eco", title: "Bakiye Sorgulama", default: "{user} Bakiye Durumu:\nCüzdan: {wallet} Coin\nBanka: {bank} Coin" },
-  { key: "dailyReward", cat: "eco", title: "Günlük Ödül Toplama", default: "{user} günlük ödülünüz olan {amount} Coin hesabınıza aktarıldı!" },
-  { key: "coinTransferSuccess", cat: "eco", title: "Coin Transferi Başarılı", default: "{user} başarıyla {target} kullanıcısına {amount} Coin gönderdi." },
-  { key: "blackjackTable", cat: "eco", title: "Blackjack Oyun Başlangıcı", default: "Bahis: {bet} Coin\nSizin Kartlarınız: [ {cards} ] (Toplam: {total})\nKrupiye: [ {dealer} - ? ]" },
-  { key: "blackjackWin", cat: "eco", title: "Blackjack Kazanma", default: "Tebrikler! Krupiyeyi yenerek {amount} Coin kazandınız. Yeni Bakiye: {balance}" },
-  { key: "blackjackLose", cat: "eco", title: "Blackjack Kaybetme", default: "Krupiye kazandı. {amount} Coin kaybettiniz. Yeni Bakiye: {balance}" },
-  { key: "blackjackPush", cat: "eco", title: "Blackjack Berabere (İade)", default: "Berabere! Bahis miktarınız olan {amount} Coin iade edildi. Yeni Bakiye: {balance}" },
-  { key: "slotWin", cat: "eco", title: "Slot Kazanma", default: "[ {reel1} | {reel2} | {reel3} ]\nTebrikler! {multiplier}x katlayarak {amount} Coin kazandınız. Yeni Bakiye: {balance}" },
-  { key: "slotLose", cat: "eco", title: "Slot Kaybetme", default: "[ {reel1} | {reel2} | {reel3} ]\nBu turda kazanamadınız. {amount} Coin kaybettiniz. Yeni Bakiye: {balance}" },
-  { key: "ruletWin", cat: "eco", title: "Rulet Kazanma", default: "Top {color} ({number}) üzerine düştü!\nTebrikler! {amount} Coin kazandınız. Yeni Bakiye: {balance}" },
-  { key: "ruletLose", cat: "eco", title: "Rulet Kaybetme", default: "Top {color} ({number}) üzerine düştü!\nKaybettiniz: {amount} Coin. Yeni Bakiye: {balance}" },
-
-  { key: "customRoomCreated", cat: "util", title: "Özel Oda Oluşturuldu", default: "{user} özel ses odanız oluşturuldu: {channel}" },
-  { key: "roomLocked", cat: "util", title: "Özel Oda Kilitlendi", default: "Oda başarıyla kilitlendi. Yabancı üyeler artık odaya katılamaz." },
-  { key: "roomUnlocked", cat: "util", title: "Özel Oda Kilidi Açıldı", default: "Oda kilidi açıldı. Artık tüm üyeler katılabilir." },
-  { key: "ticketCreated", cat: "util", title: "Destek Bileti Açıldı", default: "{user} destek talebiniz açıldı: {channel}" },
-  { key: "ticketClosed", cat: "util", title: "Destek Bileti Kapatıldı", default: "Destek talebi sonlandırıldı. Kanal 5 saniye içinde silinecektir..." },
-
-  { key: "userStats", cat: "stat", title: "Kullanıcı Aktivite Özeti", default: "{user} Aktivite İstatistikleri:\nSes Aktifliği (Toplam / Hafta / Gün): {totalVoice} / {weeklyVoice} / {dailyVoice}\nMesaj Aktifliği (Toplam / Hafta / Gün): {totalMsgs} / {weeklyMsgs} / {dailyMsgs}" },
-  { key: "topStats", cat: "stat", title: "Liderlik Sıralaması", default: "{guild} En Aktifler Sıralaması:\n\n{ranking}" },
-  { key: "staffTask", cat: "stat", title: "Yetkili Görev Durumu", default: "{user} Haftalık Görev Durumu:\nSes: {voiceHours} Saat\nMesaj: {msgs} Mesaj\nKayıt: {regs} Kayıt\nToplam Puan: {points}" },
-  { key: "attendanceReport", cat: "stat", title: "Toplantı Yoklama Raporu", default: "Toplantı Raporu - Kanal: {channel}\nKatılan Yetkili: {attendedCount} | Katılmayan: {missingCount}\nKatılanlar: {attendedList}" },
-
-  { key: "guardAlert", cat: "guard", title: "Güvenlik İhlal Uyarısı", default: "Güvenlik Bildirimi: {user} yetkisiz işlem gerçekleştirdi: {reason}" },
-  { key: "warnAdd", cat: "mod", title: "Kullanıcı Uyarı Bildirimi", default: "{user} kullanıcısı {staff} tarafından uyarıldı. Sebep: {reason}" },
-  { key: "warnClean", cat: "mod", title: "Uyarı Sıfırlama Bildirimi", default: "{user} kullanıcısının tüm uyarıları {staff} tarafından temizlendi." },
-  { key: "lockChannel", cat: "mod", title: "Kanal Kilitleme", default: "Bu kanal {staff} tarafından {duration} süreyle kilitlendi." },
-  { key: "unlockChannel", cat: "mod", title: "Kanal Kilidi Açıldı", default: "Kanal kilidi açıldı. Artık sohbet edebilirsiniz." },
-  { key: "afkSet", cat: "util", title: "AFK Moduna Geçildi", default: "{user} başarıyla AFK moduna geçti. Sebep: {reason}" },
-  { key: "suggestionNew", cat: "util", title: "Yeni Öneri Bildirimi", default: "{user} tarafından yeni bir öneri sunuldu: {content}" },
-  { key: "confessionNew", cat: "util", title: "Anonim İtiraf", default: "Yeni bir anonim itiraf alındı: {content}" },
-  { key: "birthdayWish", cat: "util", title: "Doğum Günü Kutlaması", default: "Doğum günün kutlu olsun {user}! Nice mutlu senelere!" },
-  { key: "radioStart", cat: "util", title: "Radyo Yayını Başlatıldı", default: "{station} radyo istasyonu çalınıyor: {url}" },
-  { key: "depositSuccess", cat: "eco", title: "Vadeli Mevduat Yatırımı", default: "{amount} Coin tutarında mevduat hesabı açıldı. 24 saat sonra %5 getiri sağlanacaktır." },
-  { key: "companyCreated", cat: "eco", title: "Şirket Kuruldu", default: "Tebrikler! {name} adlı şirketiniz kuruldu. Saatlik pasif gelir toplayabilirsiniz." },
-  { key: "propertyBought", cat: "eco", title: "Gayrimenkul Satın Alındı", default: "Tebrikler! {type} mülkünü satın aldınız. Günlük kira geliri hesabınıza eklenecektir." },
-  { key: "lotteryWin", cat: "eco", title: "Piyango Kazandı", default: "Büyük ikramiye! {amount} Coin ödül kazandınız!" },
-  { key: "mineSuccess", cat: "eco", title: "Maden Kazısı Tamamlandı", default: "Kazıdan {mineral} cevheri ve {amount} Coin kazandınız!" },
-  { key: "fishSuccess", cat: "eco", title: "Balık Avı Başarılı", default: "Oltanıza {fish} takıldı! Değeri: {amount} Coin." }
+  { key: "jailPunish", cat: "mod", title: "Karantina (Jail) Cezası", default: "### 🛡️ Karantina (Jail) Cezası\n▫️ **Cezalandırılan:** {user}\n▫️ **Yetkili:** {staff}\n▫️ **Ceza Puanı:** `+{points}`\n▫️ **Gerekçe:** `{reason}`\n-# Ceza süresi boyunca kanallara erişim kısıtlanmıştır." },
+  { key: "jailLift", cat: "mod", title: "Karantina Kaldırma (Af)", default: "### 🟢 Karantina Cezası Kaldırıldı\n▫️ **Kullanıcı:** {user}\n▫️ **Yetkili:** {staff}\n-# Kullanıcının sunucu erişimleri ve rolleri iade edildi." },
+  { key: "mutePunish", cat: "mod", title: "Yazı Susturma (Chat Mute)", default: "### 🔇 Metin Susturma (Mute) Uygulandı\n▫️ **Kullanıcı:** {user}\n▫️ **Yetkili:** {staff}\n▫️ **Gerekçe:** `{reason}`\n-# Sohbet kanallarında mesaj gönderme yetkisi sınırlandırıldı." },
+  { key: "muteLift", cat: "mod", title: "Yazı Susturma Kaldırma", default: "### 🔊 Metin Susturması Kaldırıldı\n▫️ **Kullanıcı:** {user}\n▫️ **Yetkili:** {staff}\n-# Kullanıcı artık metin kanallarında serbestçe yazabilir." },
+  { key: "vmutePunish", cat: "mod", title: "Ses Susturma (Voice Mute)", default: "### 🎙️ Ses Susturma (VMute) Uygulandı\n▫️ **Kullanıcı:** {user}\n▫️ **Yetkili:** {staff}\n▫️ **Gerekçe:** `{reason}`\n-# Ses kanallarında konuşma yetkisi geçici olarak kapatıldı." },
+  { key: "vmuteLift", cat: "mod", title: "Ses Susturma Kaldırma", default: "### 🎙️ Ses Susturması Kaldırıldı\n▫️ **Kullanıcı:** {user}\n▫️ **Yetkili:** {staff}\n-# Kullanıcı ses kanallarında serbestçe konuşabilir." },
+  { key: "banPunish", cat: "mod", title: "Yasaklama (Ban)", default: "### ⛔ Sunucudan Yasaklandı (Ban)\n▫️ **Yasaklanan:** {user}\n▫️ **Yetkili:** {staff}\n▫️ **Gerekçe:** `{reason}`\n-# Bu işlem sunucu güvenlik kaydına işlendi ve erişim engellendi." },
+  { key: "banLift", cat: "mod", title: "Yasak Kaldırma (Unban)", default: "### 🟢 Sunucu Yasağı Kaldırıldı\n▫️ **Kullanıcı:** {user}\n▫️ **Yetkili:** {staff}\n-# Kullanıcının sunucuya tekrar katılım engeli kaldırıldı." },
+  { key: "warnAdd", cat: "mod", title: "Kullanıcı Uyarı Bildirimi", default: "### ⚠️ Kullanıcı Uyarıldı\n▫️ **Uyarılan:** {user}\n▫️ **Yetkili:** {staff}\n▫️ **Gerekçe:** `{reason}`\n-# Tekrarlayan ihlaller otomatik yaptırımlara sebep olabilir." },
+  { key: "warnClean", cat: "mod", title: "Uyarı Sıfırlama Bildirimi", default: "### 🧹 Uyarılar Temizlendi\n▫️ **Kullanıcı:** {user}\n▫️ **Yetkili:** {staff}\n-# Kullanıcının aktif tüm uyarı sicili başarıyla sıfırlandı." },
+  { key: "lockChannel", cat: "mod", title: "Kanal Kilitleme", default: "### 🔒 Kanal Kilitlendi\n▫️ **Yetkili:** {staff}\n▫️ **Kilit Süresi:** `{duration}`\n-# Bu kanala üyelerin mesaj gönderme yetkisi sınırlandırıldı." },
+  { key: "unlockChannel", cat: "mod", title: "Kanal Kilidi Açıldı", default: "### 🔓 Kanal Kilidi Açıldı\n▫️ Kanal erişimi normale döndü. Sohbet kurallarına uymaya özen gösterin." },
+  { key: "sicilClean", cat: "mod", title: "Sicil Temiz Bildirimi", default: "### 📋 Sicil Kaydı Temiz\n▫️ **Kullanıcı:** {user}\n▫️ **Toplam Ceza Puanı:** `0`\n-# Bu kullanıcı adına veritabanında aktif veya geçmiş ceza bulunmuyor." },
+  { key: "sicilRecord", cat: "mod", title: "Sicil Geçmişi Listesi", default: "### 📋 Sicil ve Ceza Geçmişi\n▫️ **Kullanıcı:** {user}\n▫️ **Toplam Ceza Puanı:** `{points}`\n\n{records}" },
+  { key: "penaltyPoints", cat: "mod", title: "Ceza Puanı Sorgulama", default: "### 📊 Aktif Ceza Puanı Durumu\n▫️ **Kullanıcı:** {user}\n▫️ **Mevcut Puan:** `{points}` / `{limit}`\n-# Eşik sınıra ulaşıldığında kademeli yaptırım uygulanır." },
+  { key: "snipeEmpty", cat: "mod", title: "Snipe Boş Bildirimi", default: "### 🗑️ Silinen Mesaj Kaydı Yok\n-# Bu kanalda yakın zamanda silinmiş bir mesaj kaydı bulunmuyor." },
+  { key: "snipeMessage", cat: "mod", title: "Snipe Mesaj Yanıtı", default: "### 🔍 Son Silinen Mesaj\n▫️ **Yazar:** <@{authorId}>\n▫️ **Silinme Zamanı:** `{time}`\n```text\n{content}\n```" },
+  { key: "registerWelcome", cat: "reg", title: "Kayıt Hoş Geldin Mesajı", default: "### ✦ Aramıza Hoş Geldin!\n▫️ Hoş geldin {user}! Kayıt olmak için ses teyit odalarına bağlanabilirsin.\n-# Kuralları okumayı unutmayın. Keyifli vakit geçirmeniz dileğiyle!" },
+  { key: "registerSuccess", cat: "reg", title: "Kayıt Başarılı Bildirimi", default: "### 👥 Kayıt İşlemi Tamamlandı\n▫️ **Kaydedilen:** {user}\n▫️ **Yetkili:** {staff}\n▫️ **Verilen Rol / Cinsiyet:** `{gender}`\n-# Sunucu kaydı başarıyla tamamlanarak roller tanımlandı." },
+  { key: "suspiciousAlert", cat: "reg", title: "Şüpheli Hesap Karantinası", default: "### 🛡️ Şüpheli Hesap Karantinası\n▫️ **Kullanıcı:** {user}\n-# Hesabınız 7 günden yeni olduğu için güvenlik gereği şüpheli karantinasına alındınız." },
+  { key: "serverStats", cat: "reg", title: "Sunucu Sayım / İstatistik", default: "### 📈 Sunucu İstatistik Özeti\n▫️ 👥 **Toplam Üye:** `{total}`\n▫️ 🏷️ **Taglı Üye:** `{tagged}`\n▫️ 🎙️ **Sesteki Üyeler:** `{voice}`\n▫️ 🚀 **Takviye (Boost):** `{boosts}`" },
+  { key: "nameChanged", cat: "reg", title: "İsim Güncelleme Mesajı", default: "### 📝 İsim Güncellendi\n▫️ **Kullanıcı:** {user}\n▫️ **Yeni İsim:** `{name}`\n-# Kullanıcının ismi güncellendi ve geçmiş isim kayıtlarına işlendi." },
+  { key: "nameHistory", cat: "reg", title: "İsim Geçmişi Listesi", default: "### 📜 Geçmiş İsim Kayıtları\n▫️ **Kullanıcı:** {user} • **Toplam:** `{count}`\n\n{records}" },
+  { key: "coinBalance", cat: "eco", title: "Bakiye Sorgulama", default: "### 💳 Bakiye ve Varlık Durumu\n▫️ **Hesap Sahibi:** {user}\n▫️ 👛 **Cüzdan:** `{wallet}` Coin\n▫️ 🏦 **Banka:** `{bank}` Coin\n-# İşlemler Ecosystem Finans ve Banka Altyapısı güvencesindedir." },
+  { key: "dailyReward", cat: "eco", title: "Günlük Ödül Toplama", default: "### 🎁 Günlük Maaş / Ödül Alındı\n▫️ **Hesap Sahibi:** {user}\n▫️ 💰 **Kazanılan:** `+{amount}` Coin\n-# Bir sonraki günlük ödülünüzü 24 saat sonra alabilirsiniz." },
+  { key: "coinTransferSuccess", cat: "eco", title: "Coin Transferi Başarılı", default: "### 💸 Para Transferi Başarılı\n▫️ **Gönderen:** {user}\n▫️ **Alıcı:** {target}\n▫️ **Transfer Tutarı:** `{amount}` Coin\n-# Bakiye transferi anında onaylandı ve hesaplara yansıtıldı." },
+  { key: "blackjackTable", cat: "eco", title: "Blackjack Oyun Başlangıcı", default: "### 🃏 21 (Blackjack) Masası\n▫️ 💰 **Bahis:** `{bet}` Coin\n▫️ 👤 **Eliniz:** `[ {cards} ]` (Toplam: **{total}**)\n▫️ 🤖 **Krupiye:** `[ {dealer} - ? ]`\n-# Hamlenizi yapmak için aşağıdaki butonları kullanın." },
+  { key: "blackjackWin", cat: "eco", title: "Blackjack Kazanma", default: "### 🎉 Blackjack - Kazandınız!\n▫️ 🏆 **Kazanılan:** `+{amount}` Coin\n▫️ 💳 **Güncel Bakiye:** `{balance}` Coin\n-# Tebrikler! Krupiyeyi yenerek bahsinizi katladınız." },
+  { key: "blackjackLose", cat: "eco", title: "Blackjack Kaybetme", default: "### 💀 Blackjack - Kaybettiniz\n▫️ 📉 **Kaybedilen:** `-{amount}` Coin\n▫️ 💳 **Güncel Bakiye:** `{balance}` Coin\n-# Krupiye bu eli kazandı. Şansınızı tekrar deneyin!" },
+  { key: "blackjackPush", cat: "eco", title: "Blackjack Berabere (İade)", default: "### ⚖️ Blackjack - Berabere (Push)\n▫️ ↩️ **İade Edilen:** `{amount}` Coin\n▫️ 💳 **Güncel Bakiye:** `{balance}` Coin\n-# Kart toplamları eşit olduğu için bahis cüzdanınıza iade edildi." },
+  { key: "slotWin", cat: "eco", title: "Slot Kazanma", default: "### 🎰 Slot Makinesi - Büyük Kazanç!\n▫️ `[ {reel1} | {reel2} | {reel3} ]`\n▫️ 🌟 **Çarpan:** `{multiplier}x` • **Kazanılan:** `+{amount}` Coin\n▫️ 💳 **Güncel Cüzdan:** `{balance}` Coin" },
+  { key: "slotLose", cat: "eco", title: "Slot Kaybetme", default: "### 🎰 Slot Makinesi - Kazanamadınız\n▫️ `[ {reel1} | {reel2} | {reel3} ]`\n▫️ 📉 **Kaybedilen:** `-{amount}` Coin\n▫️ 💳 **Güncel Cüzdan:** `{balance}` Coin" },
+  { key: "ruletWin", cat: "eco", title: "Rulet Kazanma", default: "### 🎡 Rulet - Kazandınız!\n▫️ 🎯 **Gelen Sonuç:** `{color}` (`{number}`)\n▫️ 💰 **Kazanılan:** `+{amount}` Coin\n▫️ 💳 **Güncel Bakiye:** `{balance}` Coin" },
+  { key: "ruletLose", cat: "eco", title: "Rulet Kaybetme", default: "### 🎡 Rulet - Kaybettiniz\n▫️ 🎯 **Gelen Sonuç:** `{color}` (`{number}`)\n▫️ 📉 **Kaybedilen:** `-{amount}` Coin\n▫️ 💳 **Güncel Bakiye:** `{balance}` Coin" },
+  { key: "depositSuccess", cat: "eco", title: "Vadeli Mevduat Yatırımı", default: "### 🏦 Vadeli Mevduat Hesabı Açıldı\n▫️ 💰 **Yatırılan Tutar:** `{amount}` Coin\n▫️ 📈 **Vade Getirisi:** `%5 Faiz / 24 Saat`\n-# Vade süresi dolduğunda tutar banka hesabınıza aktarılacaktır." },
+  { key: "companyCreated", cat: "eco", title: "Şirket Kuruldu", default: "### 🏢 Şirket Kuruluşu Onaylandı\n▫️ 🏷️ **Şirket Adı:** `{name}`\n-# Şirketiniz tescillendi. Düzenli pasif gelir toplayabilirsiniz." },
+  { key: "propertyBought", cat: "eco", title: "Gayrimenkul Satın Alındı", default: "### 🏠 Gayrimenkul Yatırımı Yapıldı\n▫️ 🔑 **Satın Alınan Mülk:** `{type}`\n-# Satın aldığınız mülkten günlük kira geliri hesabınıza eklenecektir." },
+  { key: "lotteryWin", cat: "eco", title: "Piyango Kazandı", default: "### 🎟️ Piyango Büyük İkramiye!\n▫️ 🌟 **Kazanılan:** `+{amount}` Coin\n-# Şanslı bilet numaranız çekilişte kazandı!" },
+  { key: "mineSuccess", cat: "eco", title: "Maden Kazısı Tamamlandı", default: "### ⛏️ Maden Kazısı Başarılı\n▫️ 💎 **Cevher:** `{mineral}`\n▫️ 💰 **Kazanılan Değer:** `+{amount}` Coin" },
+  { key: "fishSuccess", cat: "eco", title: "Balık Avı Başarılı", default: "### 🎣 Balık Avı Başarılı\n▫️ 🐟 **Yakalanan:** `{fish}`\n▫️ 💰 **Satış Değeri:** `+{amount}` Coin" },
+  { key: "customRoomCreated", cat: "util", title: "Özel Oda Oluşturuldu", default: "### 🔊 Özel Ses Odası Oluşturuldu\n▫️ 👤 **Oda Sahibi:** {user}\n▫️ 🚪 **Kanalınız:** {channel}\n-# Aşağıdaki panel butonlarıyla odanızı yönetebilirsiniz." },
+  { key: "roomLocked", cat: "util", title: "Özel Oda Kilitlendi", default: "### 🔒 Oda Kilitlendi\n▫️ Özel ses odanız kilitlendi. Yabancı üyeler odaya katılamaz." },
+  { key: "roomUnlocked", cat: "util", title: "Özel Oda Kilidi Açıldı", default: "### 🔓 Oda Kilidi Açıldı\n▫️ Özel ses odanızın kilidi açıldı. Artık tüm üyeler odaya katılabilir." },
+  { key: "ticketCreated", cat: "util", title: "Destek Bileti Açıldı", default: "### 🎫 Destek Talebi Açıldı\n▫️ 👤 **Talep Sahibi:** {user}\n▫️ 📩 **Destek Kanalı:** {channel}\n-# Yetkililerimiz en kısa sürede talebinizi yanıtlayacaktır." },
+  { key: "ticketClosed", cat: "util", title: "Destek Bileti Kapatıldı", default: "### 🔒 Destek Talebi Sonlandırıldı\n▫️ Destek talebi yetkili tarafından sonlandırıldı. Kanal 5 saniye içinde silinecektir..." },
+  { key: "afkSet", cat: "util", title: "AFK Moduna Geçildi", default: "### 💤 AFK Moduna Geçildi\n▫️ **Kullanıcı:** {user}\n▫️ **Durum / Sebep:** `{reason}`\n-# Kanala tekrar mesaj yazdığınızda AFK modunuz otomatik kaldırılır." },
+  { key: "suggestionNew", cat: "util", title: "Yeni Öneri Bildirimi", default: "### 💡 Yeni Sunucu Önerisi\n▫️ **Öneren:** {user}\n```text\n{content}\n```\n-# Öneriyi oylamak için aşağıdaki butonları kullanabilirsiniz." },
+  { key: "confessionNew", cat: "util", title: "Anonim İtiraf", default: "### 🎭 Anonim İtiraf\n```text\n{content}\n```\n-# Bu itiraf tamamen anonim olarak iletilmiştir." },
+  { key: "birthdayWish", cat: "util", title: "Doğum Günü Kutlaması", default: "### 🎂 Doğum Günün Kutlu Olsun!\n▫️ Sevgili {user}, yeni yaşın sağlık, mutluluk ve başarı getirsin! Nice mutlu senelere! 🎉" },
+  { key: "radioStart", cat: "util", title: "Radyo Yayını Başlatıldı", default: "### 📻 Radyo Yayını Başlatıldı\n▫️ 🎵 **İstasyon:** `{station}`\n▫️ 🔗 **Yayın Akışı:** `{url}`\n-# Radyo ses odasında canlı olarak çalınıyor." },
+  { key: "userStats", cat: "stat", title: "Kullanıcı Aktivite Özeti", default: "### 📊 Kullanıcı Aktivite İstatistikleri\n▫️ **Kullanıcı:** {user}\n▫️ 🎙️ **Ses Aktifliği (Toplam / Hafta / Gün):** `{totalVoice}` • `{weeklyVoice}` • `{dailyVoice}`\n▫️ 💬 **Mesaj Aktifliği (Toplam / Hafta / Gün):** `{totalMsgs}` • `{weeklyMsgs}` • `{dailyMsgs}`" },
+  { key: "topStats", cat: "stat", title: "Liderlik Sıralaması", default: "### 🏆 {guild} En Aktifler Liderlik Tablosu\n{ranking}\n-# Sıralama haftalık ve genel aktivite verilerine göre hesaplanmaktadır." },
+  { key: "staffTask", cat: "stat", title: "Yetkili Görev Durumu", default: "### 📋 Yetkili Haftalık Görev Durumu\n▫️ **Yetkili:** {user}\n▫️ 🎙️ **Ses Süresi:** `{voiceHours}` Saat\n▫️ 💬 **Mesaj Sayısı:** `{msgs}` Mesaj\n▫️ 👥 **Kayıt Sayısı:** `{regs}` Kayıt\n▫️ ⭐ **Toplam Puan:** `{points}` Puan" },
+  { key: "attendanceReport", cat: "stat", title: "Toplantı Yoklama Raporu", default: "### 📢 Toplantı Yoklama Raporu\n▫️ 🔊 **Kanal:** {channel}\n▫️ 🟢 **Katılan:** `{attendedCount}` • 🔴 **Katılmayan:** `{missingCount}`\n▫️ 👥 **Katılanlar:** {attendedList}" },
+  { key: "guardAlert", cat: "guard", title: "Güvenlik İhlal Uyarısı", default: "### 🛡️ Güvenlik Bildirimi (Guard)\n▫️ 🚨 **Kullanıcı:** {user}\n▫️ ⚠️ **İhlal Nedeni:** `{reason}`\n-# Guard koruma kalkanı devreye girdi ve işlem geri alındı." }
 ];
 
 const commandsCatalog = [
@@ -131,13 +126,22 @@ const commandsCatalog = [
   { name: "me", cat: "stat", catTitle: "İstatistik" },
   { name: "ses", cat: "stat", catTitle: "İstatistik" },
   { name: "resetstat", cat: "stat", catTitle: "İstatistik" },
+  { name: "bilet", cat: "stat", catTitle: "İstatistik" },
+  { name: "tema", cat: "stat", catTitle: "İstatistik" },
 
   { name: "coin", cat: "eco", catTitle: "Ekonomi" },
+  { name: "coinver", cat: "eco", catTitle: "Ekonomi" },
   { name: "gunluk", cat: "eco", catTitle: "Ekonomi" },
   { name: "calis", cat: "eco", catTitle: "Ekonomi" },
   { name: "gonder", cat: "eco", catTitle: "Ekonomi" },
   { name: "banka", cat: "eco", catTitle: "Ekonomi" },
   { name: "market", cat: "eco", catTitle: "Ekonomi" },
+  { name: "itemmarket", cat: "eco", catTitle: "Ekonomi" },
+  { name: "kullan", cat: "eco", catTitle: "Ekonomi" },
+  { name: "esyagonder", cat: "eco", catTitle: "Ekonomi" },
+  { name: "esyasat", cat: "eco", catTitle: "Ekonomi" },
+  { name: "klan", cat: "eco", catTitle: "Ekonomi" },
+  { name: "klantop", cat: "eco", catTitle: "Ekonomi" },
   { name: "al", cat: "eco", catTitle: "Ekonomi" },
   { name: "sat", cat: "eco", catTitle: "Ekonomi" },
   { name: "envanter", cat: "eco", catTitle: "Ekonomi" },
@@ -214,7 +218,10 @@ document.querySelectorAll(".nav-btn").forEach((button) => {
     if (targetPane) targetPane.classList.add("active");
 
     if (target === "tab-overview") loadOverview();
-    if (target === "tab-bot-fleet") loadBotCredentials();
+    if (target === "tab-bot-fleet") {
+      loadBotCredentials();
+      loadBotOwners();
+    }
     if (target === "tab-config") loadConfig();
     if (target === "tab-commands") loadCommands();
     if (target === "tab-messages") loadMessages();
@@ -231,6 +238,11 @@ document.querySelectorAll(".nav-btn").forEach((button) => {
     if (target === "tab-staff-matrix") loadStaffMatrix();
     if (target === "tab-tickets") loadTickets();
     if (target === "tab-economy") loadEconomy();
+    if (target === "tab-battlepass") loadBattlePassData();
+    if (target === "tab-clans") loadClansData();
+    if (target === "tab-badges-titles") loadBadgesData();
+    if (target === "tab-pets") loadPetsData();
+    if (target === "tab-casino") loadCasinoData();
     if (target === "tab-backups") loadBackups();
     if (target === "tab-invites") loadInvites();
     if (target === "tab-staff-tasks") loadStaffTasks();
@@ -239,6 +251,10 @@ document.querySelectorAll(".nav-btn").forEach((button) => {
       startConsoleAutoRefresh();
     } else {
       stopConsoleAutoRefresh();
+    }
+    if (target === "tab-git-update") {
+      loadGitStatus();
+      loadSystemBackups();
     }
   });
 });
@@ -688,6 +704,7 @@ async function loadEconomy() {
     if (gDisp) gDisp.textContent = `${(data.goldPrice || 2500).toLocaleString("tr-TR")} Coin`;
     if (gInput) gInput.value = data.goldPrice || 2500;
     if (bInput) bInput.value = data.btcPrice || 65000;
+    loadMarketItems();
   } catch (error) {
     showToast("Ekonomi verileri yüklenemedi.", "danger");
   }
@@ -712,6 +729,107 @@ window.saveEconomyRates = async function() {
   } catch (error) {
     showToast("Bağlantı hatası.", "danger");
   }
+};
+
+let currentMarketItems = [];
+
+async function loadMarketItems() {
+  try {
+    const res = await fetch(`/api/economy/market-items/${currentGuildId}`);
+    const data = await res.json();
+    if (!data || !Array.isArray(data.items)) return;
+
+    currentMarketItems = data.items;
+    const discInput = document.getElementById("eco-discount-input");
+    if (discInput) discInput.value = data.discountPercent || 0;
+
+    const tbody = document.getElementById("market-items-tbody");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+
+    data.items.forEach((item) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 20px;">${item.emoji}</span>
+            <div>
+              <strong>${item.name}</strong>
+              <div class="text-sub" style="font-size: 11px;">Kod: <code>${item.itemKey}</code> : ${item.description}</div>
+            </div>
+          </div>
+        </td>
+        <td><span class="badge badge-secondary">${item.type}</span></td>
+        <td><code>${item.defaultPrice.toLocaleString("tr-TR")} Coin</code></td>
+        <td style="width: 170px;">
+          <input type="number" class="market-item-price-input" data-key="${item.itemKey}" value="${item.currentPrice}" min="1" style="width: 130px; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-color, #333); background: rgba(0,0,0,0.2); color: #fff;">
+        </td>
+        <td style="width: 130px;">
+          <label class="switch-label" style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+            <input type="checkbox" class="market-item-active-chk" data-key="${item.itemKey}" ${!item.disabled ? "checked" : ""}>
+            <span style="font-size: 12px;">${!item.disabled ? "Satışta" : "Kapalı"}</span>
+          </label>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch (error) {
+    showToast("Eşya pazar listesi yüklenemedi.", "danger");
+  }
+}
+
+window.loadMarketItems = loadMarketItems;
+
+window.saveMarketItemPrices = async function() {
+  const priceInputs = document.querySelectorAll(".market-item-price-input");
+  const activeCheckboxes = document.querySelectorAll(".market-item-active-chk");
+  const discountPercent = Number(document.getElementById("eco-discount-input")?.value || 0);
+
+  const itemPrices = {};
+  priceInputs.forEach((input) => {
+    const key = input.getAttribute("data-key");
+    const val = Number(input.value);
+    if (key && !isNaN(val) && val > 0) {
+      itemPrices[key] = val;
+    }
+  });
+
+  const disabledItems = [];
+  activeCheckboxes.forEach((chk) => {
+    const key = chk.getAttribute("data-key");
+    if (key && !chk.checked) {
+      disabledItems.push(key);
+    }
+  });
+
+  try {
+    const res = await fetch(`/api/economy/market-items/${currentGuildId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ itemPrices, disabledItems, discountPercent })
+    });
+    if (res.ok) {
+      loadMarketItems();
+      showToast("Eşya fiyatları ve market ayarları başarıyla kaydedildi.");
+    } else {
+      showToast("Ayarlar kaydedilemedi.", "danger");
+    }
+  } catch (error) {
+    showToast("Bağlantı hatası.", "danger");
+  }
+};
+
+window.resetDefaultPrices = function() {
+  if (!Array.isArray(currentMarketItems)) return;
+  const priceInputs = document.querySelectorAll(".market-item-price-input");
+  priceInputs.forEach((input) => {
+    const key = input.getAttribute("data-key");
+    const item = currentMarketItems.find((i) => i.itemKey === key);
+    if (item) input.value = item.defaultPrice;
+  });
+  const disc = document.getElementById("eco-discount-input");
+  if (disc) disc.value = 0;
+  showToast("Fiyatlar varsayılan değerlere döndürüldü. Kaydetmek için 'Fiyatları Kaydet' butonuna basın.");
 };
 
 async function loadBackups() {
@@ -862,15 +980,114 @@ window.clearConsoleDisplay = function() {
   if (box) box.textContent = "Konsol ekranı temizlendi.";
 };
 
-async function loadChannelMessages() {
+function escapeHtml(str) {
+  if (!str) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+let currentLiveMessages = [];
+let currentLiveFilter = "all";
+let liveAutoRefreshTimer = null;
+
+function renderLiveMessages() {
+  const box = document.getElementById("live-chat-stream-box");
+  if (!box) return;
+
+  const filtered = currentLiveMessages.filter((m) => {
+    if (currentLiveFilter === "deleted") return m.isDeleted;
+    if (currentLiveFilter === "edited") return m.isEdited && !m.isDeleted;
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    box.innerHTML = '<p class="text-muted" style="padding: 8px;">Seçili filtreye uygun mesaj bulunamadı.</p>';
+    return;
+  }
+
+  box.innerHTML = filtered.map((m) => {
+    const time = m.timestamp ? new Date(m.timestamp).toLocaleTimeString("tr-TR") : "";
+    const delTime = m.deletedAt ? new Date(m.deletedAt).toLocaleTimeString("tr-TR") : "";
+    const editTime = m.editedAt ? new Date(m.editedAt).toLocaleTimeString("tr-TR") : "";
+
+    if (m.isDeleted) {
+      return `<div style="padding: 8px 10px; margin-bottom: 6px; border-left: 3px solid #ff4444; background: rgba(255, 68, 68, 0.08); border-radius: 4px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <strong style="color: #ff6b6b;">${escapeHtml(m.author)}</strong>
+            <span class="badge badge-danger" style="font-size: 10px; margin-left: 6px; padding: 2px 6px;">SİLİNDİ</span>
+            <span style="font-size: 11px; opacity: 0.6; margin-left: 4px;">(${time})</span>
+          </div>
+          ${delTime ? `<span style="font-size: 11px; color: #ff8888;">Silindi: ${delTime}</span>` : ""}
+        </div>
+        <div style="margin-top: 4px; color: #ff9999; text-decoration: line-through;">${escapeHtml(m.content || "[İçerik boş]")}</div>
+      </div>`;
+    }
+
+    if (m.isEdited) {
+      return `<div style="padding: 8px 10px; margin-bottom: 6px; border-left: 3px solid #ffaa00; background: rgba(255, 170, 0, 0.08); border-radius: 4px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <strong style="color: #ffbb33;">${escapeHtml(m.author)}</strong>
+            <span class="badge badge-warning" style="font-size: 10px; margin-left: 6px; padding: 2px 6px;">DÜZENLENDİ</span>
+            <span style="font-size: 11px; opacity: 0.6; margin-left: 4px;">(${time})</span>
+          </div>
+          ${editTime ? `<span style="font-size: 11px; color: #ffbb33;">Düzenlendi: ${editTime}</span>` : ""}
+        </div>
+        ${m.previousContent ? `<div style="font-size: 12px; color: #aaa; margin-top: 3px;"><s>Eski: ${escapeHtml(m.previousContent)}</s></div>` : ""}
+        <div style="margin-top: 3px; color: #fff;"><span style="color: #ffcc00; font-size: 12px;">Yeni: </span>${escapeHtml(m.content || "[İçerik boş]")}</div>
+      </div>`;
+    }
+
+    return `<div style="padding: 6px 10px; margin-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+      <strong style="color: var(--primary);">${escapeHtml(m.author)}</strong>
+      <span style="font-size: 11px; opacity: 0.6; margin-left: 4px;">(${time})</span>:
+      <span style="margin-left: 6px;">${escapeHtml(m.content || "")}</span>
+    </div>`;
+  }).join("");
+
+  box.scrollTop = box.scrollHeight;
+}
+
+window.filterLiveMessages = function(filter) {
+  currentLiveFilter = filter;
+  const btnAll = document.getElementById("btn-msg-filter-all");
+  const btnEdited = document.getElementById("btn-msg-filter-edited");
+  const btnDeleted = document.getElementById("btn-msg-filter-deleted");
+  if (btnAll) btnAll.style.borderColor = filter === "all" ? "var(--primary)" : "var(--border-color)";
+  if (btnEdited) btnEdited.style.borderColor = filter === "edited" ? "#ffaa00" : "var(--border-color)";
+  if (btnDeleted) btnDeleted.style.borderColor = filter === "deleted" ? "#ff4444" : "var(--border-color)";
+  renderLiveMessages();
+};
+
+window.toggleLiveAutoRefresh = function(enabled) {
+  if (liveAutoRefreshTimer) {
+    clearInterval(liveAutoRefreshTimer);
+    liveAutoRefreshTimer = null;
+  }
+  if (enabled) {
+    loadChannelMessages(true);
+    liveAutoRefreshTimer = setInterval(() => {
+      loadChannelMessages(true);
+    }, 3000);
+  }
+};
+
+async function loadChannelMessages(silent = false) {
   const channelId = document.getElementById("live-channel-id")?.value.trim();
   if (!channelId) {
-    showToast("Lütfen geçerli bir kanal ID girin.", "danger");
+    if (!silent) showToast("Lütfen geçerli bir kanal ID girin.", "danger");
     return;
   }
 
   const box = document.getElementById("live-chat-stream-box");
-  if (box) box.innerHTML = '<p class="text-muted">Mesajlar alınıyor...</p>';
+  if (box && !silent && currentLiveMessages.length === 0) {
+    box.innerHTML = '<p class="text-muted">Mesajlar alınıyor...</p>';
+  }
 
   try {
     const res = await fetch(`/api/chat/messages/${channelId}`);
@@ -878,20 +1095,18 @@ async function loadChannelMessages() {
     if (!box) return;
 
     if (!Array.isArray(msgs) || msgs.length === 0) {
-      box.innerHTML = '<p class="text-muted">Bu kanalda mesaj bulunamadı veya bota yetki verilmedi.</p>';
+      if (!silent) {
+        box.innerHTML = '<p class="text-muted">Bu kanalda mesaj bulunamadı veya bota yetki verilmedi.</p>';
+      }
       return;
     }
 
-    box.innerHTML = msgs.map((m) => {
-      const time = m.timestamp ? new Date(m.timestamp).toLocaleTimeString("tr-TR") : "";
-      return `<div style="padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.06);">
-        <strong style="color: var(--primary);">${m.author}</strong> <span style="font-size: 11px; opacity: 0.6;">(${time})</span>:
-        <span style="margin-left: 6px;">${m.content}</span>
-      </div>`;
-    }).join("");
-    box.scrollTop = box.scrollHeight;
+    currentLiveMessages = msgs;
+    renderLiveMessages();
   } catch (error) {
-    if (box) box.innerHTML = '<p class="text-muted">Mesajlar alınırken bağlantı hatası oluştu.</p>';
+    if (!silent && box) {
+      box.innerHTML = '<p class="text-muted">Mesajlar alınırken bağlantı hatası oluştu.</p>';
+    }
   }
 }
 
@@ -1026,9 +1241,21 @@ async function loadConfig() {
     }
 
     if (cfg.databaseProvider) {
-      document.getElementById("cfg-db-provider").value = cfg.databaseProvider.provider || "MONGODB";
-      document.getElementById("cfg-db-uri").value = cfg.databaseProvider.connectionUri || "";
+      const provEl = document.getElementById("cfg-db-provider");
+      const uriEl = document.getElementById("cfg-db-uri");
+      if (provEl) provEl.value = cfg.databaseProvider.provider || "POSTGRESQL";
+      if (uriEl) uriEl.value = cfg.databaseProvider.connectionUri || "";
     }
+    fetch("/api/database/status")
+      .then((r) => r.json())
+      .then((st) => {
+        const badge = document.getElementById("db-active-badge");
+        if (badge) {
+          badge.textContent = `Aktif: ${st.provider || "MONGODB"} (${st.connected ? "Bağlı" : "Bağlantı Yok"})`;
+          badge.className = `badge ${st.connected ? "badge-success" : "badge-danger"}`;
+        }
+      })
+      .catch(() => {});
 
     if (cfg.penaltyThresholds) {
       const muteEl = document.getElementById("cfg-thresh-mute");
@@ -1194,13 +1421,14 @@ function renderCommandsTable() {
   });
 
   if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" class="text-muted">Aramanıza uygun komut bulunamadı.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" class="text-muted">Aramanıza uygun komut bulunamadı.</td></tr>';
     return;
   }
 
   filtered.forEach((cmd) => {
     const saved = loadedCommandsConfig[cmd.name] || {};
     const alias = saved.customName || cmd.name;
+    const customAliases = Array.isArray(saved.customAliases) ? saved.customAliases.join(", ") : (saved.customAliases || "");
     const mode = saved.mode || "BOTH";
     const isEnabled = mode !== "DISABLED";
 
@@ -1209,7 +1437,8 @@ function renderCommandsTable() {
     tr.innerHTML = `
       <td><code>${cmd.name}</code></td>
       <td><span class="status-pill status-pill-active">${cmd.catTitle}</span></td>
-      <td><input type="text" class="table-input" value="${alias}" data-field="alias"></td>
+      <td><input type="text" class="table-input" value="${alias}" data-field="alias" placeholder="${cmd.name}"></td>
+      <td><input type="text" class="table-input" value="${customAliases}" data-field="customAliases" placeholder="örn: y, banla, sutla"></td>
       <td>
         <select class="table-select" data-field="mode" onchange="updateCommandStatus(this)">
           <option value="BOTH" ${mode === "BOTH" ? "selected" : ""}>Hem Prefix Hem Slash</option>
@@ -1266,10 +1495,13 @@ document.getElementById("btn-save-commands")?.addEventListener("click", async ()
     const cmdName = row.getAttribute("data-cmd");
     if (!cmdName) return;
     const customName = row.querySelector('[data-field="alias"]')?.value.trim() || cmdName;
+    const aliasesRaw = row.querySelector('[data-field="customAliases"]')?.value || "";
+    const customAliases = aliasesRaw.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
     const mode = row.querySelector('[data-field="mode"]')?.value || "BOTH";
     loadedCommandsConfig[cmdName] = {
       enabled: mode !== "DISABLED",
       customName,
+      customAliases,
       mode
     };
   });
@@ -1323,7 +1555,7 @@ function renderMessageCards() {
 
   filtered.forEach((tpl) => {
     const saved = loadedMessagesConfig[tpl.key] || {};
-    const format = saved.format || "EMBED";
+    const format = saved.format || "COMPONENTS_V2";
     const content = saved.content !== undefined ? saved.content : tpl.default;
 
     const card = document.createElement("div");
@@ -1339,8 +1571,8 @@ function renderMessageCards() {
         <div class="form-group">
           <label>Görünüm Biçimi</label>
           <select id="msg-${tpl.key}-format" class="select-styled msg-format-input">
+            <option value="COMPONENTS_V2" ${format === "COMPONENTS_V2" ? "selected" : ""}>Components V2 (Kenar Çubuğu Yok - Modern)</option>
             <option value="EMBED" ${format === "EMBED" ? "selected" : ""}>Klasik Embed</option>
-            <option value="COMPONENTS_V2" ${format === "COMPONENTS_V2" ? "selected" : ""}>Components V2 (Modern Konteyner)</option>
             <option value="PLAIN" ${format === "PLAIN" ? "selected" : ""}>Düz Metin (Plain)</option>
           </select>
         </div>
@@ -1608,6 +1840,10 @@ async function loadBotCredentials() {
         </div>
         <div class="form-grid-2 mt-3">
           <div class="form-group">
+            <label>Bot Görünen / Discord İsmi</label>
+            <input type="text" id="bc-name-${bot.serviceKey}" value="${bot.name || ""}" placeholder="Örn: BFE Moderasyon">
+          </div>
+          <div class="form-group">
             <label>Client ID (Uygulama ID)</label>
             <input type="text" id="bc-client-${bot.serviceKey}" value="${bot.clientId || ""}" placeholder="Client ID">
           </div>
@@ -1624,13 +1860,14 @@ async function loadBotCredentials() {
               <option value="STREAMING" ${bot.activityType === "STREAMING" ? "selected" : ""}>Yayında (Streaming)</option>
             </select>
           </div>
-          <div class="form-group">
+          <div class="form-group" style="grid-column: span 2;">
             <label>Durum Metni (Presence Text)</label>
             <input type="text" id="bc-acttext-${bot.serviceKey}" value="${bot.activityText || "Public Bot Ecosystem"}" placeholder="Örn: Public Bot Ecosystem">
           </div>
         </div>
-        <div class="form-actions mt-3">
-          <button class="btn btn-primary btn-sm" onclick="saveBotCredential('${bot.serviceKey}', '${bot.name}')">Bot Bilgilerini Kaydet</button>
+        <div class="form-actions mt-3" style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button class="btn btn-primary btn-sm" onclick="saveBotCredential('${bot.serviceKey}')">Bot Bilgilerini Kaydet</button>
+          <button class="btn btn-secondary btn-sm" onclick="changeBotDiscordName('${bot.serviceKey}')">🤖 Discord İsmini Güncelle</button>
         </div>
       `;
       container.appendChild(card);
@@ -1640,7 +1877,8 @@ async function loadBotCredentials() {
   }
 }
 
-window.saveBotCredential = async function(serviceKey, botName) {
+window.saveBotCredential = async function(serviceKey) {
+  const name = document.getElementById(`bc-name-${serviceKey}`)?.value.trim() || "";
   const clientId = document.getElementById(`bc-client-${serviceKey}`)?.value.trim() || "";
   const token = document.getElementById(`bc-token-${serviceKey}`)?.value.trim() || "";
   const activityType = document.getElementById(`bc-acttype-${serviceKey}`)?.value || "PLAYING";
@@ -1652,22 +1890,58 @@ window.saveBotCredential = async function(serviceKey, botName) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         serviceKey,
-        name: botName,
+        name,
         clientId,
         token,
         activityType,
         activityText,
         status: "ONLINE",
-        enabled: true
+        enabled: true,
+        guildId: currentGuildId || ""
       })
     });
     if (res.ok) {
-      showToast(`${botName} ayarları başarıyla veritabanına kaydedildi.`);
+      const data = await res.json();
+      let msg = `${name || serviceKey} ayarları başarıyla kaydedildi.`;
+      if (data.nameSync?.message) {
+        msg += ` (${data.nameSync.message})`;
+      }
+      showToast(msg);
       loadBotCredentials();
     } else {
       showToast("Bot ayarları kaydedilemedi.", "danger");
     }
   } catch (error) {
+    showToast("Bağlantı hatası.", "danger");
+  }
+};
+
+window.changeBotDiscordName = async function(serviceKey) {
+  const newName = document.getElementById(`bc-name-${serviceKey}`)?.value.trim() || "";
+  if (!newName) {
+    showToast("Lütfen geçerli bir bot ismi girin.", "warning");
+    return;
+  }
+
+  showToast(`${serviceKey} botunun Discord ismi güncelleniyor...`);
+  try {
+    const res = await fetch("/api/bot-credentials/update-name", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        serviceKey,
+        newName,
+        guildId: currentGuildId || ""
+      })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast(data.message || "Bot ismi başarıyla güncellendi!");
+      loadBotCredentials();
+    } else {
+      showToast(data.error || "İsim güncellenemedi.", "danger");
+    }
+  } catch (err) {
     showToast("Bağlantı hatası.", "danger");
   }
 };
@@ -1763,5 +2037,780 @@ setInterval(() => {
     fetchLiveMetrics();
   }
 }, 3000);
+
+const btnDbTest = document.getElementById("btn-db-test");
+if (btnDbTest) {
+  btnDbTest.addEventListener("click", async () => {
+    const provider = document.getElementById("cfg-db-provider")?.value || "MONGODB";
+    const uri = document.getElementById("cfg-db-uri")?.value?.trim();
+    const feedback = document.getElementById("db-feedback-box");
+
+    if (!uri) {
+      showToast("Lütfen bağlantı adresi (URI) girin.", "warn");
+      return;
+    }
+
+    btnDbTest.disabled = true;
+    btnDbTest.textContent = "Bağlanıyor...";
+    if (feedback) feedback.style.display = "none";
+
+    try {
+      const res = await fetch("/api/database/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider, uri })
+      });
+      const data = await res.json();
+      btnDbTest.disabled = false;
+      btnDbTest.textContent = "🔌 Bağlantıyı Test Et";
+
+      if (data.success) {
+        showToast(`Bağlantı başarılı! (${data.latencyMs}ms)`, "success");
+        if (feedback) {
+          feedback.className = "alert-box alert-success mt-3";
+          feedback.style.display = "block";
+          feedback.innerHTML = `<strong>Bağlantı Başarılı:</strong> ${data.version || provider} motoruna erişim sağlandı. Gecikme: ${data.latencyMs}ms`;
+        }
+      } else {
+        showToast("Bağlantı başarısız oldu.", "danger");
+        if (feedback) {
+          feedback.className = "alert-box alert-danger mt-3";
+          feedback.style.display = "block";
+          feedback.innerHTML = `<strong>Bağlantı Hatası:</strong> ${data.error || "Sunucuya bağlanılamadı"}`;
+        }
+      }
+    } catch (err) {
+      btnDbTest.disabled = false;
+      btnDbTest.textContent = "🔌 Bağlantıyı Test Et";
+      showToast("İstek hatası: " + err.message, "danger");
+    }
+  });
+}
+
+const btnDbSwitch = document.getElementById("btn-db-switch");
+if (btnDbSwitch) {
+  btnDbSwitch.addEventListener("click", async () => {
+    const provider = document.getElementById("cfg-db-provider")?.value || "MONGODB";
+    const uri = document.getElementById("cfg-db-uri")?.value?.trim();
+    const migrateData = Boolean(document.getElementById("cfg-db-migrate")?.checked);
+    const feedback = document.getElementById("db-feedback-box");
+
+    if (!uri) {
+      showToast("Lütfen bağlantı adresi (URI) girin.", "warn");
+      return;
+    }
+
+    const confirmMsg = `${provider} motoruna geçiş yapmak üzeresiniz. ${migrateData ? "Mevcut veriler otomatik aktarılacak." : "Veriler aktarılmayacak."} Onaylıyor musunuz?`;
+    if (!confirm(confirmMsg)) return;
+
+    btnDbSwitch.disabled = true;
+    btnDbSwitch.textContent = "Geçiş Yapılıyor...";
+    if (feedback) {
+      feedback.className = "alert-box alert-info mt-3";
+      feedback.style.display = "block";
+      feedback.innerHTML = "<strong>İşlem Sürüyor:</strong> Veritabanı motoru değiştiriliyor ve tablolar hazırlanıyor...";
+    }
+
+    try {
+      const res = await fetch("/api/database/switch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider, uri, migrateData })
+      });
+      const data = await res.json();
+      btnDbSwitch.disabled = false;
+      btnDbSwitch.textContent = "⚡ Tek Tıkla Geçiş Yap";
+
+      if (data.success) {
+        showToast("Veritabanı geçişi başarıyla tamamlandı!", "success");
+        const badge = document.getElementById("db-active-badge");
+        if (badge) {
+          badge.textContent = `Aktif: ${data.provider} (Bağlı)`;
+          badge.className = "badge badge-success";
+        }
+        if (feedback) {
+          feedback.className = "alert-box alert-success mt-3";
+          const migInfo = data.migration ? `<br>Aktarılan Toplam Kayıt: <strong>${data.migration.totalRecords || 0}</strong>` : "";
+          feedback.innerHTML = `<strong>Tebrikler!</strong> Aktif veritabanı <strong>${data.provider}</strong> olarak güncellendi.${migInfo}`;
+        }
+        loadOverview();
+      } else {
+        showToast("Geçiş başarısız: " + (data.error || "Bilinmeyen hata"), "danger");
+        if (feedback) {
+          feedback.className = "alert-box alert-danger mt-3";
+          feedback.innerHTML = `<strong>Geçiş Başarısız:</strong> ${data.error || "İşlem tamamlanamadı."}`;
+        }
+      }
+    } catch (err) {
+      btnDbSwitch.disabled = false;
+      btnDbSwitch.textContent = "⚡ Tek Tıkla Geçiş Yap";
+      showToast("İstek hatası: " + err.message, "danger");
+    }
+  });
+}
+
+window.loadGitStatus = async function() {
+  try {
+    const res = await fetch("/api/system/git-status");
+    const data = await res.json();
+    if (data.success) {
+      const branchEl = document.getElementById("git-branch");
+      const commitEl = document.getElementById("git-commit");
+      const behindEl = document.getElementById("git-behind");
+      const localEl = document.getElementById("git-local-changes");
+
+      if (branchEl) branchEl.innerText = data.branch;
+      if (commitEl) commitEl.innerText = `${data.shortHash} : ${data.commitMessage}`;
+      if (behindEl) {
+        behindEl.innerText = data.commitsBehind > 0 ? `${data.commitsBehind} commit geride (Yeni güncelleme mevcut)` : "Güncel (0 commit)";
+        behindEl.style.color = data.commitsBehind > 0 ? "var(--warning)" : "var(--success)";
+      }
+      if (localEl) {
+        localEl.innerText = data.hasLocalChanges ? `${data.uncommittedCount} dosya değiştirildi (Güvenle korunacak)` : "Temiz";
+      }
+    }
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+window.triggerGitUpdate = async function() {
+  const confirmed = confirm("GitHub üzerinden en güncel kodlar çekilecek.\n\nİşlem öncesinde tüm projenin tam bir yedeği alınacak, .env ve veritabanı ayarlarınız korunacaktır.\n\nDevam etmek istiyor musunuz?");
+  if (!confirmed) return;
+
+  const btn = document.getElementById("btn-git-update");
+  const logBox = document.getElementById("git-update-logs");
+  if (btn) btn.disabled = true;
+  if (logBox) logBox.innerHTML = "⏳ Güncelleme işlemi başlatıldı, lütfen bekleyin...\n";
+
+  try {
+    const res = await fetch("/api/system/git-update", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ branch: "main" })
+    });
+    const data = await res.json();
+
+    if (data.logs && Array.isArray(data.logs)) {
+      logBox.innerHTML = data.logs.map((l) => {
+        const icon = l.status === "success" ? "✅" : (l.status === "warn" ? "⚠️" : (l.status === "error" ? "❌" : "ℹ️"));
+        return `[${l.time.split("T")[1].slice(0, 8)}] ${icon} ${l.message}`;
+      }).join("\n");
+    }
+
+    if (data.success) {
+      showToast("GitHub güncellemesi ve bağımlılık kurulumu başarıyla tamamlandı!");
+      loadGitStatus();
+      loadSystemBackups();
+    } else {
+      showToast(data.error || "Güncelleme sırasında hata oluştu.", "danger");
+    }
+  } catch (err) {
+    showToast("Bağlantı hatası oluştu.", "danger");
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+};
+
+window.loadSystemBackups = async function() {
+  try {
+    const res = await fetch("/api/system/backups");
+    const list = await res.json();
+    const tbody = document.getElementById("system-backups-tbody");
+    if (!tbody) return;
+
+    if (!Array.isArray(list) || list.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="text-muted">Henüz sistem yedeği bulunmuyor.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = list.map((b) => `
+      <tr>
+        <td><strong>${b.backupName}</strong></td>
+        <td>${b.createdAt ? new Date(b.createdAt).toLocaleString("tr-TR") : "-"}</td>
+        <td>${b.fileCount || 0} dosya</td>
+        <td><code>${b.commitHash ? b.commitHash.slice(0, 7) : "-"}</code></td>
+        <td>
+          <button class="btn btn-secondary btn-sm" onclick="restoreSystemBackup('${b.backupName}')">↩️ Geri Yükle</button>
+        </td>
+      </tr>
+    `).join("");
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+window.restoreSystemBackup = async function(backupName) {
+  const confirmed = confirm(`"${backupName}" yedeğine geri dönülecek.\n\nProje dosyaları bu anlık görüntünün durumuna geri yüklenecektir.\n\nDevam etmek istiyor musunuz?`);
+  if (!confirmed) return;
+
+  showToast(`"${backupName}" yedeği geri yükleniyor...`);
+  try {
+    const res = await fetch("/api/system/restore-backup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ backupName })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast(data.message || "Yedek başarıyla geri yüklendi!");
+      loadGitStatus();
+      loadSystemBackups();
+    } else {
+      showToast(data.error || "Geri yükleme başarısız.", "danger");
+    }
+  } catch (err) {
+    showToast("Bağlantı hatası.", "danger");
+  }
+};
+
+window.loadBotOwners = async function() {
+  const targetGuild = currentGuildId || "default";
+  try {
+    const res = await fetch(`/api/system/bot-owners/${targetGuild}`);
+    const data = await res.json();
+    const input = document.getElementById("bot-owners-input");
+    if (input && Array.isArray(data.botOwners)) {
+      input.value = data.botOwners.join(", ");
+    }
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+window.saveBotOwnersList = async function() {
+  const targetGuild = currentGuildId || "default";
+  const input = document.getElementById("bot-owners-input");
+  const raw = input?.value || "";
+  const botOwners = raw.split(",").map((id) => id.trim()).filter(Boolean);
+
+  try {
+    const res = await fetch(`/api/system/bot-owners/${targetGuild}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ botOwners })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast(`Bot sahipleri başarıyla kaydedildi (${botOwners.length} kullanıcı).`);
+      loadBotOwners();
+    } else {
+      showToast(data.error || "Bot sahipleri kaydedilemedi.", "danger");
+    }
+  } catch (err) {
+    showToast("Bağlantı hatası.", "danger");
+  }
+};
+
+window.assignSelfAsBotOwner = async function() {
+  const currentVal = document.getElementById("bot-owners-input")?.value || "";
+  const currentList = currentVal.split(",").map((id) => id.trim()).filter(Boolean);
+
+  const userId = prompt("Lütfen bot sahibi olarak atanacak Discord Kullanıcı ID'nizi girin:\n\n(Discord Ayarlar > Gelişmiş > Geliştirici Modu açıkken profilinize sağ tıklayıp 'Kullanıcı Kimliğini Kopyala' diyebilirsiniz)");
+  if (!userId || !userId.trim()) return;
+
+  const cleanId = userId.trim();
+  if (currentList.includes(cleanId)) {
+    showToast("Bu kullanıcı ID'si zaten listede bulunuyor.", "warning");
+    return;
+  }
+
+  currentList.push(cleanId);
+  const input = document.getElementById("bot-owners-input");
+  if (input) input.value = currentList.join(", ");
+
+  await saveBotOwnersList();
+};
+
+let currentBattlePassData = null;
+
+window.loadBattlePassData = async function() {
+  const targetGuild = currentGuildId || "default";
+  try {
+    const res = await fetch(`/api/battlepass/${targetGuild}`);
+    const data = await res.json();
+    if (!res.ok || !data.season) return;
+
+    currentBattlePassData = data.season;
+
+    const metricSeason = document.getElementById("bp-metric-season");
+    const metricStatus = document.getElementById("bp-metric-status");
+    const metricParticipants = document.getElementById("bp-metric-participants");
+    const seasonNameInput = document.getElementById("bp-season-name");
+    const seasonStatusSelect = document.getElementById("bp-season-status");
+    const tbody = document.getElementById("bp-tiers-tbody");
+
+    if (metricSeason) metricSeason.textContent = `${data.season.season}. Sezon (${data.season.seasonName || ""})`;
+    if (metricStatus) metricStatus.textContent = data.season.active ? "🟢 Aktif" : "🔴 Pasif";
+    if (metricParticipants) metricParticipants.textContent = `${data.totalParticipants || 0} Üye`;
+    if (seasonNameInput) seasonNameInput.value = data.season.seasonName || "";
+    if (seasonStatusSelect) seasonStatusSelect.value = String(Boolean(data.season.active));
+
+    if (tbody && Array.isArray(data.season.tiers)) {
+      tbody.innerHTML = data.season.tiers.map((t) => {
+        const freeCoin = t.freeRewards?.find((r) => r.type === "COIN")?.amount || 0;
+        const vipCoin = t.vipRewards?.find((r) => r.type === "COIN")?.amount || 0;
+        return `
+          <tr>
+            <td><strong>#${t.tier}</strong></td>
+            <td><input type="number" class="bp-tier-xp" data-tier="${t.tier}" value="${t.requiredXp || 0}" style="width: 100px; padding: 4px 8px; background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); border-radius: 4px;"> XP</td>
+            <td><input type="number" class="bp-tier-free" data-tier="${t.tier}" value="${freeCoin}" style="width: 110px; padding: 4px 8px; background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); border-radius: 4px;"> Coin</td>
+            <td><input type="number" class="bp-tier-vip" data-tier="${t.tier}" value="${vipCoin}" style="width: 110px; padding: 4px 8px; background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); border-radius: 4px;"> Coin</td>
+          </tr>
+        `;
+      }).join("");
+    }
+  } catch (err) {
+    console.error(err);
+    showToast("Sezon bileti verileri yüklenemedi.", "danger");
+  }
+};
+
+window.saveBattlePassSettings = async function() {
+  const targetGuild = currentGuildId || "default";
+  const seasonName = document.getElementById("bp-season-name")?.value.trim();
+  const active = document.getElementById("bp-season-status")?.value === "true";
+
+  try {
+    const res = await fetch(`/api/battlepass/${targetGuild}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ seasonName, active })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast("Sezon bileti ayarları kaydedildi.");
+      loadBattlePassData();
+    } else {
+      showToast(data.error || "Ayarlar kaydedilemedi.", "danger");
+    }
+  } catch (err) {
+    showToast("Bağlantı hatası.", "danger");
+  }
+};
+
+window.startNewBattlePassSeason = async function() {
+  const name = prompt("Yeni sezon başlığı girin (örn: 2. Sezon: Karanlık Çağ):");
+  if (!name || !name.trim()) return;
+
+  const targetGuild = currentGuildId || "default";
+  try {
+    const res = await fetch(`/api/battlepass/${targetGuild}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ newSeason: true, seasonName: name.trim() })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast(data.message || "Yeni sezon başlatıldı!");
+      loadBattlePassData();
+    } else {
+      showToast(data.error || "Yeni sezon başlatılamadı.", "danger");
+    }
+  } catch (err) {
+    showToast("Bağlantı hatası.", "danger");
+  }
+};
+
+window.saveBattlePassTiers = async function() {
+  if (!currentBattlePassData || !Array.isArray(currentBattlePassData.tiers)) {
+    showToast("Kademe verisi bulunamadı.", "warning");
+    return;
+  }
+
+  const updatedTiers = currentBattlePassData.tiers.map((t) => {
+    const xpInput = document.querySelector(`.bp-tier-xp[data-tier="${t.tier}"]`);
+    const freeInput = document.querySelector(`.bp-tier-free[data-tier="${t.tier}"]`);
+    const vipInput = document.querySelector(`.bp-tier-vip[data-tier="${t.tier}"]`);
+
+    const requiredXp = xpInput ? Number(xpInput.value) || 0 : t.requiredXp;
+    const freeAmount = freeInput ? Number(freeInput.value) || 0 : 0;
+    const vipAmount = vipInput ? Number(vipInput.value) || 0 : 0;
+
+    return {
+      tier: t.tier,
+      requiredXp,
+      freeRewards: [{ type: "COIN", amount: freeAmount, description: `${freeAmount} Coin` }],
+      vipRewards: [{ type: "COIN", amount: vipAmount, description: `${vipAmount} Coin` }]
+    };
+  });
+
+  const targetGuild = currentGuildId || "default";
+  try {
+    const res = await fetch(`/api/battlepass/${targetGuild}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tiers: updatedTiers })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast("Kademe ödülleri başarıyla kaydedildi.");
+      loadBattlePassData();
+    } else {
+      showToast(data.error || "Kademeler kaydedilemedi.", "danger");
+    }
+  } catch (err) {
+    showToast("Bağlantı hatası.", "danger");
+  }
+};
+
+window.loadClansData = async function() {
+  const targetGuild = currentGuildId || "default";
+  try {
+    const [settingsRes, clansRes] = await Promise.all([
+      fetch(`/api/clans/settings/${targetGuild}`),
+      fetch(`/api/clans/${targetGuild}`)
+    ]);
+
+    const settingsData = await settingsRes.json();
+    const clansData = await clansRes.json();
+
+    if (settingsData.settings) {
+      const enabledSelect = document.getElementById("clan-system-enabled");
+      const costInput = document.getElementById("clan-creation-cost");
+      const membersInput = document.getElementById("clan-max-members");
+
+      if (enabledSelect) enabledSelect.value = String(Boolean(settingsData.settings.enabled));
+      if (costInput) costInput.value = settingsData.settings.creationCost ?? 10000;
+      if (membersInput) membersInput.value = settingsData.settings.maxMembers ?? 25;
+    }
+
+    const tbody = document.getElementById("clans-tbody");
+    if (!tbody) return;
+
+    if (!Array.isArray(clansData.clans) || clansData.clans.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Sunucuda henüz kayıtlı klan bulunmuyor.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = clansData.clans.map((c) => `
+      <tr>
+        <td><strong>${c.name}</strong> <code style="color: var(--accent-primary);">[${c.tag}]</code></td>
+        <td><code>${c.leaderId}</code></td>
+        <td>${c.members?.length || 0} Üye</td>
+        <td>Seviye ${c.level || 1} (${(c.xp || 0).toLocaleString("tr-TR")} XP)</td>
+        <td><strong>${(c.vault || 0).toLocaleString("tr-TR")}</strong> Coin</td>
+        <td>
+          <button class="btn btn-danger btn-sm" onclick="deleteClanFromPanel('${c._id}')">Sil</button>
+        </td>
+      </tr>
+    `).join("");
+  } catch (err) {
+    console.error(err);
+    showToast("Klan verileri yüklenemedi.", "danger");
+  }
+};
+
+window.saveClanSettings = async function() {
+  const targetGuild = currentGuildId || "default";
+  const enabled = document.getElementById("clan-system-enabled")?.value === "true";
+  const creationCost = Number(document.getElementById("clan-creation-cost")?.value) || 0;
+  const maxMembers = Number(document.getElementById("clan-max-members")?.value) || 25;
+
+  try {
+    const res = await fetch(`/api/clans/settings/${targetGuild}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ enabled, creationCost, maxMembers })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast("Klan sistemi ayarları kaydedildi.");
+      loadClansData();
+    } else {
+      showToast(data.error || "Klan ayarları kaydedilemedi.", "danger");
+    }
+  } catch (err) {
+    showToast("Bağlantı hatası.", "danger");
+  }
+};
+
+window.createClanFromPanel = async function() {
+  const targetGuild = currentGuildId || "default";
+  const name = document.getElementById("clan-new-name")?.value.trim();
+  const tag = document.getElementById("clan-new-tag")?.value.trim();
+  const leaderId = document.getElementById("clan-new-leader")?.value.trim();
+  const description = document.getElementById("clan-new-desc")?.value.trim();
+
+  if (!name || !leaderId) {
+    showToast("Lütfen klan adı ve lider kullanıcı ID girin.", "warning");
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/clans/${targetGuild}/action`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "create", name, tag, leaderId, description })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast(data.message || "Klan başarıyla oluşturuldu.");
+      document.getElementById("clan-new-name").value = "";
+      document.getElementById("clan-new-tag").value = "";
+      document.getElementById("clan-new-leader").value = "";
+      document.getElementById("clan-new-desc").value = "";
+      loadClansData();
+    } else {
+      showToast(data.error || "Klan oluşturulamadı.", "danger");
+    }
+  } catch (err) {
+    showToast("Bağlantı hatası.", "danger");
+  }
+};
+
+window.deleteClanFromPanel = async function(clanId) {
+  const confirmed = confirm("Bu klanı kalıcı olarak silmek istediğinize emin misiniz?");
+  if (!confirmed) return;
+
+  const targetGuild = currentGuildId || "default";
+  try {
+    const res = await fetch(`/api/clans/${targetGuild}/action`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "delete", clanId })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast("Klan başarıyla silindi.");
+      loadClansData();
+    } else {
+      showToast(data.error || "Klan silinemedi.", "danger");
+    }
+  } catch (err) {
+    showToast("Bağlantı hatası.", "danger");
+  }
+};
+
+window.loadBadgesData = async function() {
+  const targetGuild = currentGuildId || "default";
+  try {
+    const res = await fetch(`/api/badges/${targetGuild}`);
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.error || "Rozet verileri alınamadı.", "danger");
+      return;
+    }
+    const enabledSelect = document.getElementById("badge-system-enabled");
+    if (enabledSelect) enabledSelect.value = String(Boolean(data.enabled));
+
+    const tbody = document.getElementById("badges-users-tbody");
+    if (!tbody) return;
+
+    if (!Array.isArray(data.recentUsers) || data.recentUsers.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Sunucuda henüz rozet veya unvan sahibi üye bulunmuyor.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = data.recentUsers.map((u) => {
+      const activeBadgesStr = Array.isArray(u.activeBadges) && u.activeBadges.length > 0
+        ? u.activeBadges.map((b) => `<span class="badge badge-info" style="margin-right: 4px;">${b}</span>`).join("")
+        : '<span class="text-muted">Kuşanılmamış</span>';
+      const allBadgesStr = Array.isArray(u.badges) && u.badges.length > 0
+        ? u.badges.join(", ")
+        : '<span class="text-muted">Yok</span>';
+      return `
+        <tr>
+          <td><code>${u.userId}</code></td>
+          <td><strong>${u.title || '<span class="text-muted">Yok</span>'}</strong></td>
+          <td>${activeBadgesStr}</td>
+          <td>${allBadgesStr}</td>
+        </tr>
+      `;
+    }).join("");
+  } catch (err) {
+    showToast("Rozet verileri yüklenirken bağlantı hatası oluştu.", "danger");
+  }
+};
+
+window.saveBadgeSettings = async function() {
+  const targetGuild = currentGuildId || "default";
+  const enabled = document.getElementById("badge-system-enabled")?.value === "true";
+  try {
+    const res = await fetch(`/api/badges/${targetGuild}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ enabled })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast("Rozet sistemi ayarları kaydedildi.");
+      loadBadgesData();
+    } else {
+      showToast(data.error || "Ayarlar kaydedilemedi.", "danger");
+    }
+  } catch (err) {
+    showToast("Bağlantı hatası.", "danger");
+  }
+};
+
+window.assignBadge = async function(action) {
+  const targetGuild = currentGuildId || "default";
+  const userId = document.getElementById("badge-target-user")?.value.trim();
+  const badgeId = document.getElementById("badge-select-id")?.value;
+  if (!userId) {
+    showToast("Lütfen kullanıcı Discord ID girin.", "warning");
+    return;
+  }
+  try {
+    const res = await fetch(`/api/badges/assign/${targetGuild}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, badgeId, action })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast(action === "remove" ? "Rozet kullanıcıdan silindi." : "Rozet kullanıcıya tanımlandı.");
+      loadBadgesData();
+    } else {
+      showToast(data.error || "İşlem başarısız oldu.", "danger");
+    }
+  } catch (err) {
+    showToast("Bağlantı hatası.", "danger");
+  }
+};
+
+window.assignTitle = async function(action) {
+  const targetGuild = currentGuildId || "default";
+  const userId = document.getElementById("badge-target-user")?.value.trim();
+  const title = document.getElementById("badge-select-title")?.value;
+  if (!userId) {
+    showToast("Lütfen kullanıcı Discord ID girin.", "warning");
+    return;
+  }
+  try {
+    const res = await fetch(`/api/badges/assign/${targetGuild}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, title, action })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast(action === "remove" ? "Unvan kullanıcıdan kaldırıldı." : "Unvan kullanıcıya atandı.");
+      loadBadgesData();
+    } else {
+      showToast(data.error || "İşlem başarısız oldu.", "danger");
+    }
+  } catch (err) {
+    showToast("Bağlantı hatası.", "danger");
+  }
+};
+
+window.loadPetsData = async function() {
+  const targetGuild = currentGuildId || "default";
+  try {
+    const res = await fetch(`/api/pets/${targetGuild}`);
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.error || "Pet verileri alınamadı.", "danger");
+      return;
+    }
+    const enabledSelect = document.getElementById("pet-system-enabled");
+    const basePriceInput = document.getElementById("pet-base-price");
+    const feedCostInput = document.getElementById("pet-feed-cost");
+
+    if (enabledSelect) enabledSelect.value = String(Boolean(data.enabled));
+    if (basePriceInput) basePriceInput.value = data.basePrice ?? 5000;
+    if (feedCostInput) feedCostInput.value = data.feedCost ?? 200;
+
+    const tbody = document.getElementById("pets-tbody");
+    if (!tbody) return;
+
+    if (!Array.isArray(data.activePets) || data.activePets.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Sunucuda henüz sahiplenilmiş ruh hayvanı bulunmuyor.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = data.activePets.map((p) => {
+      const activeBadge = p.isActive
+        ? '<span class="badge badge-success">Kuşanıldı</span>'
+        : '<span class="badge badge-secondary">Dinleniyor</span>';
+      return `
+        <tr>
+          <td><code>${p.userId}</code></td>
+          <td><strong>${p.name}</strong></td>
+          <td><code>${p.petType}</code></td>
+          <td>Seviye ${p.level || 1} (${(p.xp || 0).toLocaleString("tr-TR")} XP)</td>
+          <td>%${p.energy ?? 100}</td>
+          <td>${activeBadge}</td>
+        </tr>
+      `;
+    }).join("");
+  } catch (err) {
+    showToast("Pet verileri yüklenirken bağlantı hatası oluştu.", "danger");
+  }
+};
+
+window.savePetSettings = async function() {
+  const targetGuild = currentGuildId || "default";
+  const enabled = document.getElementById("pet-system-enabled")?.value === "true";
+  const basePrice = Number(document.getElementById("pet-base-price")?.value) || 5000;
+  const feedCost = Number(document.getElementById("pet-feed-cost")?.value) || 200;
+
+  try {
+    const res = await fetch(`/api/pets/settings/${targetGuild}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ enabled, basePrice, feedCost })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast("Pet sistemi ayarları başarıyla kaydedildi.");
+      loadPetsData();
+    } else {
+      showToast(data.error || "Pet ayarları kaydedilemedi.", "danger");
+    }
+  } catch (err) {
+    showToast("Bağlantı hatası.", "danger");
+  }
+};
+
+window.loadCasinoData = async function() {
+  const targetGuild = currentGuildId || "default";
+  try {
+    const res = await fetch(`/api/casino/${targetGuild}`);
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.error || "Kumarhane verileri alınamadı.", "danger");
+      return;
+    }
+    const enabledSelect = document.getElementById("casino-system-enabled");
+    const minBetInput = document.getElementById("casino-min-bet");
+    const maxBetInput = document.getElementById("casino-max-bet");
+    const kazikazanCostInput = document.getElementById("casino-kazikazan-cost");
+
+    if (enabledSelect) enabledSelect.value = String(Boolean(data.enabled));
+    if (minBetInput) minBetInput.value = data.minBet ?? 10;
+    if (maxBetInput) maxBetInput.value = data.maxBet ?? 50000;
+    if (kazikazanCostInput) kazikazanCostInput.value = data.kazikazanCost ?? 50;
+  } catch (err) {
+    showToast("Kumarhane ayarları yüklenirken bağlantı hatası oluştu.", "danger");
+  }
+};
+
+window.saveCasinoSettings = async function() {
+  const targetGuild = currentGuildId || "default";
+  const enabled = document.getElementById("casino-system-enabled")?.value === "true";
+  const minBet = Number(document.getElementById("casino-min-bet")?.value) || 10;
+  const maxBet = Number(document.getElementById("casino-max-bet")?.value) || 50000;
+  const kazikazanCost = Number(document.getElementById("casino-kazikazan-cost")?.value) || 50;
+
+  try {
+    const res = await fetch(`/api/casino/settings/${targetGuild}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ enabled, minBet, maxBet, kazikazanCost })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast("Kumarhane ve düello ayarları başarıyla kaydedildi.");
+      loadCasinoData();
+    } else {
+      showToast(data.error || "Kumarhane ayarları kaydedilemedi.", "danger");
+    }
+  } catch (err) {
+    showToast("Bağlantı hatası.", "danger");
+  }
+};
 
 loadOverview();

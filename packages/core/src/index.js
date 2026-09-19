@@ -5,3 +5,6 @@ export { MessageFormatter } from "./MessageFormatter.js";
 export { CacheManager, globalCache } from "./CacheManager.js";
 export { WebhookLogger } from "./WebhookLogger.js";
 export { SmartFilter } from "./SmartFilter.js";
+export { VisualCard } from "./VisualCard.js";
+export { GitUpdateManager } from "./GitUpdateManager.js";
+export { BotNameManager } from "./BotNameManager.js";

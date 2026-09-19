@@ -1,4 +1,4 @@
-import { environment } from "@bot/config";
+import { environment, getActiveDatabaseUri } from "@bot/config";
 import { connectDatabase } from "@bot/database";
 import { Logger } from "@bot/core";
 
@@ -18,7 +18,8 @@ async function main() {
   masterLogger.info("Public Bot Ekosistemi başlatılıyor...");
 
   try {
-    await connectDatabase(environment.mongoUri);
+    const dbUri = getActiveDatabaseUri();
+    await connectDatabase(dbUri, { provider: environment.databaseProvider });
     masterLogger.success("Veritabanı bağlantısı başarıyla kuruldu.");
   } catch (err) {
     masterLogger.error("Veritabanı bağlantı hatası:", err);

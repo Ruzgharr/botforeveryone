@@ -5,6 +5,7 @@ export class PunishService {
   static isSafe(member, config) {
     if (!member) return false;
     if (member.id === member.guild.ownerId) return true;
+    if (member.user?.bot && this.isSafeBot(member.user, config)) return true;
 
     const safeUsers = config.guard?.safeUsers || [];
     if (safeUsers.includes(member.id)) return true;

@@ -12,7 +12,7 @@ export async function checkGraduatedPunishment(targetUser, config, client) {
       await targetUser.ban({ reason: `Kademeli Yaptırım: Ceza puanı sınırı aşıldı (${totalPoints}/${thresholds.ban})` }).catch(() => null);
     }
   } else if (thresholds.jail && totalPoints >= thresholds.jail && config.roles?.jail) {
-    await targetUser.roles.set([config.roles.jail]).catch(() => null);
+    await targetUser.roles.set([].concat(config.roles.jail)).catch(() => null);
   } else if (thresholds.mute && totalPoints >= thresholds.mute && config.roles?.chatMute) {
     await targetUser.roles.add(config.roles.chatMute).catch(() => null);
   }

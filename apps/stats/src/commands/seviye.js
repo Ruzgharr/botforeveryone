@@ -1,59 +1,89 @@
+import { AttachmentBuilder } from "discord.js";
 import { Stat } from "@bot/database";
-import { Embeds } from "@bot/core";
-
-function createProgressBar(percent, length = 12) {
-  const filled = Math.round((percent / 100) * length);
-  const empty = length - filled;
-  return "█".repeat(Math.max(0, filled)) + "░".repeat(Math.max(0, empty));
-}
+import { MessageFormatter, VisualCard } from "@bot/core";
+import { StatsUI } from "../services/StatsUI.js";
 
 export default {
   name: "seviye",
   aliases: ["rank", "level", "xp"],
   async execute({ message, args, config }) {
+    const isAnimated = args.some(a => ["video", "animasyon", "anim", "gif", "canli", "canlı"].includes(String(a).toLowerCase()));
+    const format = args.some(a => ["video", "mp4"].includes(String(a).toLowerCase())) ? "mp4" : "gif";
+    const cleanArgs = args.filter(a => !["video", "animasyon", "anim", "gif", "canli", "canlı", "mp4"].includes(String(a).toLowerCase()));
+
+    const allThemes = Object.keys(VisualCard.CARD_THEMES || {});
+    const explicitThemeArg = cleanArgs.find((a) => allThemes.includes(a.toLowerCase().trim().replace(/^tema_/, "")));
+    const remainingArgs = cleanArgs.filter((a) => a !== explicitThemeArg);
+
     const targetMember = message.mentions.members.first()
-      || (args[0] ? await message.guild.members.fetch(args[0]).catch(() => null) : message.member);
+      || (remainingArgs[0] ? await message.guild.members.fetch(remainingArgs[0]).catch(() => null) : message.member);
 
     if (!targetMember || targetMember.user.bot) {
-      return message.reply({ embeds: [Embeds.warn("Uyarı", "Botların veya bulunamayan kullanıcıların seviye bilgisi görüntülenemez.", message.guild)] });
+      return message.reply(MessageFormatter.warn("Uyarı", "Botların veya bulunamayan kullanıcıların seviye bilgisi görüntülenemez."));
     }
 
     const stat = await Stat.findOne({ guildId: message.guild.id, userId: targetMember.id });
-    const currentLvl = stat?.level || 1;
+    const selectedTheme = explicitThemeArg ? explicitThemeArg.toLowerCase().trim().replace(/^tema_/, "") : (stat?.cardTheme || "sakura");
     const currentXp = stat?.xp || 0;
-
-    const prevLvlXp = currentLvl === 1 ? 0 : (currentLvl - 1) * (currentLvl - 1) * 100;
-    const nextLvlXp = currentLvl * currentLvl * 100;
-    const levelRange = Math.max(1, nextLvlXp - prevLvlXp);
-    const progressInLevel = Math.max(0, currentXp - prevLvlXp);
-    const percent = Math.min(100, Math.floor((progressInLevel / levelRange) * 100));
-    const progressBar = createProgressBar(percent, 14);
+    const currentLvl = stat?.level || 1;
 
     const rank = await Stat.countDocuments({ guildId: message.guild.id, xp: { $gt: currentXp } }) + 1;
     const totalRanked = await Stat.countDocuments({ guildId: message.guild.id });
 
     const rewards = config.leveling?.roleRewards || [];
     const nextReward = rewards.find((r) => r.level > currentLvl);
-    let rewardInfo = "Sıradaki ödül bulunmuyor.";
-    if (nextReward) {
-      rewardInfo = `Seviye **${nextReward.level}** olduğunuzda <@&${nextReward.roleId}> rolü verilecek.`;
+
+    const requiredXp = currentLvl * currentLvl * 100;
+    const shouldAnimate = isAnimated || Boolean(stat?.cardAnimated);
+
+    if (shouldAnimate) {
+      const waitMsg = await message.reply("🎬 **Canlı Seviye Kartı Hazırlanıyor...** Lütfen bekleyin.");
+      const cardBuffer = await VisualCard.renderAnimatedLevelCard({
+        user: targetMember.user,
+        level: currentLvl,
+        currentXp,
+        requiredXp,
+        rank,
+        theme: selectedTheme,
+        format
+      });
+
+      const fileName = format === "mp4" ? "level_animated.mp4" : "level_animated.gif";
+      const attachment = new AttachmentBuilder(cardBuffer, { name: fileName });
+      const payload = StatsUI.formatLevelPayload({
+        targetMember,
+        stat,
+        rank,
+        totalRanked,
+        nextReward,
+        mediaUrl: `attachment://${fileName}`
+      });
+
+      await waitMsg.delete().catch(() => null);
+      return message.reply({ ...payload, files: [attachment] });
     }
 
-    const embed = Embeds.base(`Seviye Kartı: ${targetMember.displayName}`, null, message.guild)
-      .setThumbnail(targetMember.user.displayAvatarURL({ dynamic: true, size: 256 }))
-      .addFields(
-        { name: "Mevcut Seviye", value: `⭐ **Seviye ${currentLvl}**`, inline: true },
-        { name: "Sunucu Sıralaması", value: `🏆 **#${rank}** / ${totalRanked}`, inline: true },
-        { name: "Toplam Deneyim (XP)", value: `✨ **${currentXp.toLocaleString("tr-TR")} XP**`, inline: true },
-        {
-          name: `İlerleme Durumu: %${percent}`,
-          value: `\`${progressBar}\` (${progressInLevel.toLocaleString("tr-TR")} / ${levelRange.toLocaleString("tr-TR")} XP)`,
-          inline: false
-        },
-        { name: "Sıradaki Rol Ödülü", value: rewardInfo, inline: false }
-      )
-      .setFooter({ text: "Seviye & XP Sistemi | Public Bot Ecosystem", iconURL: message.guild.iconURL() });
+    const cardBuffer = await VisualCard.renderLevelCard({
+      user: targetMember.user,
+      level: currentLvl,
+      currentXp,
+      requiredXp,
+      rank,
+      theme: selectedTheme
+    });
 
-    await message.reply({ embeds: [embed] });
+    const attachment = new AttachmentBuilder(cardBuffer, { name: "level.png" });
+
+    const payload = StatsUI.formatLevelPayload({
+      targetMember,
+      stat,
+      rank,
+      totalRanked,
+      nextReward,
+      mediaUrl: "attachment://level.png"
+    });
+
+    return message.reply({ ...payload, files: [attachment] });
   }
 };
+

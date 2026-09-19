@@ -1,6 +1,6 @@
 import { BaseBot, SmartFilter } from "@bot/core";
 import { environment } from "@bot/config";
-import { ForceBan, Penalty } from "@bot/database";
+import { ForceBan, Penalty, ChatMessage } from "@bot/database";
 import { Collection } from "discord.js";
 
 import jailCmd from "./commands/jail.js";
@@ -113,13 +113,81 @@ client.registerCommand(otocevapCmd);
 client.registerCommand(seskapatCmd);
 client.registerCommand(sesacCmd);
 
-client.on("messageDelete", (message) => {
-  if (!message.guild || message.author?.bot) return;
-  client.snipes.set(message.channel.id, {
-    authorId: message.author.id,
-    content: message.content,
-    timestamp: Date.now()
-  });
+client.on("messageDelete", async (message) => {
+  if (!message.guild) return;
+
+  let authorId = message.author?.id;
+  let authorTag = message.author?.tag || message.author?.username;
+  let authorAvatar = typeof message.author?.displayAvatarURL === "function" ? message.author.displayAvatarURL() : "";
+  let content = message.content;
+
+  if (!content || !authorId) {
+    const existing = await ChatMessage.findOne({ messageId: message.id }).catch(() => null);
+    if (existing) {
+      authorId = existing.authorId;
+      authorTag = existing.author;
+      authorAvatar = existing.authorAvatar;
+      content = existing.content;
+    }
+  }
+
+  if (authorId && content) {
+    client.snipes.set(message.channel.id, {
+      authorId,
+      content,
+      timestamp: Date.now()
+    });
+
+    await ChatMessage.findOneAndUpdate(
+      { messageId: message.id },
+      {
+        $set: {
+          channelId: message.channel.id,
+          guildId: message.guild.id,
+          author: authorTag || "Bilinmiyor",
+          authorId,
+          authorAvatar,
+          content,
+          isDeleted: true,
+          deletedAt: new Date()
+        }
+      },
+      { upsert: true }
+    ).catch(() => null);
+  }
+});
+
+client.on("messageUpdate", async (oldMessage, newMessage) => {
+  if (!newMessage.guild || newMessage.author?.bot) return;
+  if (oldMessage?.content === newMessage.content) return;
+
+  const authorId = newMessage.author?.id || oldMessage?.author?.id;
+  const authorTag = newMessage.author?.tag || newMessage.author?.username || oldMessage?.author?.tag;
+  const authorAvatar = typeof newMessage.author?.displayAvatarURL === "function" ? newMessage.author.displayAvatarURL() : "";
+
+  let prevContent = oldMessage?.content;
+  if (!prevContent) {
+    const existing = await ChatMessage.findOne({ messageId: newMessage.id }).catch(() => null);
+    if (existing?.content) prevContent = existing.content;
+  }
+
+  await ChatMessage.findOneAndUpdate(
+    { messageId: newMessage.id },
+    {
+      $set: {
+        channelId: newMessage.channel.id,
+        guildId: newMessage.guild.id,
+        author: authorTag || "Bilinmiyor",
+        authorId: authorId || "",
+        authorAvatar,
+        content: newMessage.content || "",
+        previousContent: prevContent || "",
+        isEdited: true,
+        editedAt: new Date()
+      }
+    },
+    { upsert: true }
+  ).catch(() => null);
 });
 
 client.on("messageCreate", async (message) => {
@@ -147,8 +215,18 @@ client.on("messageCreate", async (message) => {
   const responders = config.autoResponders || [];
   if (responders.length > 0) {
     const cleanMsg = message.content.trim().toLowerCase();
-    const matched = responders.find((r) => r.trigger?.toLowerCase() === cleanMsg);
-    if (matched) {
+    const matched = responders.find((r) => {
+      if (r.enabled === false) return false;
+      if (Array.isArray(r.channels) && r.channels.length > 0 && !r.channels.includes(message.channel.id)) return false;
+      const trig = (r.trigger || "").toLowerCase().trim();
+      if (!trig) return false;
+      const type = r.matchType || "exact";
+      if (type === "exact") return cleanMsg === trig;
+      if (type === "startsWith") return cleanMsg.startsWith(trig);
+      if (type === "contains") return cleanMsg.includes(trig);
+      return false;
+    });
+    if (matched && matched.response) {
       await message.reply(matched.response).catch(() => null);
     }
   }

@@ -1,5 +1,5 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
-import { Embeds } from "@bot/core";
+import { MessageFormatter } from "@bot/core";
 
 export default {
   name: "oneri",
@@ -7,9 +7,7 @@ export default {
   async execute({ client, message, args, config }) {
     const text = args.join(" ").trim();
     if (!text) {
-      return message.reply({
-        embeds: [Embeds.warn("Eksik İçerik", "Lütfen sunucu için bir öneri veya fikir belirtin. Örnek: `.oneri Etkinlik odalarına yeni oyunlar eklensin.`", message.guild)]
-      });
+      return message.reply(MessageFormatter.warn("Eksik İçerik", `Lütfen sunucu için bir öneri veya fikir belirtin.\n\n▫️ Örnek: \`${config.prefix || "."}oneri Etkinlik odalarına yeni oyunlar eklensin.\``));
     }
 
     const row = new ActionRowBuilder().addComponents(
@@ -25,16 +23,23 @@ export default {
         .setStyle(ButtonStyle.Danger)
     );
 
-    const embed = Embeds.base("💡 Yeni Sunucu Önerisi", null, message.guild)
-      .setAuthor({ name: message.author.username, iconURL: message.author.displayAvatarURL() })
-      .setDescription(`**Öneri Sahibi:** ${message.author}\n\n**Öneri:**\n${text}\n\n*Durum: Oylama Devam Ediyor...*`)
-      .setFooter({ text: "Öneri ve Fikir Sistemi | Public Bot Ecosystem", iconURL: message.guild.iconURL() });
+    const content = [
+      `### 💡 Yeni Sunucu Önerisi`,
+      `▫️ **Öneri Sahibi:** ${message.author} (\`${message.author.username}\`)`,
+      "",
+      `▫️ **Öneri İçeriği:**`,
+      `  "${text}"`,
+      "",
+      `▫️ *Durum: Oylama Devam Ediyor...*`,
+      "",
+      `-# Fikir ve önerinizi oylamak için aşağıdaki butonları kullanabilirsiniz.`
+    ].join("\n");
 
     const targetChannel = (config.channels?.suggestionChannel
       ? message.guild.channels.cache.get(config.channels.suggestionChannel)
       : null) || message.channel;
 
-    const sentMsg = await targetChannel.send({ embeds: [embed], components: [row] });
+    const sentMsg = await targetChannel.send({ content, embeds: [], components: [row] });
 
     if (!client.activeSuggestions) {
       client.activeSuggestions = new Map();
@@ -49,9 +54,8 @@ export default {
     });
 
     if (targetChannel.id !== message.channel.id) {
-      await message.reply({
-        embeds: [Embeds.success("Öneri İletildi", `Öneriniz başarıyla ${targetChannel} kanalına gönderildi ve oylamaya sunuldu.`, message.guild)]
-      });
+      await message.reply(MessageFormatter.success("Öneri İletildi", `Öneriniz başarıyla ${targetChannel} kanalına gönderildi ve oylamaya sunuldu.`));
     }
   }
 };
+

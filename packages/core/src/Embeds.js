@@ -2,15 +2,20 @@ import { EmbedBuilder } from "discord.js";
 
 export class Embeds {
   static defaultColor = 0x2b2d31;
-  static successColor = 0x57F287;
-  static errorColor = 0xED4245;
-  static warnColor = 0xFEE75C;
-  static primaryColor = 0x5865F2;
+  static successColor = 0x2b2d31;
+  static errorColor = 0x2b2d31;
+  static warnColor = 0x2b2d31;
+  static primaryColor = 0x2b2d31;
 
-  static base(guild = null) {
+  static base(titleOrGuild = null, description = null, suppliedGuild = null) {
+    const hasTitle = typeof titleOrGuild === "string";
+    const guild = hasTitle ? suppliedGuild : titleOrGuild;
     const embed = new EmbedBuilder()
       .setColor(this.defaultColor)
       .setTimestamp();
+
+    if (hasTitle) embed.setTitle(titleOrGuild);
+    if (description != null) embed.setDescription(description);
 
     if (guild && guild.iconURL()) {
       embed.setFooter({ text: guild.name, iconURL: guild.iconURL() });

@@ -1,5 +1,5 @@
 import { Economy } from "@bot/database";
-import { Embeds } from "@bot/core";
+import { MessageFormatter } from "@bot/core";
 
 export default {
   name: "banka",
@@ -22,15 +22,17 @@ export default {
       }
 
       if (isNaN(amount) || amount <= 0) {
-        return message.reply({
-          embeds: [Embeds.warn("Geçersiz Miktar", "Lütfen yatırmak istediğiniz geçerli bir miktar belirtin ya da `hepsi` yazın.", message.guild)]
-        });
+        return message.reply(MessageFormatter.warn(
+          "Geçersiz Miktar",
+          `Lütfen yatırmak istediğiniz geçerli bir miktar belirtin ya da \`hepsi\` yazın.\n\n▫️ Örnek: \`${config.prefix || "."}banka yatır 500\``
+        ));
       }
 
       if (eco.wallet < amount) {
-        return message.reply({
-          embeds: [Embeds.error("Yetersiz Bakiye", `Cüzdanınızda yalnızca **${eco.wallet} Coin** bulunuyor.`, message.guild)]
-        });
+        return message.reply(MessageFormatter.error(
+          "Yetersiz Bakiye",
+          `Cüzdanınızda yalnızca **${(eco.wallet || 0).toLocaleString("tr-TR")} Coin** bulunuyor.`
+        ));
       }
 
       await Economy.updateOne(
@@ -38,15 +40,10 @@ export default {
         { $inc: { wallet: -amount, bank: amount } }
       );
 
-      return message.reply({
-        embeds: [
-          Embeds.success(
-            "Banka Yatırımı Başarılı",
-            `Cüzdanınızdan **${amount} Coin** banka kasanıza aktarıldı.\n\n• **Yeni Cüzdan:** ${eco.wallet - amount} Coin\n• **Yeni Banka:** ${eco.bank + amount} Coin`,
-            message.guild
-          )
-        ]
-      });
+      return message.reply(MessageFormatter.success(
+        "Banka Yatırımı Başarılı",
+        `Cüzdanınızdan **${amount.toLocaleString("tr-TR")} Coin** banka kasanıza aktarıldı.\n\n▫️ Yeni Cüzdan: **${(eco.wallet - amount).toLocaleString("tr-TR")} Coin**\n▫️ Yeni Banka Kasası: **${(eco.bank + amount).toLocaleString("tr-TR")} Coin**`
+      ));
     }
 
     if (subCommand === "çek" || subCommand === "cek" || subCommand === "with") {
@@ -58,15 +55,17 @@ export default {
       }
 
       if (isNaN(amount) || amount <= 0) {
-        return message.reply({
-          embeds: [Embeds.warn("Geçersiz Miktar", "Lütfen çekmek istediğiniz geçerli bir miktar belirtin ya da `hepsi` yazın.", message.guild)]
-        });
+        return message.reply(MessageFormatter.warn(
+          "Geçersiz Miktar",
+          `Lütfen çekmek istediğiniz geçerli bir miktar belirtin ya da \`hepsi\` yazın.\n\n▫️ Örnek: \`${config.prefix || "."}banka çek 500\``
+        ));
       }
 
       if (eco.bank < amount) {
-        return message.reply({
-          embeds: [Embeds.error("Yetersiz Bakiye", `Banka hesabınızda yalnızca **${eco.bank} Coin** bulunuyor.`, message.guild)]
-        });
+        return message.reply(MessageFormatter.error(
+          "Yetersiz Bakiye",
+          `Banka hesabınızda yalnızca **${(eco.bank || 0).toLocaleString("tr-TR")} Coin** bulunuyor.`
+        ));
       }
 
       await Economy.updateOne(
@@ -74,25 +73,30 @@ export default {
         { $inc: { wallet: amount, bank: -amount } }
       );
 
-      return message.reply({
-        embeds: [
-          Embeds.success(
-            "Para Çekme Başarılı",
-            `Bankanızdan **${amount} Coin** nakit olarak cüzdanınıza aktarıldı.\n\n• **Yeni Cüzdan:** ${eco.wallet + amount} Coin\n• **Yeni Banka:** ${eco.bank - amount} Coin`,
-            message.guild
-          )
-        ]
-      });
+      return message.reply(MessageFormatter.success(
+        "Para Çekme Başarılı",
+        `Bankanızdan **${amount.toLocaleString("tr-TR")} Coin** nakit olarak cüzdanınıza aktarıldı.\n\n▫️ Yeni Cüzdan: **${(eco.wallet + amount).toLocaleString("tr-TR")} Coin**\n▫️ Yeni Banka Kasası: **${(eco.bank - amount).toLocaleString("tr-TR")} Coin**`
+      ));
     }
 
-    message.reply({
-      embeds: [
-        Embeds.info(
-          "Banka İşlemleri",
-          `• Para Yatırma: \`${config.prefix || "."}banka yatır <miktar / hepsi>\`\n• Para Çekme: \`${config.prefix || "."}banka çek <miktar / hepsi>\`\n\n• Cüzdan: **${eco.wallet} Coin**\n• Banka Kasası: **${eco.bank} Coin**`,
-          message.guild
-        )
-      ]
+    const content = [
+      `### 🏦 Sunucu Bankacılık İşlemleri`,
+      `▫️ Mevcut Bakiyeniz:`,
+      `  • Nakit Cüzdan: **${(eco.wallet || 0).toLocaleString("tr-TR")} Coin**`,
+      `  • Banka Kasası: **${(eco.bank || 0).toLocaleString("tr-TR")} Coin**`,
+      "",
+      `▫️ Kullanılabilir Komutlar:`,
+      `  • Para Yatırma: \`${config.prefix || "."}banka yatır <miktar / hepsi>\``,
+      `  • Para Çekme: \`${config.prefix || "."}banka çek <miktar / hepsi>\``,
+      "",
+      `-# Banka kasanızdaki paralar soygun girişimlerine karşı %100 güvendedir.`
+    ].join("\n");
+
+    return message.reply({
+      content,
+      embeds: [],
+      components: []
     });
   }
 };
+

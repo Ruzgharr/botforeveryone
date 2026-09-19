@@ -6,19 +6,19 @@ export default {
   aliases: ["yasakkaldır", "yasakkaldir"],
   async execute({ client, message, args, config }) {
     if (!message.member.permissions.has("BanMembers") && !client.hasStaffPermission(message.member, config, "moderationStaff")) {
-      return message.reply({ embeds: [Embeds.error("Yetki Yetersiz", "Bu komutu kullanmak için yetkiniz bulunmuyor.", message.guild)] });
+      return message.reply(MessageFormatter.error("Yetki Yetersiz", "Bu komutu kullanmak için yetkiniz bulunmuyor."));
     }
 
     const targetId = args[0];
     if (!targetId) {
-      return message.reply({ embeds: [Embeds.warn("Eksik Bilgi", "Lütfen yasağı kaldırılacak kullanıcının ID bilgisini girin.", message.guild)] });
+      return message.reply(MessageFormatter.warn("Eksik Bilgi", "Lütfen yasağı kaldırılacak kullanıcının ID bilgisini girin."));
     }
 
     const bans = await message.guild.bans.fetch().catch(() => null);
     const bannedUser = bans?.get(targetId);
 
     if (!bannedUser) {
-      return message.reply({ embeds: [Embeds.error("Bulunamadı", "Belirtilen ID değerine ait bir yasaklama kaydı bulunamadı.", message.guild)] });
+      return message.reply(MessageFormatter.error("Bulunamadı", "Belirtilen ID değerine ait bir yasaklama kaydı bulunamadı."));
     }
 
     await Penalty.updateMany(

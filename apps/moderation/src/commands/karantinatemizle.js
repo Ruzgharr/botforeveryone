@@ -1,12 +1,12 @@
 import { Penalty } from "@bot/database";
-import { Embeds } from "@bot/core";
+import { MessageFormatter } from "@bot/core";
 
 export default {
   name: "karantinatemizle",
   aliases: ["karantina-temizle", "topluunjail", "massunjail"],
   async execute({ client, message, args, config }) {
     if (!message.member.permissions.has("Administrator")) {
-      return message.reply({ embeds: [Embeds.error("Yetki Yetersiz", "Bu komutu yalnızca sunucu yöneticileri kullanabilir.", message.guild)] });
+      return message.reply(MessageFormatter.error("Yetki Yetersiz", "Bu komutu yalnızca sunucu yöneticileri kullanabilir."));
     }
 
     const jailRoleId = config.roles?.jail;
@@ -14,14 +14,13 @@ export default {
 
     const activeJails = await Penalty.find({ guildId: message.guild.id, type: "JAIL", active: true });
     if (activeJails.length === 0) {
-      return message.reply({
-        embeds: [Embeds.info("Kayıt Yok", "Sunucuda aktif karantina (jail) cezası bulunan üye yok.", message.guild)]
-      });
+      return message.reply(MessageFormatter.info("Kayıt Yok", "Sunucuda aktif karantina (jail) cezası bulunan üye yok."));
     }
 
-    const sent = await message.reply({
-      embeds: [Embeds.info("İşlem Başlatıldı", `${activeJails.length} adet aktif karantina kaydı temizleniyor...`, message.guild)]
-    });
+    const sent = await message.reply(MessageFormatter.info(
+      "İşlem Başlatıldı",
+      `${activeJails.length} adet aktif karantina kaydı temizleniyor...`
+    ));
 
     let liftedCount = 0;
     for (const pen of activeJails) {
@@ -41,22 +40,16 @@ export default {
     if (logChannelId) {
       const logChannel = message.guild.channels.cache.get(logChannelId);
       if (logChannel) {
-        logChannel.send({
-          embeds: [
-            Embeds.warn(
-              "Toplu Karantina Tahliyesi",
-              `• **Yetkili:** ${message.author} (\`${message.author.id}\`)\n• **Tahliye Edilen Üye:** ${liftedCount} kişi`,
-              message.guild
-            )
-          ]
-        });
+        logChannel.send(MessageFormatter.warn(
+          "Toplu Karantina Tahliyesi",
+          `**Yetkili:** ${message.author} (\`${message.author.id}\`)\n▫️ **Tahliye Edilen Üye:** \`${liftedCount}\` kişi\n-# Ecosystem Moderasyon Log Sistemi`
+        ));
       }
     }
 
-    sent.edit({
-      embeds: [
-        Embeds.success("Toplu Tahliye Tamamlandı", `Toplam **${liftedCount}** üyenin karantina cezası kaldırıldı ve rolleri iade edildi.`, message.guild)
-      ]
-    });
+    sent.edit(MessageFormatter.success(
+      "Toplu Tahliye Tamamlandı",
+      `Toplam **${liftedCount}** üyenin karantina cezası kaldırıldı ve rolleri iade edildi.`
+    ));
   }
 };

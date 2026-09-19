@@ -1,47 +1,114 @@
-import { StaffTask } from "@bot/database";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
 import { MessageFormatter } from "@bot/core";
-
-function makeProgressBar(current, target, size = 10) {
-  const percent = Math.min(Math.max(current / (target || 1), 0), 1);
-  const filled = Math.round(size * percent);
-  const empty = size - filled;
-  return `[${"█".repeat(filled)}${"░".repeat(empty)}] %${Math.round(percent * 100)}`;
-}
+import { BattlePassService } from "../services/BattlePassService.js";
 
 export default {
-  name: "görev",
-  aliases: ["gorev", "gorevlerim", "task"],
-  async execute({ client, message, args, config }) {
-    const targetUser = message.mentions.users.first() || (args[0] ? await client.users.fetch(args[0]).catch(() => null) : message.author);
+  name: "gorev",
+  aliases: ["gorevler", "quests", "tasks", "dailyquest"],
+  async execute({ message, args, config }) {
+    const { season, userProgress } = await BattlePassService.getUserProgress(message.guild.id, message.author.id);
 
-    const now = new Date();
-    const weekNumber = Math.ceil(now.getDate() / 7);
-    const year = now.getFullYear();
+    if (args[0] === "al" || args[0] === "claim") {
+      const targetQuestId = (args[1] || "").toLowerCase().trim();
+      if (!targetQuestId) {
+        let anyClaimed = false;
+        let totalXp = 0;
+        let totalCoin = 0;
 
-    const task = await StaffTask.findOne({ guildId: message.guild.id, userId: targetUser.id, weekNumber, year });
+        for (const dq of userProgress.dailyQuests || []) {
+          if (dq.completed && !dq.claimed) {
+            const res = await BattlePassService.claimQuestReward(message.guild.id, message.author.id, dq.questId, false);
+            if (res.success) {
+              anyClaimed = true;
+              totalXp += res.gainedXp;
+              totalCoin += res.gainedCoin;
+            }
+          }
+        }
 
-    const currentVoiceHours = Math.floor((task?.currentVoiceMs || 0) / (1000 * 60 * 60));
-    const targetVoiceHours = Math.floor((task?.targetVoiceMs || 36000000) / (1000 * 60 * 60));
+        for (const wq of userProgress.weeklyQuests || []) {
+          if (wq.completed && !wq.claimed) {
+            const res = await BattlePassService.claimQuestReward(message.guild.id, message.author.id, wq.questId, true);
+            if (res.success) {
+              anyClaimed = true;
+              totalXp += res.gainedXp;
+              totalCoin += res.gainedCoin;
+            }
+          }
+        }
 
-    const currentMsgs = task?.currentMessages || 0;
-    const targetMsgs = task?.targetMessages || 500;
+        if (!anyClaimed) {
+          return message.reply(MessageFormatter.warn("Ödül Yok", "Şu anda ödülü toplanabilir tamamlanmış bir görev bulunmuyor."));
+        }
 
-    const currentRegs = task?.currentRegisters || 0;
-    const targetRegs = task?.targetRegisters || 5;
+        return message.reply(MessageFormatter.success(
+          "Görev Ödülleri Alındı!",
+          `▫️ Tamamlanan görevlerden toplam **+${totalXp.toLocaleString("tr-TR")} Bilet XP** ve **+${totalCoin.toLocaleString("tr-TR")} Coin** hesabınıza eklendi!\n▫️ Sezon biletinizi incelemek için: \`.bilet\``
+        ));
+      }
 
-    const voiceBar = makeProgressBar(currentVoiceHours, targetVoiceHours);
-    const msgBar = makeProgressBar(currentMsgs, targetMsgs);
-    const regBar = makeProgressBar(currentRegs, targetRegs);
+      const isWeekly = (userProgress.weeklyQuests || []).some((q) => q.questId === targetQuestId);
+      const res = await BattlePassService.claimQuestReward(message.guild.id, message.author.id, targetQuestId, isWeekly);
+      if (!res.success) {
+        return message.reply(MessageFormatter.warn("Hata", res.reason));
+      }
 
-    const payload = MessageFormatter.render("staffTask", {
-      user: targetUser,
-      voiceHours: `${currentVoiceHours}/${targetVoiceHours} Saat (${voiceBar})`,
-      msgs: `${currentMsgs}/${targetMsgs} Mesaj (${msgBar})`,
-      regs: `${currentRegs}/${targetRegs} Kayıt (${regBar})`,
-      points: task?.points || 0,
-      title: `${targetUser.tag} - Haftalık Görev Durumu`
-    }, config, message.guild);
+      return message.reply(MessageFormatter.success(
+        "Görev Ödülü Alındı!",
+        `▫️ **${res.title}** görevi tamamlandı!\n▫️ **Kazanılan:** \`+${res.gainedXp} Bilet XP\` ve \`+${res.gainedCoin} Coin\`\n▫️ **Güncel Bilet Seviyesi:** Kademe **${res.newPassLevel}**`
+      ));
+    }
 
-    message.reply(payload);
+    const dailyCfgMap = new Map((season.dailyQuestsConfig || []).map((q) => [q.id, q]));
+    const dailyRows = (userProgress.dailyQuests || []).map((dq) => {
+      const cfg = dailyCfgMap.get(dq.questId);
+      if (!cfg) return null;
+
+      let statusBadge = `⏳ **${dq.current}/${dq.target}**`;
+      if (dq.completed) {
+        statusBadge = dq.claimed ? "✅ *(Toplandı)*" : "🎁 **[Toplanabilir: .gorev al]**";
+      }
+
+      return `▫️ **${cfg.title}** : ${statusBadge}\n  *${cfg.description}*\n  Ödül: \`+${cfg.xpReward} Bilet XP\` • \`+${cfg.coinReward} Coin\``;
+    }).filter(Boolean).join("\n\n");
+
+    const weeklyCfgMap = new Map((season.weeklyQuestsConfig || []).map((q) => [q.id, q]));
+    const weeklyRows = (userProgress.weeklyQuests || []).map((wq) => {
+      const cfg = weeklyCfgMap.get(wq.questId);
+      if (!cfg) return null;
+
+      let statusBadge = `⏳ **${wq.current}/${wq.target}**`;
+      if (wq.completed) {
+        statusBadge = wq.claimed ? "✅ *(Toplandı)*" : "🎁 **[Toplanabilir: .gorev al]**";
+      }
+
+      return `▫️ **${cfg.title}** : ${statusBadge}\n  *${cfg.description}*\n  Ödül: \`+${cfg.xpReward} Bilet XP\` • \`+${cfg.coinReward} Coin\``;
+    }).filter(Boolean).join("\n\n");
+
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId(`bp_claim_all_quests:${message.author.id}`)
+        .setLabel("🎁 Tamamlananları Topla")
+        .setStyle(ButtonStyle.Success),
+      new ButtonBuilder()
+        .setCustomId(`bp_view_pass:${message.author.id}`)
+        .setLabel("🎫 Sezon Bileti")
+        .setStyle(ButtonStyle.Primary)
+    );
+
+    const content = [
+      `# 📜 Sezon Görevleri : ${season.seasonName}`,
+      `Görevleri tamamlayarak Sezon Bileti XP'si ve ekstra Coin kazanın. Günlük görevler her gece yarısı otomatik yenilenir.`,
+      "",
+      `### ☀️ Günlük Görevler`,
+      dailyRows || "Aktif günlük görev bulunmuyor.",
+      "",
+      `### 🌟 Haftalık Büyük Görevler`,
+      weeklyRows || "Aktif haftalık görev bulunmuyor.",
+      "",
+      `-# 💡 Tamamlanan ödülleri almak için \`.gorev al\` yazabilir veya aşağıdaki yeşil butona basabilirsiniz.`
+    ].join("\n");
+
+    return message.reply(MessageFormatter.v2(content, [row]));
   }
 };

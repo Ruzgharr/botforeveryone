@@ -1,5 +1,5 @@
 import { Economy, MarketItem } from "@bot/database";
-import { Embeds } from "@bot/core";
+import { MessageFormatter } from "@bot/core";
 
 export default {
   name: "al",
@@ -9,7 +9,10 @@ export default {
     const count = parseInt(args[1], 10) || 1;
 
     if (!["altin", "altın", "gold", "btc", "kripto"].includes(type) || count <= 0) {
-      return message.reply({ embeds: [Embeds.warn("Hatalı Kullanım", "Lütfen geçerli bir varlık ve miktar belirtin. Örnek: `.al altın 2` veya `.al btc 1`", message.guild)] });
+      return message.reply(MessageFormatter.warn(
+        "Hatalı Kullanım",
+        `Lütfen geçerli bir varlık ve miktar belirtin.\n\n▫️ Örnek: \`${config.prefix || "."}al altın 2\` veya \`${config.prefix || "."}al btc 1\``
+      ));
     }
 
     const isGold = ["altin", "altın", "gold"].includes(type);
@@ -20,7 +23,10 @@ export default {
 
     const userEco = await Economy.findOne({ guildId: message.guild.id, userId: message.author.id });
     if (!userEco || (userEco.wallet || 0) < totalPrice) {
-      return message.reply({ embeds: [Embeds.error("Yetersiz Bakiye", `Bu alım için cüzdanınızda **${totalPrice} Coin** bulunması gerekir. Mevcut cüzdanınız: **${userEco?.wallet || 0} Coin**`, message.guild)] });
+      return message.reply(MessageFormatter.error(
+        "Yetersiz Bakiye",
+        `Bu alım için cüzdanınızda **${totalPrice.toLocaleString("tr-TR")} Coin** bulunması gerekir.\n\n▫️ Mevcut Cüzdan: **${(userEco?.wallet || 0).toLocaleString("tr-TR")} Coin**`
+      ));
     }
 
     await Economy.updateOne(
@@ -38,12 +44,10 @@ export default {
       { upsert: true }
     );
 
-    const embed = Embeds.success(
+    return message.reply(MessageFormatter.success(
       "Alım İşlemi Başarılı",
-      `Başarıyla **${count} adet ${itemName}** satın aldınız.\nÖdenen Tutar: **${totalPrice} Coin**\nBirim Fiyat: **${unitPrice} Coin**`,
-      message.guild
-    );
-
-    message.reply({ embeds: [embed] });
+      `Başarıyla **${count} adet ${itemName}** satın aldınız.\n\n▫️ Ödenen Tutar: **${totalPrice.toLocaleString("tr-TR")} Coin**\n▫️ Birim Fiyat: **${unitPrice.toLocaleString("tr-TR")} Coin**\n▫️ Kalan Cüzdan: **${((userEco?.wallet || 0) - totalPrice).toLocaleString("tr-TR")} Coin**`
+    ));
   }
 };
+

@@ -1,12 +1,12 @@
 import { UserAccount } from "@bot/database";
-import { Embeds } from "@bot/core";
+import { MessageFormatter } from "@bot/core";
 
 export default {
   name: "topteyit",
   aliases: ["top-teyit", "teyitsıralama", "teyitsiralama", "topkayit"],
   async execute({ client, message, args, config }) {
     if (!client.hasStaffPermission(message.member, config, "registerStaff")) {
-      return message.reply({ embeds: [Embeds.error("Yetki Yetersiz", "Bu komutu kullanmak için yetkiniz bulunmuyor.", message.guild)] });
+      return message.reply(MessageFormatter.error("Yetki Yetersiz", "Bu komutu kullanmak için yetkiniz bulunmuyor."));
     }
 
     const leaderboard = await UserAccount.aggregate([
@@ -24,14 +24,12 @@ export default {
     ]);
 
     if (!leaderboard || leaderboard.length === 0) {
-      return message.reply({
-        embeds: [Embeds.info("Sıralama Boş", "Sunucuda henüz kayıt verisi kaydedilmemiş.", message.guild)]
-      });
+      return message.reply(MessageFormatter.info("Sıralama Boş", "Sunucuda henüz kayıt verisi kaydedilmemiş."));
     }
 
     const medals = ["🥇", "🥈", "🥉"];
     const rows = leaderboard.map((item, index) => {
-      const badge = medals[index] || `**${index + 1}.**`;
+      const badge = medals[index] || `▫️ **${index + 1}.**`;
       return `${badge} <@${item._id}>: **${item.total}** Kayıt (\`${item.men} Erkek\`, \`${item.women} Kadın\`)`;
     });
 
@@ -41,10 +39,9 @@ export default {
       ...rows
     ].join("\n");
 
-    message.reply({
-      embeds: [
-        Embeds.success("🏆 Yetkili Kayıt Sıralaması (Top 10)", description, message.guild)
-      ]
-    });
+    message.reply(MessageFormatter.info(
+      "🏆 Yetkili Kayıt Sıralaması (Top 10)",
+      `${description}\n-# Ecosystem Teyit Sıralama Sistemi`
+    ));
   }
 };

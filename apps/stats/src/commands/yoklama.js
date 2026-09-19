@@ -1,16 +1,16 @@
-import { Embeds, MessageFormatter } from "@bot/core";
+import { MessageFormatter } from "@bot/core";
 
 export default {
   name: "yoklama",
   aliases: ["toplantı", "toplanti", "toplantiyoklama"],
   async execute({ client, message, config }) {
     if (!message.member.permissions.has("Administrator") && !client.hasStaffPermission(message.member, config, "staffRoles")) {
-      return message.reply({ embeds: [Embeds.error("Yetki Yetersiz", "Yoklama başlatmak için yönetici yetkiniz bulunmuyor.", message.guild)] });
+      return message.reply(MessageFormatter.error("Yetki Yetersiz", "Yoklama başlatmak için yetkiniz bulunmuyor."));
     }
 
     const voiceChannel = message.member.voice.channel;
     if (!voiceChannel) {
-      return message.reply({ embeds: [Embeds.warn("Ses Kanalı Gerekli", "Yoklama almak için bir ses kanalında bulunmalısınız.", message.guild)] });
+      return message.reply(MessageFormatter.warn("Ses Kanalı Gerekli", "Yoklama almak için bir ses kanalında bulunmalısınız."));
     }
 
     const presentMembers = voiceChannel.members.filter((m) => !m.user.bot);

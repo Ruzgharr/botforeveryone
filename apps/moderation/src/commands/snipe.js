@@ -1,24 +1,36 @@
-import { MessageFormatter } from "@bot/core";
+import { ChatMessage } from "@bot/database";
+import { ModerationUI } from "../services/ModerationUI.js";
 
 export default {
   name: "snipe",
-  aliases: ["sonsilinek", "silinen"],
-  async execute({ client, message, config }) {
-    const sniped = client.snipes?.get(message.channel.id);
-    if (!sniped) {
-      const payload = MessageFormatter.render("snipeEmpty", {
-        title: "Bulunamadı"
-      }, config, message.guild);
-      return message.reply(payload);
+  aliases: ["sonsilinek", "silinen", "editsnipe", "duzenlenen"],
+  async execute({ client, message, args = [], config }) {
+    const isEditMode = args[0]?.toLowerCase() === "edit" || args[0]?.toLowerCase() === "düzenlenen" || args[0]?.toLowerCase() === "duzenlenen" || message.content.includes("editsnipe");
+    const type = isEditMode ? "edit" : "delete";
+
+    const filter = type === "edit"
+      ? { channelId: message.channel.id, isEdited: true }
+      : { channelId: message.channel.id, isDeleted: true };
+
+    let records = await ChatMessage.find(filter)
+      .sort(type === "edit" ? { editedAt: -1, timestamp: -1 } : { deletedAt: -1, timestamp: -1 })
+      .limit(10)
+      .catch(() => []);
+
+    if ((!records || records.length === 0) && type === "delete") {
+      const memorySniped = client.snipes?.get(message.channel.id);
+      if (memorySniped) {
+        records = [memorySniped];
+      }
     }
 
-    const payload = MessageFormatter.render("snipeMessage", {
-      authorId: sniped.authorId,
-      content: sniped.content || "Görsel / Dosya Eki",
-      time: `<t:${Math.floor(sniped.timestamp / 1000)}:R>`,
-      title: "Son Silinen Mesaj"
-    }, config, message.guild);
+    const payload = ModerationUI.buildSnipePayload({
+      type,
+      records,
+      index: 0,
+      channelId: message.channel.id
+    });
 
-    message.reply(payload);
+    return message.reply(payload);
   }
 };

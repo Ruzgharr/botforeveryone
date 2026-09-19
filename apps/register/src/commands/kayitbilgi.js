@@ -1,12 +1,12 @@
 import { UserAccount } from "@bot/database";
-import { Embeds } from "@bot/core";
+import { MessageFormatter } from "@bot/core";
 
 export default {
   name: "kayitbilgi",
   aliases: ["kayıtbilgi", "kayit-bilgi", "teyitbilgi"],
   async execute({ client, message, args, config }) {
     if (!client.hasStaffPermission(message.member, config, "registerStaff")) {
-      return message.reply({ embeds: [Embeds.error("Yetki Yetersiz", "Bu komutu kullanmak için yetkiniz bulunmuyor.", message.guild)] });
+      return message.reply(MessageFormatter.error("Yetki Yetersiz", "Bu komutu kullanmak için yetkiniz bulunmuyor."));
     }
 
     const targetUser = message.mentions.users.first() || (args[0] ? await client.users.fetch(args[0]).catch(() => null) : message.author);
@@ -18,22 +18,15 @@ export default {
     const womenCount = asStaff.filter((u) => u.gender === "WOMAN").length;
     const totalRegistered = asStaff.length;
 
-    let memberInfo = "Bu kullanıcıya ait sunucu kayıt geçmişi bulunamadı.";
+    let memberInfo = "▫️ Bu kullanıcıya ait sunucu kayıt geçmişi bulunamadı.";
     if (asMember && asMember.registeredBy) {
       const regTime = asMember.registeredAt ? `<t:${Math.floor(new Date(asMember.registeredAt).getTime() / 1000)}:R>` : "Bilinmiyor";
-      memberInfo = `• Kaydeden Yetkili: <@${asMember.registeredBy}>\n• Kayıt Tarihi: ${regTime}\n• Cinsiyet: ${asMember.gender === "MAN" ? "Erkek" : asMember.gender === "WOMAN" ? "Kadın" : "Üye"}\n• Kayıtlı İsim: **${asMember.name} | ${asMember.age}**`;
+      memberInfo = `▫️ **Kaydeden Yetkili:** <@${asMember.registeredBy}>\n▫️ **Kayıt Tarihi:** ${regTime}\n▫️ **Cinsiyet:** \`${asMember.gender === "MAN" ? "Erkek" : asMember.gender === "WOMAN" ? "Kadın" : "Üye"}\`\n▫️ **Kayıtlı İsim:** \`${asMember.name} | ${asMember.age}\``;
     }
 
-    const embed = Embeds.info(
+    message.reply(MessageFormatter.info(
       `${targetUser.username} - Kayıt Verileri`,
-      `Yetkili Olarak Kayıt İstatistikleri:\n` +
-      `• Toplam Kayıt: **${totalRegistered}**\n` +
-      `• Erkek Kayıt: **${menCount}**\n` +
-      `• Kadın Kayıt: **${womenCount}**\n\n` +
-      `Kullanıcının Kendi Kayıt Bilgisi:\n${memberInfo}`,
-      message.guild
-    );
-
-    message.reply({ embeds: [embed] });
+      `**Yetkili Olarak Kayıt:**\n▫️ **Toplam Kayıt:** \`${totalRegistered}\`\n▫️ **Erkek Kayıt:** \`${menCount}\`\n▫️ **Kadın Kayıt:** \`${womenCount}\`\n\n**Kullanıcının Kayıt Durumu:**\n${memberInfo}\n-# Kayıt ve Teyit Veri Takip Sistemi`
+    ));
   }
 };

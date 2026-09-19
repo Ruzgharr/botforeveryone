@@ -1,4 +1,4 @@
-import { Embeds } from "@bot/core";
+import { MessageFormatter } from "@bot/core";
 import { ChannelType } from "discord.js";
 
 const channelTypeMap = {
@@ -16,7 +16,7 @@ export default {
   async execute({ client, message, args, config }) {
     const targetChannel = message.mentions.channels.first() || (args[0] ? message.guild.channels.cache.get(args[0]) : message.channel);
     if (!targetChannel) {
-      return message.reply({ embeds: [Embeds.warn("Kanal Bulunamadı", "Belirtilen kanal sunucuda bulunamadı.", message.guild)] });
+      return message.reply(MessageFormatter.warn("Kanal Bulunamadı", "Belirtilen kanal sunucuda bulunamadı."));
     }
 
     const typeStr = channelTypeMap[targetChannel.type] || "Diğer";
@@ -24,30 +24,40 @@ export default {
     const createdDate = targetChannel.createdAt ? targetChannel.createdAt.toLocaleString("tr-TR") : "Bilinmiyor";
 
     const rows = [
-      `• **Kanal Adı:** ${targetChannel.name}`,
-      `• **Kanal ID:** \`${targetChannel.id}\``,
-      `• **Kanal Türü:** \`${typeStr}\``,
-      `• **Bağlı Olduğu Kategori:** \`${categoryName}\``,
-      `• **Pozisyon:** ${targetChannel.position} / ${message.guild.channels.cache.size}`,
-      `• **Oluşturulma Tarihi:** \`${createdDate}\``
+      `▫️ **Kanal Adı:** <#${targetChannel.id}> (\`${targetChannel.name}\`)`,
+      `▫️ **Kanal ID:** \`${targetChannel.id}\``,
+      `▫️ **Kanal Türü:** \`${typeStr}\``,
+      `▫️ **Kategori:** \`${categoryName}\``,
+      `▫️ **Pozisyon:** ${targetChannel.position} / ${message.guild.channels.cache.size}`,
+      `▫️ **Oluşturulma:** \`${createdDate}\``
     ];
 
     if (targetChannel.isTextBased() && !targetChannel.isVoiceBased()) {
-      rows.push(`• **Yavaş Mod (Slowmode):** \`${targetChannel.rateLimitPerUser || 0} saniye\``);
-      rows.push(`• **NSFW (Yetişkin):** ${targetChannel.nsfw ? "Evet" : "Hayır"}`);
+      rows.push(`▫️ **Yavaş Mod (Slowmode):** \`${targetChannel.rateLimitPerUser || 0} saniye\``);
+      rows.push(`▫️ **NSFW:** ${targetChannel.nsfw ? "Evet (+18)" : "Hayır"}`);
       if (targetChannel.topic) {
-        rows.push(`• **Kanal Açıklaması:** ${targetChannel.topic}`);
+        rows.push(`▫️ **Kanal Konusu:** ${targetChannel.topic}`);
       }
     }
 
     if (targetChannel.isVoiceBased()) {
-      rows.push(`• **Bitrate:** \`${Math.round(targetChannel.bitrate / 1000)} kbps\``);
-      rows.push(`• **Kullanıcı Limiti:** \`${targetChannel.userLimit || "Limitsiz"}\``);
-      rows.push(`• **Odada Bağlı Üye:** \`${targetChannel.members.size} kişi\``);
+      rows.push(`▫️ **Ses Bit Hızı:** \`${Math.round(targetChannel.bitrate / 1000)} kbps\``);
+      rows.push(`▫️ **Kullanıcı Limiti:** \`${targetChannel.userLimit || "Limitsiz"}\``);
+      rows.push(`▫️ **Odadaki Üye:** \`${targetChannel.members.size} kişi\``);
     }
 
-    message.reply({
-      embeds: [Embeds.info(`${targetChannel.name} - Kanal Detayları`, rows.join("\n"), message.guild)]
+    const content = [
+      `### 📺 Kanal Detayları: ${targetChannel.name}`,
+      ...rows,
+      "",
+      `-# Bilgiler sunucu kanal yapısından çekilmiştir.`
+    ].join("\n");
+
+    return message.reply({
+      content,
+      embeds: [],
+      components: []
     });
   }
 };
+

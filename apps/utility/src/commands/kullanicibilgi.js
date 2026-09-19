@@ -1,14 +1,14 @@
-import { Embeds } from "@bot/core";
+import { UtilityUI } from "../services/UtilityUI.js";
 
 export default {
   name: "kullanicibilgi",
-  aliases: ["kullanici", "userinfo", "whois", "kb", "profil"],
+  aliases: ["kullanici", "userinfo", "whois", "kb"],
   async execute({ message, args }) {
     const targetMember = message.mentions.members.first()
       || (args[0] ? await message.guild.members.fetch(args[0]).catch(() => null) : message.member);
 
     if (!targetMember) {
-      return message.reply({ embeds: [Embeds.error("Kullanıcı Bulunamadı", "Belirtilen kullanıcı sunucuda bulunamadı.", message.guild)] });
+      return message.reply({ content: "Belirtilen kullanıcı sunucuda bulunamadı." });
     }
 
     const user = targetMember.user;
@@ -43,27 +43,18 @@ export default {
     if (targetMember.permissions.has("KickMembers")) keyPermissions.push("Üyeleri At");
     if (targetMember.permissions.has("MentionEveryone")) keyPermissions.push("Everyone/Here Etiketleme");
 
-    const embed = Embeds.base(`Kullanıcı Profili: ${user.username}`, null, message.guild)
-      .setThumbnail(user.displayAvatarURL({ dynamic: true, size: 256 }))
-      .addFields(
-        { name: "Kullanıcı", value: `${user} (\`${user.id}\`)`, inline: true },
-        { name: "Hesap Türü", value: user.bot ? "🤖 Bot" : "👤 Üye", inline: true },
-        { name: "En Yüksek Rol", value: `${targetMember.roles.highest}`, inline: true },
-        { name: "Hesap Kuruluş Tarihi", value: `<t:${createdAccountTs}:F>\n(<t:${createdAccountTs}:R>)`, inline: true },
-        { name: "Sunucuya Katılış Tarihi", value: joinedServerTs ? `<t:${joinedServerTs}:F>\n(<t:${joinedServerTs}:R>)` : "Bilinmiyor", inline: true },
-        { name: "Ses Kanalı Durumu", value: voiceStatus, inline: false },
-        { name: `Roller (${roles.size})`, value: rolesStr, inline: false }
-      );
+    const payload = UtilityUI.formatUserPayload({
+      targetMember,
+      user,
+      joinedServerTs,
+      createdAccountTs,
+      roles,
+      rolesStr,
+      voiceStatus,
+      keyPermissions
+    });
 
-    if (targetMember.premiumSince) {
-      const boostTs = Math.floor(targetMember.premiumSinceTimestamp / 1000);
-      embed.addFields({ name: "Sunucu Takviyesi (Boost)", value: `💎 <t:${boostTs}:F> tarihinden beri takviye yapıyor.`, inline: false });
-    }
-
-    if (keyPermissions.length > 0) {
-      embed.addFields({ name: "Önemli Yetkiler", value: keyPermissions.join(", "), inline: false });
-    }
-
-    await message.reply({ embeds: [embed] });
+    return message.reply(payload);
   }
 };
+

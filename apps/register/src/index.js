@@ -18,6 +18,7 @@ import kayitsifirlaCmd from "./commands/kayitsifirla.js";
 import teyitsifirlaCmd from "./commands/teyitsifirla.js";
 import dogrulamaCmd from "./commands/dogrulama.js";
 import gckontrolCmd from "./commands/gckontrol.js";
+import { registerRegisterInteractions } from "./services/RegisterInteractions.js";
 
 const client = new BaseBot({
   serviceName: "REGISTER",
@@ -43,127 +44,7 @@ client.registerCommand(teyitsifirlaCmd);
 client.registerCommand(dogrulamaCmd);
 client.registerCommand(gckontrolCmd);
 
-client.registerInteraction("verify_human", async ({ interaction, config }) => {
-  const unregRoles = config.roles?.unregistered || [];
-  if (unregRoles.length > 0) {
-    await interaction.member.roles.add(unregRoles).catch(() => null);
-  }
-  await interaction.reply({
-    content: "✅ İnsan doğrulamanız başarıyla tamamlandı! Kayıt odalarına ve sohbet kanallarına erişebilirsiniz.",
-    ephemeral: true
-  });
-});
-
-client.registerInteraction("reg_", async ({ client, interaction, config }) => {
-  if (!client.hasStaffPermission(interaction.member, config, "registerStaff")) {
-    return interaction.reply({ content: "Bu işlemi yapabilmek için yetkiniz bulunmuyor.", ephemeral: true });
-  }
-
-  const parts = interaction.customId.split("_");
-  const genderType = parts[1];
-  const targetId = parts[2];
-  const name = parts[3];
-  const age = parseInt(parts[4], 10);
-
-  const targetMember = await interaction.guild.members.fetch(targetId).catch(() => null);
-  if (!targetMember) {
-    return interaction.reply({ content: "Kullanıcı sunucuda bulunamadı.", ephemeral: true });
-  }
-
-  let rolesToAdd = [];
-  let roleLabel = "";
-  let genderEnum = "UNREGISTERED";
-
-  if (genderType === "man") {
-    rolesToAdd = config.roles?.man || [];
-    roleLabel = "Erkek";
-    genderEnum = "MAN";
-  } else if (genderType === "woman") {
-    rolesToAdd = config.roles?.woman || [];
-    roleLabel = "Kadın";
-    genderEnum = "WOMAN";
-  } else {
-    rolesToAdd = config.roles?.member || [];
-    roleLabel = "Üye";
-    genderEnum = "MEMBER";
-  }
-
-  const unregRoles = config.roles?.unregistered || [];
-  if (unregRoles.length > 0) {
-    await targetMember.roles.remove(unregRoles).catch(() => null);
-  }
-
-  if (rolesToAdd.length > 0) {
-    await targetMember.roles.add(rolesToAdd).catch(() => null);
-  }
-
-  await UserAccount.findOneAndUpdate(
-    { guildId: interaction.guild.id, userId: targetMember.id },
-    {
-      $set: {
-        name,
-        age,
-        gender: genderEnum,
-        registeredBy: interaction.user.id,
-        registeredAt: new Date()
-      },
-      $push: {
-        namesHistory: {
-          name,
-          age,
-          roleAssigned: roleLabel,
-          staffId: interaction.user.id,
-          date: new Date()
-        }
-      }
-    },
-    { upsert: true }
-  );
-
-  const now = new Date();
-  const weekNumber = Math.ceil(now.getDate() / 7);
-  const year = now.getFullYear();
-
-  await StaffTask.findOneAndUpdate(
-    { guildId: interaction.guild.id, userId: interaction.user.id, weekNumber, year },
-    { $inc: { currentRegisters: 1, points: 5 } },
-    { upsert: true }
-  );
-
-  const regLogId = config.channels?.registerLog;
-  if (regLogId) {
-    const regLog = interaction.guild.channels.cache.get(regLogId);
-    if (regLog) {
-      regLog.send({
-        embeds: [
-          Embeds.success(
-            "Kayıt İşlemi Başarılı",
-            `• **Kaydedilen:** ${targetMember} (${targetMember.id})\n• **Yetkili:** ${interaction.user} (${interaction.user.id})\n• **Cinsiyet / Rol:** ${roleLabel}\n• **İsim / Yaş:** ${name} | ${age}`,
-            interaction.guild
-          )
-        ]
-      });
-    }
-  }
-
-  const successPayload = MessageFormatter.render("registerSuccess", {
-    user: targetMember,
-    staff: interaction.user,
-    gender: roleLabel,
-    title: "Kayıt Başarılı"
-  }, config, interaction.guild);
-
-  await StaffKpi.findOneAndUpdate(
-    { guildId: interaction.guild.id, staffId: interaction.user.id, period: "WEEKLY" },
-    { $inc: { registers: 1, totalScore: 5 } },
-    { upsert: true }
-  ).catch(() => {});
-
-  interaction.update({
-    ...successPayload,
-    components: []
-  });
-});
+registerRegisterInteractions(client);
 
 client.on("ready", async () => {
   for (const guild of client.guilds.cache.values()) {
@@ -224,15 +105,10 @@ client.on("guildMemberAdd", async (member) => {
       if (inviteLog) {
         const invRecord = await InviteRecord.findOne({ guildId: member.guild.id, userId: inviterId });
         const totalInv = Math.max(0, (invRecord?.regular || 0) + (invRecord?.bonus || 0) - (invRecord?.leaves || 0));
-        inviteLog.send({
-          embeds: [
-            Embeds.info(
-              "Üye Katıldı",
-              `• **Katılan:** ${member} (\`${member.id}\`)\n• **Davet Eden:** <@${inviterId}> (\`${inviterId}\`)\n• **Davet Sayısı:** \`${totalInv}\` davet\n• **Davet Kodu:** \`${usedInvite.code}\``,
-              member.guild
-            )
-          ]
-        }).catch(() => null);
+        inviteLog.send(MessageFormatter.info(
+          "Üye Katıldı",
+          `**Katılan:** ${member} (\`${member.id}\`)\n▫️ **Davet Eden:** <@${inviterId}> (\`${inviterId}\`)\n▫️ **Davet Sayısı:** \`${totalInv}\` davet\n▫️ **Davet Kodu:** \`${usedInvite.code}\`\n-# Ecosystem Davet Takip Sistemi`
+        )).catch(() => null);
       }
     }
   }
@@ -272,18 +148,16 @@ client.on("guildMemberAdd", async (member) => {
       const trustBadge = accountAgeDays >= 7 ? "🟢 Güvenilir Hesap" : "🔴 Şüpheli Hesap (7 günden yeni)";
       const staffPing = (config.roles?.registerStaff || []).map((r) => `<@&${r}>`).join(" ");
 
-      const welcomeEmbed = Embeds.base("Aramıza Hoş Geldin!", null, member.guild)
-        .setThumbnail(member.user.displayAvatarURL({ dynamic: true, size: 256 }))
-        .setDescription(
-          `Merhaba ${member}, **${member.guild.name}** sunucumuza hoş geldin!\n\n`
-          + `• **Hesap Kuruluş:** <t:${Math.floor(member.user.createdTimestamp / 1000)}:R> (${trustBadge})\n`
-          + `• **Sunucu Nüfusu:** **${member.guild.memberCount}.** üyemizsin\n`
-          + `• **Tag Durumu:** Sunucu tagımızı (\`${config.tag || "Yok"}\`) alarak ailemize katılabilirsin.\n\n`
-          + `Kayıt olmak için lütfen ses teyit odalarına bağlanın. Yetkili ekibimiz sizinle ilgilenecektir.`
-        )
-        .setFooter({ text: "Kayıt ve Teyit Sistemi | Public Bot Ecosystem", iconURL: member.guild.iconURL() });
+      const welcomePayload = MessageFormatter.render("registerWelcome", {
+        user: member,
+        title: "Aramıza Hoş Geldin!"
+      }, config, member.guild);
 
-      regChat.send({ content: `${member} ${staffPing}`.trim(), embeds: [welcomeEmbed] }).catch(() => null);
+      const fullWelcomeText = `${welcomePayload.content}\n▫️ **Hesap Kuruluş:** <t:${Math.floor(member.user.createdTimestamp / 1000)}:R> (${trustBadge})\n▫️ **Sunucu Nüfusu:** **${member.guild.memberCount}.** üyemizsin\n▫️ **Tag Durumu:** Sunucu tagımızı (\`${config.tag || "Yok"}\`) alarak ailemize katılabilirsin.`;
+
+      regChat.send({
+        content: `${member} ${staffPing}\n\n${fullWelcomeText}`.trim()
+      }).catch(() => null);
     }
   }
 });
@@ -303,7 +177,7 @@ client.on("voiceStateUpdate", async (oldState, newState) => {
             const staffRoles = config.roles?.registerStaff || [];
             const pingStr = staffRoles.length > 0 ? staffRoles.map((r) => `<@&${r}>`).join(" ") : "Yetkililer";
             regChat.send({
-              content: `🔔 ${pingStr}, ${newState.member} kullanıcısı <#${newState.channelId}> ses teyit odasına katıldı ve kayıt bekliyor!`
+              content: `### 🔔 Ses Teyit Bildirimi\n▫️ ${pingStr}, ${newState.member} kullanıcısı <#${newState.channelId}> ses teyit odasına katıldı ve kayıt bekliyor!`
             }).catch(() => null);
           }
         }
@@ -330,15 +204,10 @@ client.on("guildMemberRemove", async (member) => {
       const inviteLog = member.guild.channels.cache.get(inviteLogId);
       if (inviteLog) {
         const totalInv = Math.max(0, invRecord.regular + invRecord.bonus - (invRecord.leaves + 1));
-        inviteLog.send({
-          embeds: [
-            Embeds.warn(
-              "Üye Ayrıldı",
-              `• **Ayrılan:** ${member.user.tag} (\`${member.id}\`)\n• **Davet Eden:** <@${invRecord.userId}>\n• **Kalan Davet:** \`${totalInv}\` davet`,
-              member.guild
-            )
-          ]
-        }).catch(() => null);
+        inviteLog.send(MessageFormatter.warn(
+          "Üye Ayrıldı",
+          `**Ayrılan:** ${member.user.tag} (\`${member.id}\`)\n▫️ **Davet Eden:** <@${invRecord.userId}>\n▫️ **Kalan Davet:** \`${totalInv}\` davet\n-# Ecosystem Davet Log Sistemi`
+        )).catch(() => null);
       }
     }
   }
@@ -364,11 +233,10 @@ client.on("userUpdate", async (oldUser, newUser) => {
       if (regChatId) {
         const channel = guild.channels.cache.get(regChatId);
         if (channel) {
-          channel.send({
-            embeds: [
-              Embeds.success("Tag Aldı!", `${member} sunucu tagımızı (\`${tag}\`) ismine ekleyerek aramıza katıldı!`, guild)
-            ]
-          }).catch(() => null);
+          channel.send(MessageFormatter.success(
+            "Tag Aldı!",
+            `${member} sunucu tagımızı (\`${tag}\`) ismine ekleyerek aramıza katıldı!`
+          )).catch(() => null);
         }
       }
     } else if (oldHasTag && !newHasTag) {
@@ -377,11 +245,10 @@ client.on("userUpdate", async (oldUser, newUser) => {
       if (regLogId) {
         const logChannel = guild.channels.cache.get(regLogId);
         if (logChannel) {
-          logChannel.send({
-            embeds: [
-              Embeds.warn("Tag Bıraktı", `${member} sunucu tagımızı (\`${tag}\`) isminden çıkardı ve tag rolü alındı.`, guild)
-            ]
-          }).catch(() => null);
+          logChannel.send(MessageFormatter.warn(
+            "Tag Bıraktı",
+            `${member} sunucu tagımızı (\`${tag}\`) isminden çıkardı ve tag rolü alındı.`
+          )).catch(() => null);
         }
       }
     }

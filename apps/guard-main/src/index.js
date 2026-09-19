@@ -1,4 +1,4 @@
-import { BaseBot, WebhookLogger } from "@bot/core";
+import { BaseBot, WebhookLogger, MessageFormatter } from "@bot/core";
 import { environment } from "@bot/config";
 import { AuditLogEvent } from "discord.js";
 import { PunishService } from "./services/PunishService.js";
@@ -7,11 +7,14 @@ import yedekalCmd from "./commands/yedekal.js";
 import yedekyukleCmd from "./commands/yedekyukle.js";
 import yedeklisteCmd from "./commands/yedekliste.js";
 import korumabilgiCmd from "./commands/korumabilgi.js";
+import { registerGuardInteractions } from "./services/GuardInteractions.js";
 
 const client = new BaseBot({
   serviceName: "GUARD-MAIN",
   token: environment.tokens.guardMain
 });
+
+registerGuardInteractions(client);
 
 client.registerCommand(yedekalCmd);
 client.registerCommand(yedekyukleCmd);
@@ -157,13 +160,10 @@ client.on("guildMemberAdd", async (member) => {
     if (config.channels?.guardLog) {
       const guardLogChannel = member.guild.channels.cache.get(config.channels.guardLog);
       if (guardLogChannel) {
-        guardLogChannel.send({
-          embeds: [Embeds.warn(
-            "Şüpheli Yeni Hesap Koruması",
-            `**Üye:** ${member} (${member.user.tag} - \`${member.id}\`)\n**Hesap Yaşı:** <t:${Math.floor(member.user.createdTimestamp / 1000)}:R>\n**Durum:** 7 günden yeni hesap olduğu için otomatik tecrit uygulandı.`,
-            member.guild
-          )]
-        }).catch(() => null);
+        guardLogChannel.send(MessageFormatter.warn(
+          "Şüpheli Yeni Hesap Koruması",
+          `▫️ **Üye:** ${member} (${member.user.tag} - \`${member.id}\`)\n▫️ **Hesap Yaşı:** <t:${Math.floor(member.user.createdTimestamp / 1000)}:R>\n▫️ **Durum:** 7 günden yeni hesap olduğu için otomatik tecrit uygulandı.`
+        )).catch(() => null);
       }
     }
   }

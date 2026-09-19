@@ -1,24 +1,25 @@
 import { Penalty } from "@bot/database";
-import { Embeds, MessageFormatter } from "@bot/core";
+import { MessageFormatter } from "@bot/core";
 import { parseDuration } from "../services/PenaltyWatcher.js";
 import { recordStaffKpi, checkGraduatedPunishment } from "../services/PunishmentHelper.js";
+import { ModerationUI } from "../services/ModerationUI.js";
 
 export default {
   name: "mute",
   aliases: ["cmute", "sustur"],
   async execute({ client, message, args, config }) {
     if (!client.hasStaffPermission(message.member, config, "moderationStaff")) {
-      return message.reply({ embeds: [Embeds.error("Yetki Yetersiz", "Bu komutu kullanmak için yetkiniz bulunmuyor.", message.guild)] });
+      return message.reply(MessageFormatter.error("Yetki Yetersiz", "Bu komutu kullanmak için yetkiniz bulunmuyor."));
     }
 
     const targetUser = message.mentions.members.first() || (args[0] ? await message.guild.members.fetch(args[0]).catch(() => null) : null);
     if (!targetUser) {
-      return message.reply({ embeds: [Embeds.warn("Eksik Bilgi", "Lütfen susturulacak kullanıcıyı etiketleyin veya ID girin.", message.guild)] });
+      return message.reply(MessageFormatter.warn("Eksik Bilgi", "Lütfen susturulacak kullanıcıyı etiketleyin veya ID girin."));
     }
 
     const muteRoleId = config.roles?.chatMute;
     if (!muteRoleId) {
-      return message.reply({ embeds: [Embeds.error("Ayar Hatası", "Mute rolü sistemde tanımlı değil.", message.guild)] });
+      return message.reply(MessageFormatter.error("Ayar Hatası", "Mute rolü sistemde tanımlı değil."));
     }
 
     const durationMs = parseDuration(args[1]);
@@ -51,15 +52,10 @@ export default {
     if (logChannelId) {
       const logChannel = message.guild.channels.cache.get(logChannelId);
       if (logChannel) {
-        logChannel.send({
-          embeds: [
-            Embeds.warn(
-              `Ceza #${caseCount} - Chat Mute`,
-              `**Kullanıcı:** ${targetUser} (${targetUser.id})\n**Yetkili:** ${message.author} (${message.author.id})\n**Sebep:** ${reason}\n**Ceza Puanı:** +10`,
-              message.guild
-            )
-          ]
-        });
+        logChannel.send(MessageFormatter.warn(
+          `Ceza #${caseCount} - Chat Mute`,
+          `**Kullanıcı:** ${targetUser} (\`${targetUser.id}\`)\n▫️ **Yetkili:** ${message.author} (\`${message.author.id}\`)\n▫️ **Sebep:** ${reason}\n▫️ **Ceza Puanı:** \`+10\`\n-# Ecosystem Moderasyon Log Sistemi`
+        ));
       }
     }
 
@@ -70,6 +66,8 @@ export default {
       points: 10,
       title: "Yazı Susturma (Chat Mute)"
     }, config, message.guild);
+
+    payload.components = [ModerationUI.buildPunishActionRow("MUTE", targetUser.id, caseCount)];
 
     message.reply(payload);
 
