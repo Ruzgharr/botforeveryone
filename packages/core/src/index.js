@@ -8,3 +8,5 @@ export { SmartFilter } from "./SmartFilter.js";
 export { VisualCard } from "./VisualCard.js";
 export { GitUpdateManager } from "./GitUpdateManager.js";
 export { BotNameManager } from "./BotNameManager.js";
+export { SecurityHelper } from "./SecurityHelper.js";
+export { TotpHelper } from "./TotpHelper.js";

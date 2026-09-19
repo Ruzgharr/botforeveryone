@@ -18,13 +18,16 @@ import "./models/BattlePass.js";
 import "./models/UserBattlePass.js";
 import "./models/Clan.js";
 import "./models/Pet.js";
+import "./models/DashboardAdmin.js";
+import "./models/SecurityAuditLog.js";
 
 import { DatabaseManager } from "./DatabaseManager.js";
 import { DatabaseMigrator } from "./DatabaseMigrator.js";
 import { PostgresDriver } from "./PostgresDriver.js";
 import { SqliteDriver } from "./SqliteDriver.js";
+import { encryptToken, decryptToken, isEncrypted } from "./CryptoHelper.js";
 
-export { DatabaseManager, DatabaseMigrator, PostgresDriver, SqliteDriver };
+export { DatabaseManager, DatabaseMigrator, PostgresDriver, SqliteDriver, encryptToken, decryptToken, isEncrypted };
 
 export const GuildConfig = DatabaseManager.getModel("GuildConfig");
 export const Penalty = DatabaseManager.getModel("Penalty");
@@ -46,6 +49,8 @@ export const BattlePass = DatabaseManager.getModel("BattlePass");
 export const UserBattlePass = DatabaseManager.getModel("UserBattlePass");
 export const Clan = DatabaseManager.getModel("Clan");
 export const Pet = DatabaseManager.getModel("Pet");
+export const DashboardAdmin = DatabaseManager.getModel("DashboardAdmin");
+export const SecurityAuditLog = DatabaseManager.getModel("SecurityAuditLog");
 
 export async function connectDatabase(uri, options = {}) {
   return await DatabaseManager.connect(uri, options);

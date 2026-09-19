@@ -1,8 +1,17 @@
 import fs from "fs";
 import path from "path";
-import { execSync } from "child_process";
+import { execSync, spawnSync } from "child_process";
+import { SecurityHelper } from "./SecurityHelper.js";
 
 export class GitUpdateManager {
+  static isValidBranch(branch) {
+    return typeof branch === "string" && /^[A-Za-z0-9._\/-]+$/.test(branch.trim());
+  }
+
+  static isValidBackupName(name) {
+    return typeof name === "string" && /^[A-Za-z0-9._-]+$/.test(name.trim());
+  }
+
   static getRootPath() {
     return process.cwd();
   }
@@ -67,7 +76,8 @@ export class GitUpdateManager {
   static getGitStatus() {
     const root = this.getRootPath();
     try {
-      const branch = execSync("git branch --show-current", { cwd: root, encoding: "utf8" }).trim() || "main";
+      const rawBranch = execSync("git branch --show-current", { cwd: root, encoding: "utf8" }).trim() || "main";
+      const branch = this.isValidBranch(rawBranch) ? rawBranch : "main";
       const commitHash = execSync("git rev-parse HEAD", { cwd: root, encoding: "utf8" }).trim();
       const commitMsg = execSync('git log -1 --format="%h : %s (%ar)"', { cwd: root, encoding: "utf8" }).trim();
       const statusPorcelain = execSync("git status --porcelain", { cwd: root, encoding: "utf8" }).trim();
@@ -84,27 +94,29 @@ export class GitUpdateManager {
       let remoteCommitMsg = "";
 
       try {
-        execSync(`git fetch origin ${branch}`, { cwd: root, stdio: "ignore", timeout: 10000 });
-        remoteAvailable = true;
+        const fetchRes = spawnSync("git", ["fetch", "origin", branch], { cwd: root, stdio: "ignore", timeout: 10000 });
+        if (fetchRes.status === 0) {
+          remoteAvailable = true;
 
-        const behindCount = execSync(`git rev-list --count HEAD..origin/${branch}`, { cwd: root, encoding: "utf8" }).trim();
-        commitsBehind = parseInt(behindCount, 10) || 0;
+          const behindCount = spawnSync("git", ["rev-list", "--count", `HEAD..origin/${branch}`], { cwd: root, encoding: "utf8" }).stdout?.trim() || "0";
+          commitsBehind = parseInt(behindCount, 10) || 0;
 
-        try {
-          remoteCommitHash = execSync(`git rev-parse origin/${branch}`, { cwd: root, encoding: "utf8" }).trim();
-          remoteCommitMsg = execSync(`git log -1 origin/${branch} --format="%h : %s (%ar)"`, { cwd: root, encoding: "utf8" }).trim();
-        } catch {}
-
-        if (commitsBehind > 0) {
           try {
-            const rawPending = execSync(`git log HEAD..origin/${branch} --format="%h|%s|%an|%ar" -n 15`, { cwd: root, encoding: "utf8" }).trim();
-            if (rawPending) {
-              pendingCommits = rawPending.split("\n").map((line) => {
-                const [hash, message, author, date] = line.split("|");
-                return { hash, message, author, date };
-              });
-            }
+            remoteCommitHash = spawnSync("git", ["rev-parse", `origin/${branch}`], { cwd: root, encoding: "utf8" }).stdout?.trim() || "";
+            remoteCommitMsg = spawnSync("git", ["log", "-1", `origin/${branch}`, "--format=%h : %s (%ar)"], { cwd: root, encoding: "utf8" }).stdout?.trim() || "";
           } catch {}
+
+          if (commitsBehind > 0) {
+            try {
+              const rawPending = spawnSync("git", ["log", `HEAD..origin/${branch}`, "--format=%h|%s|%an|%ar", "-n", "15"], { cwd: root, encoding: "utf8" }).stdout?.trim() || "";
+              if (rawPending) {
+                pendingCommits = rawPending.split("\n").map((line) => {
+                  const [hash, message, author, date] = line.split("|");
+                  return { hash, message, author, date };
+                });
+              }
+            } catch {}
+          }
         }
       } catch (e) {
         remoteAvailable = false;
@@ -153,7 +165,7 @@ export class GitUpdateManager {
     }
   }
 
-  static createFullBackup() {
+  static createFullBackup({ encrypt = false, encryptionKey = null } = {}) {
     const root = this.getRootPath();
     const backupsDir = this.getBackupsDir();
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
@@ -185,7 +197,13 @@ export class GitUpdateManager {
           fs.mkdirSync(destPath, { recursive: true });
           copyRecursive(srcPath, destPath);
         } else if (entry.isFile()) {
-          fs.copyFileSync(srcPath, destPath);
+          if (encrypt) {
+            const raw = fs.readFileSync(srcPath);
+            const enc = SecurityHelper.encryptAesGcm(raw, encryptionKey);
+            fs.writeFileSync(`${destPath}.enc`, enc);
+          } else {
+            fs.copyFileSync(srcPath, destPath);
+          }
           copiedFiles++;
         }
       }
@@ -202,7 +220,9 @@ export class GitUpdateManager {
       backupName,
       createdAt: new Date().toISOString(),
       commitHash: commit,
-      fileCount: copiedFiles
+      fileCount: copiedFiles,
+      isEncrypted: Boolean(encrypt),
+      encryptionAlgorithm: encrypt ? "AES-256-GCM" : "NONE"
     };
 
     fs.writeFileSync(path.join(targetDir, "backup-meta.json"), JSON.stringify(meta, null, 2));
@@ -212,6 +232,7 @@ export class GitUpdateManager {
       backupName,
       backupPath: targetDir,
       fileCount: copiedFiles,
+      isEncrypted: Boolean(encrypt),
       createdAt: meta.createdAt
     };
   }
@@ -241,20 +262,32 @@ export class GitUpdateManager {
     return list.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
   }
 
-  static restoreBackup(backupName) {
-    if (!backupName) {
-      return { success: false, error: "backupName belirtilmedi" };
+  static restoreBackup(backupName, { encryptionKey = null } = {}) {
+    if (!this.isValidBackupName(backupName)) {
+      return { success: false, error: "Geçersiz yedek adı formatı." };
     }
 
     const backupsDir = this.getBackupsDir();
-    const sourceDir = path.join(backupsDir, backupName);
-    const root = this.getRootPath();
+    const sourceDir = path.resolve(backupsDir, backupName);
+    const resolvedBackupsDir = path.resolve(backupsDir);
 
-    if (!fs.existsSync(sourceDir)) {
-      return { success: false, error: "Yedek klasörü bulunamadı" };
+    if (!sourceDir.startsWith(resolvedBackupsDir) || !fs.existsSync(sourceDir)) {
+      return { success: false, error: "Yedek klasörü bulunamadı veya geçersiz dizin." };
     }
 
+    const root = this.getRootPath();
     let restoredCount = 0;
+
+    let isEncrypted = false;
+    const metaPath = path.join(sourceDir, "backup-meta.json");
+    if (fs.existsSync(metaPath)) {
+      try {
+        const meta = JSON.parse(fs.readFileSync(metaPath, "utf8"));
+        if (meta && meta.isEncrypted) {
+          isEncrypted = true;
+        }
+      } catch {}
+    }
 
     const copyRestoreRecursive = (src, dest) => {
       const entries = fs.readdirSync(src, { withFileTypes: true });
@@ -267,7 +300,14 @@ export class GitUpdateManager {
           fs.mkdirSync(destPath, { recursive: true });
           copyRestoreRecursive(srcPath, destPath);
         } else if (entry.isFile()) {
-          fs.copyFileSync(srcPath, destPath);
+          if (entry.name.endsWith(".enc") && isEncrypted) {
+            const rawEnc = fs.readFileSync(srcPath);
+            const decrypted = SecurityHelper.decryptAesGcm(rawEnc, encryptionKey);
+            const origDestPath = destPath.slice(0, -4);
+            fs.writeFileSync(origDestPath, decrypted);
+          } else {
+            fs.copyFileSync(srcPath, destPath);
+          }
           restoredCount++;
         }
       }
@@ -279,6 +319,7 @@ export class GitUpdateManager {
       success: true,
       backupName,
       restoredCount,
+      isEncrypted,
       message: `${backupName} yedeğindeki ${restoredCount} dosya başarıyla geri yüklendi.`
     };
   }
@@ -290,6 +331,15 @@ export class GitUpdateManager {
     const addLog = (step, message, status = "ok") => {
       logs.push({ step, message, status, time: new Date().toISOString() });
     };
+
+    if (!this.isValidBranch(branch)) {
+      addLog(0, "Geçersiz branch adı belirtildi. Güvenlik gerekçesiyle işlem reddedildi.", "error");
+      return {
+        success: false,
+        logs,
+        error: "Geçersiz branch parametresi."
+      };
+    }
 
     addLog(1, "1. Adım: Projenin tam ve eksiksiz yedeği alınıyor...");
     let backupResult;
@@ -305,7 +355,7 @@ export class GitUpdateManager {
     addLog(2, "2. Adım: Yerel ayarlar ve .env dosyası güvenlik kalkanına alınıyor...");
     let stashed = false;
     try {
-      const stashOutput = execSync(`git stash push -u -m "bfe-preupdate-${Date.now()}"`, { cwd: root, encoding: "utf8" }).trim();
+      const stashOutput = spawnSync("git", ["stash", "push", "-u", "-m", `bfe-preupdate-${Date.now()}`], { cwd: root, encoding: "utf8" }).stdout?.trim() || "";
       stashed = !stashOutput.includes("No local changes to save");
       addLog(2, stashed ? "Yerel değişiklikler ve konfigürasyonlar güvene alındı." : "Kaydedilecek bekleyen yerel değişiklik yok, temiz durumda.", "success");
     } catch (err) {
@@ -314,19 +364,22 @@ export class GitUpdateManager {
 
     addLog(3, `3. Adım: GitHub üzerinden '${branch}' dalındaki yeni ve düzenlenen satırlar çekiliyor...`);
     try {
-      execSync(`git fetch origin ${branch}`, { cwd: root, stdio: "ignore" });
-      execSync(`git merge origin/${branch} --no-edit -m "Safe merge remote updates"`, { cwd: root, stdio: "ignore" });
+      const fetchRes = spawnSync("git", ["fetch", "origin", branch], { cwd: root, stdio: "ignore" });
+      if (fetchRes.status !== 0) throw new Error("git fetch başarısız");
+      const mergeRes = spawnSync("git", ["merge", `origin/${branch}`, "--no-edit", "-m", "Safe merge remote updates"], { cwd: root, stdio: "ignore" });
+      if (mergeRes.status !== 0) throw new Error("git merge başarısız");
       addLog(3, "GitHub üzerindeki güncel kodlar başarıyla birleştirildi.", "success");
     } catch (err) {
       try {
-        execSync(`git pull origin ${branch} --no-rebase`, { cwd: root, stdio: "ignore" });
+        const pullRes = spawnSync("git", ["pull", "origin", branch, "--no-rebase"], { cwd: root, stdio: "ignore" });
+        if (pullRes.status !== 0) throw new Error("git pull başarısız");
         addLog(3, "GitHub üzerinden yeni dosyalar ve satırlar alternatif pull ile çekildi.", "success");
       } catch (pullErr) {
         addLog(3, `Kod çekme hatası: ${pullErr.message}`, "error");
         this.restoreSafetyShield();
         if (stashed) {
           try {
-            execSync("git stash pop", { cwd: root, stdio: "ignore" });
+            spawnSync("git", ["stash", "pop"], { cwd: root, stdio: "ignore" });
           } catch {}
         }
         return { success: false, logs, error: "GitHub kodları çekilemedi." };
@@ -336,7 +389,7 @@ export class GitUpdateManager {
     if (stashed) {
       addLog(4, "4. Adım: Yerel ayarlar ve özelleştirmeler projeye geri uygulanıyor...");
       try {
-        execSync("git stash pop", { cwd: root, stdio: "ignore" });
+        spawnSync("git", ["stash", "pop"], { cwd: root, stdio: "ignore" });
         addLog(4, "Yerel ayarlar (.env ve özel yapılandırmalar) başarıyla korundu ve geri yüklendi.", "success");
       } catch (popErr) {
         addLog(4, "Yerel ayarlar geri uygulanırken birleşim korundu.", "warn");
@@ -349,7 +402,7 @@ export class GitUpdateManager {
 
     addLog(5, "5. Adım: Bağımlılık paketleri kontrol ediliyor ve güncelleniyor (npm install)...");
     try {
-      execSync("npm install --no-audit --no-fund", { cwd: root, stdio: "ignore", timeout: 120000 });
+      spawnSync("npm", ["install", "--no-audit", "--no-fund"], { cwd: root, stdio: "ignore", timeout: 120000 });
       addLog(5, "Bağımlılıklar başarıyla güncellendi ve doğrulandı.", "success");
     } catch (npmErr) {
       addLog(5, `Paket kontrol uyarısı: ${npmErr.message}`, "warn");

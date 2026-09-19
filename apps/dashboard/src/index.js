@@ -4,8 +4,9 @@ import path from "path";
 import { fileURLToPath } from "url";
 import mongoose from "mongoose";
 import { environment, defaultGuildConfig, getActiveDatabaseUri } from "@bot/config";
-import { connectDatabase, DatabaseManager, GuildConfig, Penalty, Stat, VoiceBot, UserAccount, BotCredential, ForceBan, Ticket, Backup, Economy, InviteRecord, StaffTask, ChatMessage, BattlePass, UserBattlePass, Clan, Pet } from "@bot/database";
+import { connectDatabase, DatabaseManager, GuildConfig, Penalty, Stat, VoiceBot, UserAccount, BotCredential, ForceBan, Ticket, Backup, Economy, InviteRecord, StaffTask, ChatMessage, BattlePass, UserBattlePass, Clan, Pet, encryptToken } from "@bot/database";
 import { Logger } from "@bot/core";
+import { authenticateDashboard, createRateLimiter } from "../../dashboard-v2/src/middleware/auth.js";
 import welcomeManager from "../../voice-welcome/src/index.js";
 import { GitUpdateManager } from "./services/GitUpdateManager.js";
 import { BotNameManager } from "./services/BotNameManager.js";
@@ -49,9 +50,13 @@ console.error = function(...args) {
 
 mongoose.set("bufferTimeoutMS", 2500);
 
+app.set("trust proxy", true);
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "512kb" }));
+app.use(express.urlencoded({ extended: true, limit: "512kb" }));
 app.use(express.static(path.join(__dirname, "public")));
+app.use("/api", createRateLimiter({ windowMs: 60000, maxRequests: 120 }));
+app.use("/api", authenticateDashboard);
 
 app.get("/api/overview", async (req, res) => {
   try {
@@ -273,13 +278,15 @@ app.post("/api/bot-credentials", async (req, res) => {
       return res.status(400).json({ error: "serviceKey zorunludur" });
     }
 
+    const finalToken = token ? encryptToken(token) : "";
+
     const updated = await BotCredential.findOneAndUpdate(
       { serviceKey },
       {
         $set: {
           name,
           clientId: clientId || "",
-          token: token || "",
+          token: finalToken,
           enabled: enabled !== undefined ? enabled : true,
           activityType: activityType || "PLAYING",
           activityText: activityText || "Public Bot Ecosystem",
@@ -317,7 +324,7 @@ app.post("/api/voice-bots", async (req, res) => {
     }
 
     const created = await VoiceBot.create({
-      token,
+      token: encryptToken(token),
       name: name || "Ses Karşılama",
       channelId: channelId || "",
       welcomeMessage: welcomeMessage || "Sunucumuza hoş geldiniz.",
@@ -1280,8 +1287,10 @@ app.get("*", (req, res) => {
 });
 
 export async function startDashboard() {
-  app.listen(environment.dashboardPort, () => {
-    logger.success(`Web Dashboard http://localhost:${environment.dashboardPort} adresinde yayında.`);
+  logger.warn("UYARI: Dashboard V1 eski sürümdür (DEPRECATED). Güncel ve güvenli arayüz için Dashboard V2 (npm run dashboard:v2) önerilir.");
+  const host = process.env.DASHBOARD_HOST || "0.0.0.0";
+  app.listen(environment.dashboardPort, host, () => {
+    logger.success(`Web Dashboard http://${host === "0.0.0.0" ? "localhost" : host}:${environment.dashboardPort} adresinde yayında.`);
   });
   const dbUri = getActiveDatabaseUri();
   connectDatabase(dbUri, { provider: environment.databaseProvider })

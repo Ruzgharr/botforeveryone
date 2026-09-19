@@ -22,8 +22,14 @@ const TABLE_MAP = {
   BattlePass: "battlepasses",
   UserBattlePass: "userbattlepasses",
   Clan: "clans",
-  Pet: "pets"
+  Pet: "pets",
+  DashboardAdmin: "dashboardadmins",
+  SecurityAuditLog: "securityauditlogs"
 };
+
+function isValidSqlIdentifier(name) {
+  return typeof name === "string" && /^[A-Za-z0-9_]+$/.test(name) && !["__proto__", "prototype", "constructor"].includes(name);
+}
 
 function getNested(obj, path) {
   if (!obj || !path) return undefined;
@@ -197,6 +203,7 @@ export class PgQuery {
     if (this._sort) {
       const parts = [];
       for (const [key, dir] of Object.entries(this._sort)) {
+        if (!isValidSqlIdentifier(key)) continue;
         const direction = (dir === -1 || dir === "desc" || dir === "DESC") ? "DESC" : "ASC";
         if (key === "createdAt") {
           parts.push(`created_at ${direction}`);
@@ -323,6 +330,7 @@ export class PostgresModel {
       for (const branch of filter.$or) {
         const subConditions = [];
         for (const [bKey, bVal] of Object.entries(branch)) {
+          if (!isValidSqlIdentifier(bKey)) continue;
           if (bKey === "_id" || bKey === "id") {
             subConditions.push(`_id = $${paramIndex++}`);
             params.push(String(bVal));
@@ -355,6 +363,7 @@ export class PostgresModel {
 
     for (const [key, val] of Object.entries(filter)) {
       if (["_id", "id", "guildId", "userId", "caseId", "serviceKey", "ticketId", "itemId", "messageId", "$or"].includes(key)) continue;
+      if (!isValidSqlIdentifier(key)) continue;
 
       if (val !== null && typeof val === "object" && !Array.isArray(val) && !(val instanceof Date)) {
         if (val.$ne !== undefined) {

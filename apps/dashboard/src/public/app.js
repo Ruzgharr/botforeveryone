@@ -1,3 +1,41 @@
+const originalWindowFetch = window.fetch;
+
+function getStoredDashboardToken() {
+  return localStorage.getItem("bfe_dashboard_token") || "";
+}
+
+function setStoredDashboardToken(token) {
+  if (token) {
+    localStorage.setItem("bfe_dashboard_token", token);
+  } else {
+    localStorage.removeItem("bfe_dashboard_token");
+  }
+}
+
+window.fetch = async function(resource, init = {}) {
+  const token = getStoredDashboardToken();
+  const modifiedInit = { ...init };
+  const headers = new Headers(modifiedInit.headers || {});
+  if (token && !headers.has("Authorization") && !headers.has("x-dashboard-key")) {
+    headers.set("Authorization", `Bearer ${token}`);
+    headers.set("x-dashboard-key", token);
+  }
+  modifiedInit.headers = headers;
+
+  const response = await originalWindowFetch(resource, modifiedInit);
+  if (response.status === 401) {
+    const entered = window.prompt("Dashboard Guvenlik Anahtarini Girin (DASHBOARD_SECRET):");
+    if (entered) {
+      setStoredDashboardToken(entered.trim());
+      headers.set("Authorization", `Bearer ${entered.trim()}`);
+      headers.set("x-dashboard-key", entered.trim());
+      modifiedInit.headers = headers;
+      return originalWindowFetch(resource, modifiedInit);
+    }
+  }
+  return response;
+};
+
 let currentGuildId = localStorage.getItem("dash_guildId") || "default";
 
 const messageCatalog = [

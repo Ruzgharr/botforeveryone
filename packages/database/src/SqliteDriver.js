@@ -24,8 +24,14 @@ const TABLE_MAP = {
   BattlePass: "battlepasses",
   UserBattlePass: "userbattlepasses",
   Clan: "clans",
-  Pet: "pets"
+  Pet: "pets",
+  DashboardAdmin: "dashboardadmins",
+  SecurityAuditLog: "securityauditlogs"
 };
+
+function isValidSqlIdentifier(name) {
+  return typeof name === "string" && /^[A-Za-z0-9_]+$/.test(name) && !["__proto__", "prototype", "constructor"].includes(name);
+}
 
 function getNested(obj, targetPath) {
   if (!obj || !targetPath) return undefined;
@@ -196,6 +202,7 @@ export class SqliteQuery {
     if (this._sort) {
       const parts = [];
       for (const [key, dir] of Object.entries(this._sort)) {
+        if (!isValidSqlIdentifier(key)) continue;
         const direction = (dir === -1 || dir === "desc" || dir === "DESC") ? "DESC" : "ASC";
         if (key === "createdAt") {
           parts.push(`created_at ${direction}`);
@@ -314,8 +321,44 @@ export class SqliteModel {
       params.push(String(filter.messageId));
     }
 
+    if (Array.isArray(filter.$or) && filter.$or.length > 0) {
+      const orClauses = [];
+      for (const branch of filter.$or) {
+        const subConditions = [];
+        for (const [bKey, bVal] of Object.entries(branch)) {
+          if (!isValidSqlIdentifier(bKey)) continue;
+          if (bKey === "_id" || bKey === "id") {
+            subConditions.push("_id = ?");
+            params.push(String(bVal));
+          } else if (bKey === "guildId") {
+            subConditions.push("guild_id = ?");
+            params.push(String(bVal));
+          } else if (bKey === "userId") {
+            subConditions.push("user_id = ?");
+            params.push(String(bVal));
+          } else if (typeof bVal === "boolean") {
+            subConditions.push(`json_extract(data, '$.${bKey}') = ?`);
+            params.push(bVal ? 1 : 0);
+          } else if (typeof bVal === "number") {
+            subConditions.push(`CAST(json_extract(data, '$.${bKey}') AS NUMERIC) = ?`);
+            params.push(bVal);
+          } else {
+            subConditions.push(`(json_extract(data, '$.${bKey}') = ? OR json_extract(data, '$.${bKey}') LIKE ?)`);
+            params.push(String(bVal), `%"${String(bVal)}"%`);
+          }
+        }
+        if (subConditions.length > 0) {
+          orClauses.push(`(${subConditions.join(" AND ")})`);
+        }
+      }
+      if (orClauses.length > 0) {
+        conditions.push(`(${orClauses.join(" OR ")})`);
+      }
+    }
+
     for (const [key, val] of Object.entries(filter)) {
-      if (["_id", "id", "guildId", "userId", "caseId", "serviceKey", "ticketId", "itemId", "messageId"].includes(key)) continue;
+      if (["_id", "id", "guildId", "userId", "caseId", "serviceKey", "ticketId", "itemId", "messageId", "$or"].includes(key)) continue;
+      if (!isValidSqlIdentifier(key)) continue;
 
       if (val !== null && typeof val === "object" && !Array.isArray(val) && !(val instanceof Date)) {
         if (val.$ne !== undefined) {

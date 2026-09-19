@@ -1,17 +1,20 @@
 # Public Bot Ecosystem
 
-Türkiye'nin büyük ölçekli Discord toplulukları için geliştirilmiş, mikro-servis mimarisine sahip açık kaynaklı Discord bot ekosistemi ve web yönetim konsolu.
+Türkiye'nin büyük ölçekli Discord toplulukları için geliştirilmiş, modüler servis mimarisine sahip açık kaynaklı Discord bot ekosistemi ve web yönetim konsolu.
 
 ---
 
 ## Genel Bakış
 
-Bu ekosistem, yüksek üye sayılı topluluklarda Discord API hız sınırlarına (rate limits) takılmadan çalışan 8 bağımsız bot servisini ve 23 modüllü modern bir yönetim panelini (Dashboard V2) bir araya getirir.
+Bu ekosistem, yüksek üye sayılı topluluklarda Discord API hız sınırlarını (rate limits) dağıtık servis mimarisi ve token havuzu ile minimize ederek çalışan 8 modüler bot servisini ve 23 modüllü modern bir yönetim panelini (Dashboard V2) bir araya getirir.
 
 ### Temel Yetenekler
 
 * **Çoklu Veritabanı Desteği:** PostgreSQL 16 (JSONB indeksleme), MongoDB ve SQLite sürücüleri ile sıfır harici bağımlılıkla veya kurumsal SQL altyapısıyla çalışabilme.
 * **Web Dashboard V2 (Port 3001):** 23 modüllü yönetim konsolu. Canlı metrikler, web terminali, git güncelleme, bilet yönetimi, ceza masası ve rol atama.
+* **Banka ve Kurumsal Düzeyde Güvenlik (Bank-Grade):** RFC 6238 TOTP 2FA (Google Authenticator/Authy), tek seferlik kurulum kilidi, güvenlik denetim günlüğü (Security Audit Log), AES-256-GCM şifreli sistem yedekleri, 15 dakika boşta kalma zaman aşımı, otomatik HTTPS yönlendirmesi, CSRF engelleme, otomatik log maskeleme ve Discord Guard acil kilit modu (Panic Shield).
+* **Dayanıklı Denetleyici (Supervisor & Watchdog):** STARTING, READY, DEGRADED, FAILED, STOPPED sağlık durumları, üstel geri çekilme (exponential backoff) ve crash-loop koruma mekanizması.
+* **Güvenli Güncelleme:** GitUpdateManager üzerinde komut enjeksiyonu ve dizin geçişi (path traversal) korumaları ile güvenli güncelleme ve otomatik yedekleme.
 * **Görsel Kart Motoru:** Node-Canvas ve FFmpeg tabanlı 15 FPS hareketli profil, seviye, cüzdan ve liderlik kartları (PNG, GIF ve MP4).
 * **Gelişmiş Ekonomi & Şans Oyunları:** Blackjack 21, Vegas Slot, Rulet, Yazı Tura, Kazı Kazan, Balıkçılık, Madencilik, Borsa, Şirketler, Emlak ve Bahisli Düello.
 * **Klanlar ve Loncalar:** Klan kurma, rütbeler, klan sandığı, ortak borsa ve klanlar arası sıralama.
@@ -76,6 +79,9 @@ cp .env.example .env
 ```env
 PORT=3000
 DASHBOARD_V2_PORT=3001
+DASHBOARD_SECRET=guclu-ve-guvenli-bir-secret-anahtar-yazin
+ENCRYPTION_KEY=32-karakterli-guvenli-sifreleme-anahtari
+ALLOWED_ORIGINS=http://localhost:3001,http://127.0.0.1:3001
 
 DB_PROVIDER=postgres
 POSTGRES_HOST=127.0.0.1
@@ -152,7 +158,7 @@ Ekosistemin sağlığını ve kaynak kod doğruluğunu denetlemek için yerleşi
 ```bash
 npm test
 ```
-78 birim testini çalıştırır; görsel kart oluşturma, ekonomi, pet, klan ve veritabanı sürücülerini doğrular.
+97 birim ve kurumsal güvenlik testini çalıştırır; RFC 6238 TOTP 2FA, geçici 2FA oturumları, güvenlik denetim günlüğü, AES-256-GCM sistem yedekleri, scrypt parola hashleme, tek seferlik ilk kayıt kilidi, brute-force koruması, CSRF engelleme, otomatik log maskeleme (token ve şifre redaction), oturum yönetimi, SSRF ve webhook doğrulaması, HTTP güvenlik başlıkları (CSP, HSTS, X-Frame-Options), token şifreleme, SQL enjeksiyon koruması, git komut güvenliği, görsel kart oluşturma ve veritabanı sürücülerini doğrular.
 
 * **Kaynak Kod ve Sözdizimi Denetimi:**
 ```bash

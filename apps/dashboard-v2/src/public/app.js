@@ -1,3 +1,339 @@
+function escapeHtml(str) {
+  if (str == null) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+const originalWindowFetch = window.fetch;
+
+function getStoredDashboardToken() {
+  return localStorage.getItem("bfe_dashboard_token") || "";
+}
+
+function setStoredDashboardToken(token) {
+  if (token) {
+    localStorage.setItem("bfe_dashboard_token", token);
+  } else {
+    localStorage.removeItem("bfe_dashboard_token");
+  }
+}
+
+async function checkSetupStatus() {
+  try {
+    const res = await originalWindowFetch("/api/auth/setup-status");
+    if (!res.ok) return { setupRequired: false };
+    return await res.json();
+  } catch {
+    return { setupRequired: false };
+  }
+}
+
+let currentTemp2faToken = "";
+
+async function showDashboardAuthModal(errorMessage = "") {
+  const modal = document.getElementById("auth-modal-backdrop");
+  const errEl = document.getElementById("auth-error-msg");
+  const setupBox = document.getElementById("auth-setup-container");
+  const loginBox = document.getElementById("auth-login-container");
+  const twoFactorBox = document.getElementById("auth-2fa-container");
+  const titleEl = document.getElementById("auth-modal-title");
+  const subEl = document.getElementById("auth-modal-sub");
+
+  if (!modal) return;
+
+  currentTemp2faToken = "";
+  if (twoFactorBox) twoFactorBox.style.display = "none";
+
+  const status = await checkSetupStatus();
+  if (status.setupRequired) {
+    if (setupBox) setupBox.style.display = "block";
+    if (loginBox) loginBox.style.display = "none";
+    if (titleEl) titleEl.textContent = "Sistem İlk Kurulumu";
+    if (subEl) subEl.textContent = "Tek seferlik yönetici hesabı oluşturma";
+  } else {
+    if (setupBox) setupBox.style.display = "none";
+    if (loginBox) loginBox.style.display = "block";
+    if (titleEl) titleEl.textContent = "Yönetici Girişi";
+    if (subEl) subEl.textContent = "Panel erişimi için kimlik doğrulaması gereklidir";
+  }
+
+  modal.style.display = "flex";
+  if (errEl) {
+    if (errorMessage) {
+      errEl.textContent = errorMessage;
+      errEl.style.display = "block";
+    } else {
+      errEl.style.display = "none";
+    }
+  }
+}
+
+function hideDashboardAuthModal() {
+  const modal = document.getElementById("auth-modal-backdrop");
+  if (modal) {
+    modal.style.display = "none";
+  }
+  currentTemp2faToken = "";
+}
+
+window.handleDashboardSetupSubmit = async function(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const usernameInput = document.getElementById("setup-username-input");
+  const passwordInput = document.getElementById("setup-password-input");
+  const confirmInput = document.getElementById("setup-password-confirm");
+  const btn = document.getElementById("setup-submit-btn");
+  const errEl = document.getElementById("auth-error-msg");
+
+  const username = usernameInput ? usernameInput.value.trim() : "";
+  const password = passwordInput ? passwordInput.value : "";
+  const confirm = confirmInput ? confirmInput.value : "";
+
+  if (!username || !password) return;
+  if (password !== confirm) {
+    if (errEl) {
+      errEl.textContent = "Girdiğiniz parolalar birbiriyle eşleşmiyor.";
+      errEl.style.display = "block";
+    }
+    return;
+  }
+
+  if (btn) btn.disabled = true;
+  try {
+    const res = await originalWindowFetch("/api/auth/setup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    if (res.ok && data.success && data.token) {
+      setStoredDashboardToken(data.token);
+      hideDashboardAuthModal();
+      window.location.reload();
+    } else {
+      if (errEl) {
+        errEl.textContent = data.error || "Kurulum sırasında hata oluştu.";
+        errEl.style.display = "block";
+      }
+    }
+  } catch (err) {
+    if (errEl) {
+      errEl.textContent = "Bağlantı hatası: " + err.message;
+      errEl.style.display = "block";
+    }
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+};
+
+window.handleDashboardAuthSubmit = async function(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const userInput = document.getElementById("auth-username-input");
+  const passInput = document.getElementById("auth-password-input");
+  const btn = document.getElementById("auth-submit-btn");
+  const errEl = document.getElementById("auth-error-msg");
+  const loginBox = document.getElementById("auth-login-container");
+  const twoFactorBox = document.getElementById("auth-2fa-container");
+  const titleEl = document.getElementById("auth-modal-title");
+  const subEl = document.getElementById("auth-modal-sub");
+
+  const usernameVal = userInput ? userInput.value.trim() : "";
+  const passwordVal = passInput ? passInput.value : "";
+  if (!usernameVal) return;
+
+  const payload = {};
+  if (passwordVal) {
+    payload.username = usernameVal;
+    payload.password = passwordVal;
+  } else {
+    payload.key = usernameVal;
+    payload.username = usernameVal;
+  }
+
+  if (btn) btn.disabled = true;
+  try {
+    const res = await originalWindowFetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      if (data.requires2fa && data.tempToken) {
+        currentTemp2faToken = data.tempToken;
+        if (loginBox) loginBox.style.display = "none";
+        if (twoFactorBox) twoFactorBox.style.display = "block";
+        if (titleEl) titleEl.textContent = "İki Aşamalı Doğrulama (2FA)";
+        if (subEl) subEl.textContent = "Lütfen Authenticator kodunuzu giriniz";
+        const codeInput = document.getElementById("auth-2fa-code-input");
+        if (codeInput) {
+          codeInput.value = "";
+          codeInput.focus();
+        }
+        if (errEl) errEl.style.display = "none";
+        return;
+      }
+
+      if (data.token) {
+        setStoredDashboardToken(data.token);
+        hideDashboardAuthModal();
+        window.location.reload();
+      }
+    } else {
+      if (errEl) {
+        errEl.textContent = data.error || "Giriş başarısız.";
+        errEl.style.display = "block";
+      }
+    }
+  } catch (err) {
+    if (errEl) {
+      errEl.textContent = "Bağlantı hatası: " + err.message;
+      errEl.style.display = "block";
+    }
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+};
+
+window.handleDashboard2faSubmit = async function(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const codeInput = document.getElementById("auth-2fa-code-input");
+  const btn = document.getElementById("auth-2fa-submit-btn");
+  const errEl = document.getElementById("auth-error-msg");
+
+  const code = codeInput ? codeInput.value.trim() : "";
+  if (!code || !currentTemp2faToken) return;
+
+  if (btn) btn.disabled = true;
+  try {
+    const res = await originalWindowFetch("/api/auth/2fa/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tempToken: currentTemp2faToken, code })
+    });
+    const data = await res.json();
+    if (res.ok && data.success && data.token) {
+      setStoredDashboardToken(data.token);
+      hideDashboardAuthModal();
+      window.location.reload();
+    } else {
+      if (errEl) {
+        errEl.textContent = data.error || "2FA doğrulama kodu geçersiz.";
+        errEl.style.display = "block";
+      }
+    }
+  } catch (err) {
+    if (errEl) {
+      errEl.textContent = "Bağlantı hatası: " + err.message;
+      errEl.style.display = "block";
+    }
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+};
+
+window.cancel2faLoginFlow = function() {
+  currentTemp2faToken = "";
+  const loginBox = document.getElementById("auth-login-container");
+  const twoFactorBox = document.getElementById("auth-2fa-container");
+  const titleEl = document.getElementById("auth-modal-title");
+  const subEl = document.getElementById("auth-modal-sub");
+  const errEl = document.getElementById("auth-error-msg");
+
+  if (twoFactorBox) twoFactorBox.style.display = "none";
+  if (loginBox) loginBox.style.display = "block";
+  if (titleEl) titleEl.textContent = "Yönetici Girişi";
+  if (subEl) subEl.textContent = "Panel erişimi için kimlik doğrulaması gereklidir";
+  if (errEl) errEl.style.display = "none";
+};
+
+let lastUserActivity = Date.now();
+const IDLE_TIMEOUT_MS = 15 * 60 * 1000;
+
+function recordUserActivity() {
+  lastUserActivity = Date.now();
+}
+
+["mousemove", "mousedown", "keydown", "scroll", "touchstart"].forEach((evt) => {
+  window.addEventListener(evt, recordUserActivity, { passive: true });
+});
+
+setInterval(() => {
+  const token = getStoredDashboardToken();
+  if (!token) return;
+  if (Date.now() - lastUserActivity > IDLE_TIMEOUT_MS) {
+    setStoredDashboardToken("");
+    showDashboardAuthModal("Güvenlik gerekçesiyle 15 dakika boyunca hareketsiz kaldığınız için oturumunuz otomatik olarak sonlandırıldı.");
+  }
+}, 30000);
+
+window.handleDashboardLogout = async function() {
+  try {
+    await originalWindowFetch("/api/auth/logout", {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + getStoredDashboardToken() }
+    });
+  } catch {}
+  setStoredDashboardToken("");
+  window.location.reload();
+};
+
+window.fetch = async function(resource, init = {}) {
+  init = init || {};
+  const token = getStoredDashboardToken();
+
+  if (token) {
+    if (init.headers instanceof Headers) {
+      if (!init.headers.has("Authorization")) {
+        init.headers.set("Authorization", "Bearer " + token);
+      }
+      if (!init.headers.has("x-dashboard-key")) {
+        init.headers.set("x-dashboard-key", token);
+      }
+    } else {
+      init.headers = init.headers || {};
+      if (!init.headers["Authorization"]) {
+        init.headers["Authorization"] = "Bearer " + token;
+      }
+      if (!init.headers["x-dashboard-key"]) {
+        init.headers["x-dashboard-key"] = token;
+      }
+    }
+  }
+
+  const response = await originalWindowFetch(resource, init);
+
+  if (response.status === 401) {
+    const url = typeof resource === "string" ? resource : (resource && resource.url ? resource.url : "");
+    if (url.includes("/api/") && !url.includes("/api/auth/")) {
+      showDashboardAuthModal("Oturum süresi doldu veya yetkisiz istek. Lütfen tekrar giriş yapınız.");
+    }
+  }
+
+  return response;
+};
+
+document.addEventListener("DOMContentLoaded", async () => {
+  try {
+    const token = getStoredDashboardToken();
+    if (!token) {
+      await showDashboardAuthModal();
+    } else {
+      const res = await originalWindowFetch("/api/auth/verify", {
+        headers: { "Authorization": "Bearer " + token }
+      });
+      if (!res.ok) {
+        await showDashboardAuthModal();
+      }
+    }
+  } catch {
+    await showDashboardAuthModal();
+  }
+});
+
 const indicator = document.getElementById("nav-active-indicator");
 const navItems = document.querySelectorAll(".nav-item");
 const layoutContainer = document.querySelector(".layout-container");
@@ -60,6 +396,9 @@ navItems.forEach((btn) => {
       startGitStatusPolling();
     } else {
       stopGitStatusPolling();
+    }
+    if (target === "tab-security") {
+      loadSecurityTab();
     }
     if (target === "tab-commands") {
       loadCommandsPage();
@@ -599,22 +938,22 @@ async function loadOverviewBotFleet() {
       <tr>
         <td>
           <div class="bot-table-name-cell">
-            <span class="bot-table-title">${bot.name}</span>
-            <span class="bot-table-key">${bot.key || bot.id}</span>
+            <span class="bot-table-title">${escapeHtml(bot.name)}</span>
+            <span class="bot-table-key">${escapeHtml(bot.key || bot.id)}</span>
           </div>
         </td>
-        <td>${bot.role}</td>
+        <td>${escapeHtml(bot.role)}</td>
         <td>
           <span class="bot-ping-badge">
             <span class="ping-indicator-dot"></span>
-            <span>${bot.ping || 20}ms</span>
+            <span>${Number(bot.ping) || 20}ms</span>
           </span>
         </td>
-        <td>${bot.memoryMb || 40} MB</td>
-        <td>${bot.uptime || "100.0%"}</td>
+        <td>${Number(bot.memoryMb) || 40} MB</td>
+        <td>${escapeHtml(bot.uptime || "100.0%")}</td>
         <td><span class="metric-pill pill-success">Çevrim İçi</span></td>
         <td style="text-align: right;">
-          <button type="button" class="btn-table-action" onclick="restartSingleBot('${bot.id}', '${bot.name}')">Yeniden Başlat</button>
+          <button type="button" class="btn-table-action" onclick="restartSingleBot('${escapeHtml(bot.id)}', '${escapeHtml(bot.name)}')">Yeniden Başlat</button>
         </td>
       </tr>
     `).join("");
@@ -638,10 +977,10 @@ async function loadOverviewEvents() {
     container.innerHTML = events.map((ev) => `
       <div class="event-feed-item">
         <div class="event-feed-left">
-          <span class="event-tag tag-${ev.type || 'info'}">${ev.tag || 'Sistem'}</span>
-          <span class="event-message">${ev.message}</span>
+          <span class="event-tag tag-${escapeHtml(ev.type || 'info')}">${escapeHtml(ev.tag || 'Sistem')}</span>
+          <span class="event-message">${escapeHtml(ev.message)}</span>
         </div>
-        <span class="event-time">${ev.time}</span>
+        <span class="event-time">${escapeHtml(ev.time)}</span>
       </div>
     `).join("");
   } catch (err) {
@@ -788,46 +1127,50 @@ function formatPing(ping) {
 
 function buildBotCard(bot) {
   const isOnline = bot.status === "ONLINE";
+  const safeServiceKey = escapeHtml(bot.serviceKey);
+  const safeName = escapeHtml(bot.name);
+  const safeTag = escapeHtml(bot.tag || bot.serviceKey);
+  const safeRole = escapeHtml(bot.role || "-");
   const avatarHtml = bot.avatar
-    ? `<img class="fleet-bot-avatar" src="${bot.avatar}" alt="${bot.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" /><div class="fleet-bot-avatar-fallback" style="display:none">${bot.name.charAt(0)}</div>`
-    : `<div class="fleet-bot-avatar-fallback">${bot.name.charAt(0)}</div>`;
+    ? `<img class="fleet-bot-avatar" src="${escapeHtml(bot.avatar)}" alt="${safeName}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" /><div class="fleet-bot-avatar-fallback" style="display:none">${safeName.charAt(0)}</div>`
+    : `<div class="fleet-bot-avatar-fallback">${safeName.charAt(0)}</div>`;
 
   const actionButtons = isOnline
     ? `
-      <button class="fleet-card-btn danger" onclick="stopSingleBot('${bot.serviceKey}', this)">
+      <button class="fleet-card-btn danger" onclick="stopSingleBot('${safeServiceKey}', this)">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>
         Durdur
       </button>
-      <button class="fleet-card-btn primary" onclick="restartSingleBot('${bot.serviceKey}', this)">
+      <button class="fleet-card-btn primary" onclick="restartSingleBot('${safeServiceKey}', this)">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
         Yeniden Başlat
       </button>
-      <button class="fleet-card-btn" onclick="openBotEditor('${bot.serviceKey}')">
+      <button class="fleet-card-btn" onclick="openBotEditor('${safeServiceKey}')">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         Düzenle
       </button>
     `
     : `
-      <button class="fleet-card-btn success" onclick="startSingleBot('${bot.serviceKey}', this)">
+      <button class="fleet-card-btn success" onclick="startSingleBot('${safeServiceKey}', this)">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
         Başlat
       </button>
-      <button class="fleet-card-btn" onclick="openBotEditor('${bot.serviceKey}')">
+      <button class="fleet-card-btn" onclick="openBotEditor('${safeServiceKey}')">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         Düzenle
       </button>
     `;
 
-  return `<div class="fleet-bot-card${isOnline ? "" : " offline"}" data-service-key="${bot.serviceKey}">
+  return `<div class="fleet-bot-card${isOnline ? "" : " offline"}" data-service-key="${safeServiceKey}">
     <div class="fleet-card-header">
       ${avatarHtml}
       <div class="fleet-card-title-group">
-        <div class="fleet-bot-name">${bot.name}</div>
-        <div class="fleet-bot-tag">${bot.tag || bot.serviceKey}</div>
+        <div class="fleet-bot-name">${safeName}</div>
+        <div class="fleet-bot-tag">${safeTag}</div>
       </div>
       <div class="fleet-status-dot ${isOnline ? "online" : "offline"}" title="${isOnline ? "Çevrimiçi" : "Çevrim Dışı"}"></div>
     </div>
-    <div class="fleet-card-role">${bot.role || "-"}</div>
+    <div class="fleet-card-role">${safeRole}</div>
     <div class="fleet-card-metrics">
       <div class="fleet-metric">
         <div class="fleet-metric-value">${formatPing(bot.ping)}</div>
@@ -838,7 +1181,7 @@ function buildBotCard(bot) {
         <div class="fleet-metric-label">Çalışma</div>
       </div>
       <div class="fleet-metric">
-        <div class="fleet-metric-value">${bot.guildCount || 1}</div>
+        <div class="fleet-metric-value">${Number(bot.guildCount) || 1}</div>
         <div class="fleet-metric-label">Sunucu</div>
       </div>
     </div>
@@ -883,8 +1226,8 @@ async function loadBotOwners() {
     }
     list.innerHTML = owners.map((id) => `
       <div class="bot-owner-row">
-        <span class="bot-owner-id">${id}</span>
-        <button class="bot-owner-remove" onclick="removeBotOwner('${id}')">Kaldır</button>
+        <span class="bot-owner-id">${escapeHtml(id)}</span>
+        <button class="bot-owner-remove" onclick="removeBotOwner('${escapeHtml(id)}')">Kaldır</button>
       </div>
     `).join("");
   } catch {}
@@ -2814,16 +3157,6 @@ if (btnGitBackupsRefresh) {
     fetchGitBackups();
     window.showToast("Snapshot listesi yenilendi.", "info");
   });
-}
-
-function escapeHtml(str) {
-  if (str == null) return "";
-  return String(str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
 }
 
 const commandsCatalog = [
@@ -10468,3 +10801,313 @@ window.submitEditBackup = submitEditBackup;
 window.restoreBackupRecord = restoreBackupRecord;
 window.deleteBackupRecord = deleteBackupRecord;
 window.saveBackupConfig = saveBackupConfig;
+
+let securityAuditLogsCache = [];
+let generated2faSecretCache = "";
+
+window.loadSecurityTab = async function() {
+  await Promise.all([
+    check2faStatus(),
+    checkGuardLockdownStatus(),
+    loadSecurityAuditLogs()
+  ]);
+};
+
+async function check2faStatus() {
+  try {
+    const res = await fetch("/api/auth/2fa/status");
+    const data = await res.json();
+    const isEnabled = Boolean(data && data.enabled);
+
+    const badge = document.getElementById("security-2fa-badge");
+    const text = document.getElementById("security-2fa-status-text");
+    const unconfiguredBox = document.getElementById("security-2fa-unconfigured-box");
+    const setupBox = document.getElementById("security-2fa-setup-box");
+    const activeBox = document.getElementById("security-2fa-active-box");
+
+    if (badge) {
+      badge.textContent = isEnabled ? "AKTİF" : "DEVRE DIŞI";
+      badge.className = isEnabled ? "metric-pill pill-success" : "metric-pill pill-danger";
+    }
+    if (text) {
+      text.textContent = isEnabled ? "2FA Korumalı" : "Korumasız";
+    }
+    if (isEnabled) {
+      if (unconfiguredBox) unconfiguredBox.style.display = "none";
+      if (setupBox) setupBox.style.display = "none";
+      if (activeBox) activeBox.style.display = "block";
+    } else {
+      if (unconfiguredBox) unconfiguredBox.style.display = "block";
+      if (setupBox) setupBox.style.display = "none";
+      if (activeBox) activeBox.style.display = "none";
+    }
+  } catch {}
+}
+
+window.initiate2faSetup = async function() {
+  try {
+    const res = await fetch("/api/auth/2fa/generate", { method: "POST" });
+    const data = await res.json();
+    if (data.success && data.secret) {
+      generated2faSecretCache = data.secret;
+      const secretDisplay = document.getElementById("security-2fa-secret-display");
+      if (secretDisplay) secretDisplay.value = data.secret;
+
+      const unconfiguredBox = document.getElementById("security-2fa-unconfigured-box");
+      const setupBox = document.getElementById("security-2fa-setup-box");
+      const errorBox = document.getElementById("security-2fa-setup-error");
+
+      if (unconfiguredBox) unconfiguredBox.style.display = "none";
+      if (setupBox) setupBox.style.display = "block";
+      if (errorBox) errorBox.style.display = "none";
+
+      const confirmInput = document.getElementById("security-2fa-confirm-input");
+      if (confirmInput) {
+        confirmInput.value = "";
+        confirmInput.focus();
+      }
+    }
+  } catch (err) {
+    alert("2FA anahtarı üretilemedi: " + err.message);
+  }
+};
+
+window.copy2faSecretToClipboard = function() {
+  const secretDisplay = document.getElementById("security-2fa-secret-display");
+  if (secretDisplay && secretDisplay.value) {
+    navigator.clipboard.writeText(secretDisplay.value).then(() => {
+      alert("2FA Kurulum Anahtarı panoya kopyalandı!");
+    }).catch(() => {});
+  }
+};
+
+window.cancel2faSetup = function() {
+  generated2faSecretCache = "";
+  const unconfiguredBox = document.getElementById("security-2fa-unconfigured-box");
+  const setupBox = document.getElementById("security-2fa-setup-box");
+  if (unconfiguredBox) unconfiguredBox.style.display = "block";
+  if (setupBox) setupBox.style.display = "none";
+};
+
+window.confirmEnable2fa = async function() {
+  const confirmInput = document.getElementById("security-2fa-confirm-input");
+  const errorBox = document.getElementById("security-2fa-setup-error");
+  const code = confirmInput ? confirmInput.value.trim() : "";
+
+  if (!code || !generated2faSecretCache) {
+    if (errorBox) {
+      errorBox.textContent = "Lütfen Authenticator uygulamasındaki 6 haneli kodu giriniz.";
+      errorBox.style.display = "block";
+    }
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/auth/2fa/enable", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ secret: generated2faSecretCache, code })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      generated2faSecretCache = "";
+      alert("İki aşamalı doğrulama başarıyla etkinleştirildi!");
+      await check2faStatus();
+      await loadSecurityAuditLogs();
+    } else {
+      if (errorBox) {
+        errorBox.textContent = data.error || "Kod doğrulanamadı.";
+        errorBox.style.display = "block";
+      }
+    }
+  } catch (err) {
+    if (errorBox) {
+      errorBox.textContent = "Bağlantı hatası: " + err.message;
+      errorBox.style.display = "block";
+    }
+  }
+};
+
+window.initiate2faDisable = async function() {
+  const code = prompt("2FA korumasını devre dışı bırakmak için Authenticator kodunuzu veya yönetici parolanızı giriniz:");
+  if (!code) return;
+
+  try {
+    const res = await fetch("/api/auth/2fa/disable", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      alert("İki aşamalı doğrulama devre dışı bırakıldı.");
+      await check2faStatus();
+      await loadSecurityAuditLogs();
+    } else {
+      alert(data.error || "2FA devre dışı bırakılamadı.");
+    }
+  } catch (err) {
+    alert("İşlem hatası: " + err.message);
+  }
+};
+
+async function checkGuardLockdownStatus() {
+  try {
+    const res = await fetch("/api/guard/lockdown-status");
+    const data = await res.json();
+    const details = data && data.data ? data.data : { active: false };
+
+    const badge = document.getElementById("security-lockdown-badge");
+    const val = document.getElementById("security-lockdown-val");
+    const desc = document.getElementById("security-lockdown-desc");
+    const toggleBtn = document.getElementById("btn-security-lockdown-toggle");
+
+    if (details.active) {
+      if (badge) {
+        badge.textContent = "KİLİTLİ (PANIC)";
+        badge.className = "metric-pill pill-danger";
+      }
+      if (val) val.textContent = "Acil Kilit Modunda";
+      if (desc) desc.textContent = details.reason ? `Sebep: ${details.reason}` : "Sistem acil durum modunda kilitlendi.";
+      if (toggleBtn) {
+        toggleBtn.textContent = "Kilit Modunu Kaldır (Normale Dön)";
+        toggleBtn.style.background = "#23a55a";
+      }
+    } else {
+      if (badge) {
+        badge.textContent = "NORMAL";
+        badge.className = "metric-pill pill-success";
+      }
+      if (val) val.textContent = "Sistem Aktif";
+      if (desc) desc.textContent = "Yetkili suistimalinde acil dondurma kalkanı.";
+      if (toggleBtn) {
+        toggleBtn.textContent = "Acil Kilit Modunu Başlat (Panic Shield)";
+        toggleBtn.style.background = "#ef4444";
+      }
+    }
+  } catch {}
+}
+
+window.toggleGuardLockdown = async function() {
+  const reasonInput = document.getElementById("security-lockdown-reason-input");
+  const feedback = document.getElementById("security-lockdown-feedback");
+  const toggleBtn = document.getElementById("btn-security-lockdown-toggle");
+
+  const isCurrentlyActive = toggleBtn && toggleBtn.textContent.includes("Kaldır");
+  const newActiveState = !isCurrentlyActive;
+
+  if (newActiveState) {
+    const confirmed = confirm("DİKKAT: Acil durum kilit modu sunucudaki bot işlemlerini donduracaktır. Devam etmek istiyor musunuz?");
+    if (!confirmed) return;
+  }
+
+  try {
+    const res = await fetch("/api/guard/lockdown", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        enabled: newActiveState,
+        reason: reasonInput ? reasonInput.value.trim() : ""
+      })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      if (feedback) {
+        feedback.textContent = data.message;
+        feedback.style.color = newActiveState ? "#ef4444" : "#10b981";
+        feedback.style.display = "block";
+      }
+      await checkGuardLockdownStatus();
+      await loadSecurityAuditLogs();
+    } else {
+      if (feedback) {
+        feedback.textContent = data.error || "İşlem gerçekleştirilemedi.";
+        feedback.style.color = "#ed4245";
+        feedback.style.display = "block";
+      }
+    }
+  } catch (err) {
+    if (feedback) {
+      feedback.textContent = "Bağlantı hatası: " + err.message;
+      feedback.style.color = "#ed4245";
+      feedback.style.display = "block";
+    }
+  }
+};
+
+window.loadSecurityAuditLogs = async function() {
+  try {
+    const tbody = document.getElementById("security-audit-tbody");
+    const countBadge = document.getElementById("security-logs-count-badge");
+    const countVal = document.getElementById("security-logs-count-val");
+
+    const res = await fetch("/api/security/audit-logs?limit=100");
+    const data = await res.json();
+    const logs = (data && data.success && Array.isArray(data.data)) ? data.data : [];
+    securityAuditLogsCache = logs;
+
+    if (countBadge) countBadge.textContent = `${logs.length} OLAY`;
+    if (countVal) countVal.textContent = `${logs.length} Kayıt`;
+
+    renderSecurityAuditLogs(logs);
+  } catch {
+    const tbody = document.getElementById("security-audit-tbody");
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #ed4245; padding: 24px;">Günlük kayıtları alınamadı.</td></tr>`;
+    }
+  }
+};
+
+function renderSecurityAuditLogs(logs) {
+  const tbody = document.getElementById("security-audit-tbody");
+  if (!tbody) return;
+
+  if (logs.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">Henüz kaydedilmiş bir güvenlik olayı bulunmuyor.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = logs.map((log) => {
+    const timeStr = log.timestamp ? new Date(log.timestamp).toLocaleString("tr-TR") : "-";
+    const statusPill = log.status === "SUCCESS"
+      ? `<span class="metric-pill pill-success">BAŞARILI</span>`
+      : `<span class="metric-pill pill-danger">BAŞARISIZ</span>`;
+
+    let detailsStr = "-";
+    if (log.details && typeof log.details === "object" && Object.keys(log.details).length > 0) {
+      detailsStr = escapeHtml(JSON.stringify(log.details));
+    }
+
+    return `
+      <tr>
+        <td style="font-family: monospace; font-size: 11px; color: var(--text-muted);">${escapeHtml(timeStr)}</td>
+        <td><strong style="color: #f2f3f5; font-size: 12px;">${escapeHtml(log.action || "-")}</strong></td>
+        <td><span style="color: #38bdf8; font-weight: 500; font-size: 12px;">${escapeHtml(log.username || "Bilinmiyor")}</span></td>
+        <td style="font-family: monospace; font-size: 11px;">${escapeHtml(log.ip || "-")}</td>
+        <td style="text-align: center;">${statusPill}</td>
+        <td style="font-size: 11px; color: var(--text-muted); font-family: monospace; max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${detailsStr}</td>
+      </tr>
+    `;
+  }).join("");
+}
+
+window.filterSecurityAuditLogs = function() {
+  const select = document.getElementById("security-audit-filter");
+  const filterVal = select ? select.value : "ALL";
+
+  if (filterVal === "ALL") {
+    renderSecurityAuditLogs(securityAuditLogsCache);
+    return;
+  }
+
+  const filtered = securityAuditLogsCache.filter((item) => {
+    const action = String(item.action || "").toUpperCase();
+    if (filterVal === "LOGIN") return action.includes("LOGIN");
+    if (filterVal === "2FA") return action.includes("2FA");
+    if (filterVal === "GUARD") return action.includes("GUARD") || action.includes("LOCKDOWN");
+    if (filterVal === "BACKUP") return action.includes("BACKUP");
+    return true;
+  });
+
+  renderSecurityAuditLogs(filtered);
+};

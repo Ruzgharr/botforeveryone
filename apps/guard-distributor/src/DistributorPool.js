@@ -1,6 +1,6 @@
 import { Client, GatewayIntentBits } from "discord.js";
 import { Logger } from "@bot/core";
-import { Backup, BotCredential } from "@bot/database";
+import { Backup, BotCredential, decryptToken } from "@bot/database";
 
 export class DistributorPool {
   constructor(tokens = []) {
@@ -60,7 +60,7 @@ export class DistributorPool {
     if (!tokensToUse || tokensToUse.length === 0) {
       const cred = await BotCredential.findOne({ serviceKey: "GUARD_DISTRIBUTOR" });
       if (cred && cred.token) {
-        tokensToUse = cred.token.split(",").map((t) => t.trim()).filter(Boolean);
+        tokensToUse = cred.token.split(",").map((t) => decryptToken(t.trim())).filter(Boolean);
       }
     }
 

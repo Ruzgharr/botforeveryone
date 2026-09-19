@@ -1,5 +1,5 @@
 import { Client, GatewayIntentBits, Partials, Collection, ActivityType } from "discord.js";
-import { connectDatabase, GuildConfig, BotCredential, ChatMessage } from "@bot/database";
+import { connectDatabase, GuildConfig, BotCredential, ChatMessage, decryptToken } from "@bot/database";
 import { environment, defaultGuildConfig, getActiveDatabaseUri } from "@bot/config";
 import { Logger } from "./Logger.js";
 import { MessageFormatter } from "./MessageFormatter.js";
@@ -418,7 +418,9 @@ export class BaseBot extends Client {
         ECONOMY: environment.tokens.economy,
         UTILITY: environment.tokens.utility
       };
-      let tokenToUse = customToken || (cred && cred.token ? cred.token : this.token) || envTokenMap[this.serviceName] || "";
+      const rawDbToken = cred && cred.token ? cred.token : "";
+      const decryptedDbToken = rawDbToken ? decryptToken(rawDbToken) : "";
+      let tokenToUse = customToken || decryptedDbToken || this.token || envTokenMap[this.serviceName] || "";
 
       if (!tokenToUse) {
         this.logger.warn("Token tanımlanmadığı için bot başlatılamadı.");

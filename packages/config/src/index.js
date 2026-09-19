@@ -10,6 +10,8 @@ export const environment = {
   sqlitePath: process.env.SQLITE_PATH || "./data/bot_ecosystem.sqlite",
   dashboardPort: Number(process.env.DASHBOARD_PORT) || 3000,
   dashboardSecret: process.env.DASHBOARD_SECRET || "public-ecosystem-secret-key",
+  encryptionKey: process.env.ENCRYPTION_KEY || process.env.DASHBOARD_SECRET || "public-ecosystem-secret-key",
+  allowedOrigins: (process.env.ALLOWED_ORIGINS || "").split(",").map((o) => o.trim()).filter(Boolean),
   tokens: {
     moderation: process.env.TOKEN_MODERATION || "",
     register: process.env.TOKEN_REGISTER || "",
@@ -21,6 +23,15 @@ export const environment = {
     utility: process.env.TOKEN_UTILITY || ""
   }
 };
+
+export function validateProductionConfig() {
+  if (process.env.NODE_ENV === "production") {
+    if (!process.env.DASHBOARD_SECRET || process.env.DASHBOARD_SECRET === "public-ecosystem-secret-key") {
+      throw new Error("GÜVENLİK HATASI: Production ortamında DASHBOARD_SECRET tanımlanmalı ve varsayılan değerde bırakılmamalıdır.");
+    }
+  }
+  return true;
+}
 
 export function getActiveDatabaseUri() {
   const provider = (process.env.DATABASE_PROVIDER || environment.databaseProvider || "POSTGRESQL").toUpperCase();

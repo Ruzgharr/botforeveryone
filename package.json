@@ -28,12 +28,14 @@
   },
   "dependencies": {
     "@napi-rs/canvas": "^1.0.9",
+    "better-sqlite3": "^13.0.3",
     "cors": "^2.8.5",
     "discord.js": "^14.18.0",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "mongoose": "^8.12.1",
-    "msedge-tts": "^2.0.7"
+    "msedge-tts": "^2.0.7",
+    "pg": "^8.23.0"
   },
   "devDependencies": {
     "mongodb-memory-server": "^11.2.0"

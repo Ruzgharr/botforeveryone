@@ -1,6 +1,8 @@
+import { SecurityHelper } from "./SecurityHelper.js";
+
 export class WebhookLogger {
   static async sendAlert(webhookUrl, { title, description, color = 0xe02424, fields = [], footer = "Ecosystem Guard" }) {
-    if (!webhookUrl || !webhookUrl.startsWith("http")) return false;
+    if (!SecurityHelper.isValidDiscordWebhookUrl(webhookUrl)) return false;
 
     const payload = {
       embeds: [

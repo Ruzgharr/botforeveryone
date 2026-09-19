@@ -1,4 +1,4 @@
-import { BotCredential } from "@bot/database";
+import { BotCredential, decryptToken } from "@bot/database";
 import { environment } from "@bot/config";
 
 export class BotNameManager {
@@ -29,7 +29,7 @@ export class BotNameManager {
 
     const upperKey = String(serviceKey).toUpperCase();
     let cred = await BotCredential.findOne({ serviceKey: upperKey });
-    let token = cred?.token || this.getServiceToken(upperKey);
+    let token = (cred?.token ? decryptToken(cred.token) : "") || this.getServiceToken(upperKey);
 
     let globalUpdated = false;
     let nicknameUpdated = false;

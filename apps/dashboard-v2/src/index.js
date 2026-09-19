@@ -5,9 +5,11 @@ import os from "os";
 import { spawn } from "child_process";
 import { fileURLToPath } from "url";
 import mongoose from "mongoose";
-import { environment, defaultGuildConfig, getActiveDatabaseUri } from "@bot/config";
-import { connectDatabase, DatabaseManager, GuildConfig, Penalty, Stat, VoiceBot, UserAccount, BotCredential, ForceBan, Ticket, Backup, Economy, InviteRecord, StaffTask, StaffKpi, ChatMessage, BattlePass, UserBattlePass, Clan, Pet, ShopItem, MarketItem } from "@bot/database";
-import { Logger, GitUpdateManager } from "@bot/core";
+import { environment, defaultGuildConfig, getActiveDatabaseUri, validateProductionConfig } from "@bot/config";
+import { connectDatabase, DatabaseManager, GuildConfig, Penalty, Stat, VoiceBot, UserAccount, BotCredential, ForceBan, Ticket, Backup, Economy, InviteRecord, StaffTask, StaffKpi, ChatMessage, BattlePass, UserBattlePass, Clan, Pet, ShopItem, MarketItem, DashboardAdmin, SecurityAuditLog, encryptToken, decryptToken } from "@bot/database";
+import { Logger, GitUpdateManager, SecurityHelper, TotpHelper } from "@bot/core";
+import { authenticateDashboard, createRateLimiter, getExpectedSecret, hashPassword, verifyPassword, generateSalt, createSessionToken, getSession, invalidateSession, checkBruteForceLock, recordFailedLogin, resetFailedLogins, createTemp2faToken, getTemp2faSession, invalidateTemp2faToken } from "./middleware/auth.js";
+import { createSecurityHeadersMiddleware, configureSocketTimeouts, createCsrfProtectionMiddleware, createForceHttpsMiddleware } from "./middleware/securityHeaders.js";
 import { MARKET_ITEMS } from "../../economy/src/services/ItemMarketCatalog.js";
 import { BattlePassService } from "../../stats/src/services/BattlePassService.js";
 import { ClanService } from "../../economy/src/services/ClanService.js";
@@ -18,7 +20,26 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+app.set("trust proxy", true);
+app.use(createForceHttpsMiddleware());
+app.use(createSecurityHeadersMiddleware());
+app.use(createCsrfProtectionMiddleware());
 const logger = new Logger("DASHBOARD-V2");
+
+async function recordAuditLog({ action, ip, username = "SYSTEM", details = {}, status = "SUCCESS" }) {
+  try {
+    await SecurityAuditLog.create({
+      action,
+      ip: String(ip || "127.0.0.1"),
+      username: String(username || "SYSTEM"),
+      details,
+      status,
+      timestamp: new Date()
+    });
+  } catch (err) {
+    logger.warn("Audit log kaydedilemedi: " + err.message);
+  }
+}
 
 const consoleLogs = [];
 const origLog = console.log;
@@ -48,11 +69,399 @@ console.error = function(...args) {
 
 mongoose.set("bufferTimeoutMS", 2500);
 
-app.use(cors());
-app.use(express.json());
+const DASHBOARD_PORT = process.env.DASHBOARD_V2_PORT ? Number(process.env.DASHBOARD_V2_PORT) : 3001;
+const DASHBOARD_HOST = process.env.DASHBOARD_HOST || "0.0.0.0";
+
+const configuredOrigins = (process.env.ALLOWED_ORIGINS || "")
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (configuredOrigins.length === 0 || configuredOrigins.includes("*") || configuredOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error("CORS erişim engeli: İzin verilmeyen kaynak."), false);
+  },
+  credentials: true
+}));
+
+app.use(express.json({ limit: "512kb" }));
+app.use(express.urlencoded({ extended: true, limit: "512kb" }));
 app.use(express.static(path.join(__dirname, "public")));
 
-const DASHBOARD_PORT = process.env.DASHBOARD_V2_PORT ? Number(process.env.DASHBOARD_V2_PORT) : 3001;
+const generalApiLimiter = createRateLimiter({
+  windowMs: 60000,
+  maxRequests: 120,
+  message: "İstek sınırı aşıldı. Lütfen bir dakika bekleyin."
+});
+
+const strictOperationsLimiter = createRateLimiter({
+  windowMs: 60000,
+  maxRequests: 20,
+  message: "Hassas işlem sınırı aşıldı. Lütfen bir dakika bekleyin."
+});
+
+const authLimiter = createRateLimiter({
+  windowMs: 60000,
+  maxRequests: 10,
+  message: "Giriş deneme sınırı aşıldı. Lütfen bekleyin."
+});
+
+app.use("/api", generalApiLimiter);
+app.use("/api/terminal", strictOperationsLimiter);
+app.use("/api/system/git-update", strictOperationsLimiter);
+app.use("/api/system/restore-backup", strictOperationsLimiter);
+app.use("/api/auth/login", authLimiter);
+app.use("/api/auth/setup", authLimiter);
+
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok", uptime: process.uptime(), timestamp: new Date().toISOString() });
+});
+
+app.get("/api/auth/setup-status", async (req, res) => {
+  try {
+    const adminCount = await DashboardAdmin.countDocuments().catch(() => 0);
+    res.json({
+      isConfigured: adminCount > 0,
+      setupRequired: adminCount === 0
+    });
+  } catch {
+    res.json({ isConfigured: false, setupRequired: true });
+  }
+});
+
+app.post("/api/auth/setup", async (req, res) => {
+  try {
+    const adminCount = await DashboardAdmin.countDocuments().catch(() => 0);
+    if (adminCount > 0) {
+      return res.status(403).json({
+        success: false,
+        error: "İlk kurulum tamamlanmıştır. Yeni kayıt kabul edilmemektedir."
+      });
+    }
+
+    const { username, password } = req.body || {};
+    if (!username || typeof username !== "string" || username.trim().length < 3) {
+      return res.status(400).json({ success: false, error: "Kullanıcı adı en az 3 karakter olmalıdır." });
+    }
+    if (!password || typeof password !== "string" || password.length < 8) {
+      return res.status(400).json({ success: false, error: "Parola en az 8 karakter olmalıdır." });
+    }
+
+    const passCheck = SecurityHelper.validatePasswordComplexity(password);
+    if (!passCheck.valid) {
+      return res.status(400).json({ success: false, error: passCheck.error });
+    }
+
+    const salt = generateSalt();
+    const passwordHash = hashPassword(password, salt);
+    const created = await DashboardAdmin.create({
+      username: username.toLowerCase().trim(),
+      passwordHash,
+      salt,
+      role: "SUPERADMIN",
+      lastLoginAt: new Date()
+    });
+
+    const session = createSessionToken({ username: created.username, role: created.role });
+    return res.json({
+      success: true,
+      message: "Yönetici hesabı oluşturuldu ve sistem kilitlendi.",
+      token: session.token,
+      user: session.user
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: "Kurulum sırasında hata oluştu." });
+  }
+});
+
+app.post("/api/auth/login", async (req, res) => {
+  const ip = req.ip || req.socket.remoteAddress || "127.0.0.1";
+  const lockStatus = checkBruteForceLock(ip);
+  if (lockStatus.locked) {
+    const mins = Math.ceil(lockStatus.remainingMs / 60000);
+    return res.status(429).json({
+      success: false,
+      error: `Çok fazla hatalı deneme. Güvenlik gereği ${mins} dakika boyunca giriş engellendi.`
+    });
+  }
+
+  const { username, password, key } = req.body || {};
+  const expectedKey = getExpectedSecret();
+
+  if (key && String(key).trim() === expectedKey) {
+    resetFailedLogins(ip);
+    await recordAuditLog({ action: "LOGIN_SUCCESS", ip, username: "master_key", details: { method: "MASTER_KEY" }, status: "SUCCESS" });
+    const session = createSessionToken({ username: "master_key", role: "MASTER" });
+    return res.json({ success: true, token: session.token, user: session.user });
+  }
+
+  if (username && password) {
+    const cleanUser = String(username).toLowerCase().trim();
+    const admin = await DashboardAdmin.findOne({ username: cleanUser });
+    if (admin && verifyPassword(password, admin.salt, admin.passwordHash)) {
+      resetFailedLogins(ip);
+      await DashboardAdmin.updateOne({ _id: admin._id }, { $set: { lastLoginAt: new Date(), loginAttempts: 0 } }).catch(() => {});
+
+      if (admin.twoFactorEnabled && admin.twoFactorSecret) {
+        const tempToken = createTemp2faToken({ username: admin.username, role: admin.role, adminId: String(admin._id) });
+        await recordAuditLog({ action: "LOGIN_2FA_REQUIRED", ip, username: admin.username, details: { adminId: String(admin._id) }, status: "PENDING" });
+        return res.json({ success: true, requires2fa: true, tempToken });
+      }
+
+      await recordAuditLog({ action: "LOGIN_SUCCESS", ip, username: admin.username, details: { role: admin.role }, status: "SUCCESS" });
+      const session = createSessionToken({ username: admin.username, role: admin.role });
+      return res.json({ success: true, token: session.token, user: session.user });
+    }
+  }
+
+  const failResult = recordFailedLogin(ip);
+  await recordAuditLog({ action: "LOGIN_FAILED", ip, username: username || "UNKNOWN", details: { remainingAttempts: failResult.remainingAttempts }, status: "FAILURE" });
+  if (failResult.locked) {
+    return res.status(429).json({
+      success: false,
+      error: "Çok fazla başarısız giriş denemesi. IP adresiniz 15 dakika süreyle kilitlendi."
+    });
+  }
+
+  return res.status(401).json({
+    success: false,
+    error: `Geçersiz kullanıcı adı veya parola. Kalan hak: ${failResult.remainingAttempts}`
+  });
+});
+
+app.post("/api/auth/2fa/verify", async (req, res) => {
+  const ip = req.ip || req.socket.remoteAddress || "127.0.0.1";
+  const { tempToken, code } = req.body || {};
+  if (!tempToken || !code) {
+    return res.status(400).json({ success: false, error: "Geçici jeton ve 6 haneli doğrulama kodu gereklidir." });
+  }
+
+  const tempSession = getTemp2faSession(tempToken);
+  if (!tempSession) {
+    return res.status(401).json({ success: false, error: "2FA oturum süresi dolmuş veya geçersiz. Lütfen tekrar giriş yapın." });
+  }
+
+  const admin = await DashboardAdmin.findOne({ username: tempSession.username });
+  if (!admin || !admin.twoFactorEnabled || !admin.twoFactorSecret) {
+    return res.status(400).json({ success: false, error: "2FA yapılandırması bulunamadı." });
+  }
+
+  const isValid = TotpHelper.verifyTotp(admin.twoFactorSecret, String(code).trim());
+  if (!isValid) {
+    await recordAuditLog({ action: "2FA_VERIFY_FAILED", ip, username: admin.username, status: "FAILURE" });
+    return res.status(401).json({ success: false, error: "Geçersiz veya süresi dolmuş 2FA kodu." });
+  }
+
+  invalidateTemp2faToken(tempToken);
+  await recordAuditLog({ action: "2FA_VERIFY_SUCCESS", ip, username: admin.username, status: "SUCCESS" });
+  const session = createSessionToken({ username: admin.username, role: admin.role });
+  return res.json({ success: true, token: session.token, user: session.user });
+});
+
+app.post("/api/auth/logout", (req, res) => {
+  const authHeader = req.headers["authorization"] || req.headers["x-session-token"] || "";
+  let token = "";
+  if (authHeader && typeof authHeader === "string") {
+    token = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : authHeader.trim();
+  }
+  if (!token && req.headers["x-dashboard-key"]) {
+    token = String(req.headers["x-dashboard-key"]).trim();
+  }
+  if (token) {
+    invalidateSession(token);
+  }
+  res.json({ success: true });
+});
+
+app.get("/api/auth/verify", (req, res) => {
+  const authHeader = req.headers["authorization"] || req.headers["x-session-token"] || "";
+  let providedToken = "";
+  if (authHeader && typeof authHeader === "string") {
+    providedToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : authHeader.trim();
+  }
+  if (!providedToken && req.headers["x-dashboard-key"]) {
+    providedToken = String(req.headers["x-dashboard-key"]).trim();
+  }
+  if (!providedToken && req.query && (req.query.key || req.query.token)) {
+    providedToken = String(req.query.key || req.query.token).trim();
+  }
+
+  const expectedKey = getExpectedSecret();
+  if (providedToken) {
+    const sessionUser = getSession(providedToken);
+    if (sessionUser) {
+      return res.json({ success: true, authenticated: true, user: sessionUser });
+    }
+    if (providedToken === expectedKey) {
+      return res.json({ success: true, authenticated: true, user: { username: "Master", role: "MASTER" } });
+    }
+  }
+
+  return res.status(401).json({ success: false, authenticated: false, error: "Yetkisiz oturum." });
+});
+
+app.get("/api/auth/status", async (req, res) => {
+  const adminCount = await DashboardAdmin.countDocuments().catch(() => 0);
+  res.json({
+    requiresAuth: true,
+    isConfigured: adminCount > 0,
+    setupRequired: adminCount === 0
+  });
+});
+
+app.use("/api", authenticateDashboard);
+
+let guardLockdownActive = false;
+let guardLockdownDetails = {
+  active: false,
+  reason: "",
+  activatedAt: null,
+  activatedBy: null
+};
+
+app.get("/api/auth/2fa/status", async (req, res) => {
+  try {
+    const username = req.sessionUser?.username;
+    if (!username) {
+      return res.json({ success: true, enabled: false });
+    }
+    const admin = await DashboardAdmin.findOne({ username });
+    return res.json({
+      success: true,
+      enabled: Boolean(admin?.twoFactorEnabled)
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: "2FA durumu alınamadı." });
+  }
+});
+
+app.post("/api/auth/2fa/generate", async (req, res) => {
+  try {
+    const username = req.sessionUser?.username || "admin";
+    const secret = TotpHelper.generateSecret(16);
+    const otpAuthUrl = TotpHelper.getOtpAuthUrl(username, secret, "BotForEveryone");
+    return res.json({ success: true, secret, otpAuthUrl });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: "2FA anahtarı üretilemedi." });
+  }
+});
+
+app.post("/api/auth/2fa/enable", async (req, res) => {
+  try {
+    const ip = req.ip || req.socket.remoteAddress || "127.0.0.1";
+    const username = req.sessionUser?.username;
+    if (!username) {
+      return res.status(400).json({ success: false, error: "Yönetici oturumu gereklidir." });
+    }
+    const { secret, code } = req.body || {};
+    if (!secret || !code) {
+      return res.status(400).json({ success: false, error: "Secret ve onay kodu gereklidir." });
+    }
+
+    const isValid = TotpHelper.verifyTotp(secret, String(code).trim());
+    if (!isValid) {
+      return res.status(400).json({ success: false, error: "Geçersiz doğrulama kodu. Kod telefonunuzdaki Authenticator uygulaması ile uyuşmuyor." });
+    }
+
+    await DashboardAdmin.updateOne(
+      { username },
+      { $set: { twoFactorEnabled: true, twoFactorSecret: secret } }
+    );
+    await recordAuditLog({ action: "2FA_ENABLED", ip, username, status: "SUCCESS" });
+    return res.json({ success: true, message: "İki aşamalı doğrulama başarıyla etkinleştirildi." });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: "2FA etkinleştirme hatası." });
+  }
+});
+
+app.post("/api/auth/2fa/disable", async (req, res) => {
+  try {
+    const ip = req.ip || req.socket.remoteAddress || "127.0.0.1";
+    const username = req.sessionUser?.username;
+    if (!username) {
+      return res.status(400).json({ success: false, error: "Yönetici oturumu gereklidir." });
+    }
+    const { code, password } = req.body || {};
+    const admin = await DashboardAdmin.findOne({ username });
+    if (!admin) {
+      return res.status(404).json({ success: false, error: "Yönetici bulunamadı." });
+    }
+
+    let verified = false;
+    if (code && admin.twoFactorSecret) {
+      verified = TotpHelper.verifyTotp(admin.twoFactorSecret, String(code).trim());
+    }
+    if (!verified && password) {
+      verified = verifyPassword(password, admin.salt, admin.passwordHash);
+    }
+
+    if (!verified) {
+      return res.status(400).json({ success: false, error: "2FA devre dışı bırakmak için geçerli 2FA kodu veya parolanız gereklidir." });
+    }
+
+    await DashboardAdmin.updateOne(
+      { username },
+      { $set: { twoFactorEnabled: false, twoFactorSecret: null } }
+    );
+    await recordAuditLog({ action: "2FA_DISABLED", ip, username, status: "SUCCESS" });
+    return res.json({ success: true, message: "İki aşamalı doğrulama devre dışı bırakıldı." });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: "2FA devre dışı bırakma hatası." });
+  }
+});
+
+app.get("/api/security/audit-logs", async (req, res) => {
+  try {
+    const limit = Math.min(Number(req.query.limit) || 100, 200);
+    const logs = await SecurityAuditLog.find().sort({ timestamp: -1 }).limit(limit);
+    return res.json({ success: true, data: logs });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: "Denetim günlükleri alınamadı." });
+  }
+});
+
+app.get("/api/guard/lockdown-status", (req, res) => {
+  return res.json({
+    success: true,
+    data: guardLockdownDetails
+  });
+});
+
+app.post("/api/guard/lockdown", async (req, res) => {
+  try {
+    const ip = req.ip || req.socket.remoteAddress || "127.0.0.1";
+    const username = req.sessionUser?.username || (req.isMasterKey ? "master_key" : "ADMIN");
+    const { enabled, reason } = req.body || {};
+
+    guardLockdownActive = Boolean(enabled);
+    guardLockdownDetails = {
+      active: guardLockdownActive,
+      reason: reason ? String(reason).trim() : (guardLockdownActive ? "Yönetici Acil Durum Kilit Modu" : ""),
+      activatedAt: guardLockdownActive ? new Date() : null,
+      activatedBy: guardLockdownActive ? username : null
+    };
+
+    await recordAuditLog({
+      action: guardLockdownActive ? "GUARD_LOCKDOWN_ACTIVATED" : "GUARD_LOCKDOWN_DEACTIVATED",
+      ip,
+      username,
+      details: { reason: guardLockdownDetails.reason },
+      status: "SUCCESS"
+    });
+
+    return res.json({
+      success: true,
+      message: guardLockdownActive ? "Acil durum kilit modu (Panic Shield) etkinleştirildi!" : "Acil durum kilit modu kaldırıldı.",
+      data: guardLockdownDetails
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: "Kilit modu işlemi başarısız oldu." });
+  }
+});
 
 const CLUSTER_CONTROL = `http://127.0.0.1:${Number(process.env.CLUSTER_CONTROL_PORT) || 3099}`;
 
@@ -1210,7 +1619,7 @@ app.post("/api/bot-credentials", async (req, res) => {
     const updateFields = {};
     if (name !== undefined) updateFields.name = name;
     if (clientId !== undefined) updateFields.clientId = clientId;
-    if (token !== undefined && token !== "") updateFields.token = token;
+    if (token !== undefined && token !== "") updateFields.token = encryptToken(token);
     if (enabled !== undefined) updateFields.enabled = Boolean(enabled);
     if (activityType !== undefined) updateFields.activityType = activityType;
     if (activityText !== undefined) updateFields.activityText = activityText;
@@ -3712,19 +4121,43 @@ app.get("/api/system/backups", (req, res) => {
   }
 });
 
-app.post("/api/system/backup-create", (req, res) => {
+app.post("/api/system/backup-create", async (req, res) => {
   try {
-    const result = GitUpdateManager.createFullBackup();
+    const ip = req.ip || req.socket.remoteAddress || "127.0.0.1";
+    const username = req.sessionUser?.username || (req.isMasterKey ? "master_key" : "ADMIN");
+    const { encrypt, encryptionKey } = req.body || {};
+    const result = GitUpdateManager.createFullBackup({
+      encrypt: Boolean(encrypt),
+      encryptionKey: encryptionKey || null
+    });
+    await recordAuditLog({
+      action: "BACKUP_CREATED",
+      ip,
+      username,
+      details: { backupName: result.backupName, isEncrypted: result.isEncrypted, fileCount: result.fileCount },
+      status: "SUCCESS"
+    });
     res.json(result);
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-app.post("/api/system/restore-backup", (req, res) => {
+app.post("/api/system/restore-backup", async (req, res) => {
   try {
-    const { backupName } = req.body || {};
-    const result = GitUpdateManager.restoreBackup(backupName);
+    const ip = req.ip || req.socket.remoteAddress || "127.0.0.1";
+    const username = req.sessionUser?.username || (req.isMasterKey ? "master_key" : "ADMIN");
+    const { backupName, encryptionKey } = req.body || {};
+    const result = GitUpdateManager.restoreBackup(backupName, {
+      encryptionKey: encryptionKey || null
+    });
+    await recordAuditLog({
+      action: "BACKUP_RESTORED",
+      ip,
+      username,
+      details: { backupName, isEncrypted: result.isEncrypted, restoredCount: result.restoredCount },
+      status: result.success ? "SUCCESS" : "FAILURE"
+    });
     if (result.success) {
       res.json(result);
     } else {
@@ -3743,10 +4176,20 @@ app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-export async function startDashboardV2() {
-  app.listen(DASHBOARD_PORT, () => {
-    logger.success(`Web Dashboard V2 http://localhost:${DASHBOARD_PORT} adresinde yayında.`);
+app.use((err, req, res, next) => {
+  logger.error(`Sunucu hatası: ${err.message}`);
+  res.status(err.status || 500).json({
+    success: false,
+    error: "Sunucu tarafında güvenli bir işlem hatası oluştu."
   });
+});
+
+export async function startDashboardV2() {
+  validateProductionConfig();
+  const server = app.listen(DASHBOARD_PORT, DASHBOARD_HOST, () => {
+    logger.success(`Web Dashboard V2 http://${DASHBOARD_HOST === "0.0.0.0" ? "localhost" : DASHBOARD_HOST}:${DASHBOARD_PORT} adresinde yayında.`);
+  });
+  configureSocketTimeouts(server);
   const dbUri = getActiveDatabaseUri();
   connectDatabase(dbUri, { provider: environment.databaseProvider })
     .catch(() => {

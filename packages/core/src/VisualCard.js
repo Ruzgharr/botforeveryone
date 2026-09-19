@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
-import { execSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import { createCanvas, loadImage, GlobalFonts } from "@napi-rs/canvas";
 
 const SYSTEM_FONTS = [
@@ -1317,13 +1317,11 @@ export class VisualCard {
     let resultBuffer;
     if (format === "mp4") {
       const outMp4 = path.join(tmpDir, "output.mp4");
-      const cmd = `ffmpeg -y -framerate ${fps} -i "${inputPattern}" -c:v libx264 -pix_fmt yuv420p -movflags +faststart "${outMp4}"`;
-      execSync(cmd, { stdio: "ignore" });
+      spawnSync("ffmpeg", ["-y", "-framerate", String(fps), "-i", inputPattern, "-c:v", "libx264", "-pix_fmt", "yuv420p", "-movflags", "+faststart", outMp4], { stdio: "ignore" });
       resultBuffer = fs.readFileSync(outMp4);
     } else {
       const outGif = path.join(tmpDir, "output.gif");
-      const cmd = `ffmpeg -y -framerate ${fps} -i "${inputPattern}" -filter_complex "split[s0][s1];[s0]palettegen=max_colors=128[p];[s1][p]paletteuse=dither=bayer" -loop 0 "${outGif}"`;
-      execSync(cmd, { stdio: "ignore" });
+      spawnSync("ffmpeg", ["-y", "-framerate", String(fps), "-i", inputPattern, "-filter_complex", "split[s0][s1];[s0]palettegen=max_colors=128[p];[s1][p]paletteuse=dither=bayer", "-loop", "0", outGif], { stdio: "ignore" });
       resultBuffer = fs.readFileSync(outGif);
     }
     return resultBuffer;
