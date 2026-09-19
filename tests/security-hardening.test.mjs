@@ -2,13 +2,15 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { encryptToken, decryptToken, isEncrypted } from "../packages/database/src/CryptoHelper.js";
 import { GitUpdateManager } from "../packages/core/src/GitUpdateManager.js";
-import { authenticateDashboard, createRateLimiter, hashPassword, verifyPassword, generateSalt, createSessionToken, getSession, invalidateSession, checkBruteForceLock, recordFailedLogin, resetFailedLogins, createTemp2faToken, getTemp2faSession, invalidateTemp2faToken } from "../apps/dashboard-v2/src/middleware/auth.js";
+import { authenticateDashboard, createRateLimiter, hashPassword, verifyPassword, generateSalt, createSessionToken, getSession, invalidateSession, checkBruteForceLock, recordFailedLogin, resetFailedLogins, createTemp2faToken, getTemp2faSession, invalidateTemp2faToken, requireRole, getExpectedSecret } from "../apps/dashboard-v2/src/middleware/auth.js";
 import { SqliteModel } from "../packages/database/src/SqliteDriver.js";
 import { SecurityHelper } from "../packages/core/src/SecurityHelper.js";
 import { TotpHelper } from "../packages/core/src/TotpHelper.js";
 import { WebhookLogger } from "../packages/core/src/WebhookLogger.js";
 import { SecurityAuditLog } from "../packages/database/src/models/SecurityAuditLog.js";
 import { createSecurityHeadersMiddleware, createCsrfProtectionMiddleware } from "../apps/dashboard-v2/src/middleware/securityHeaders.js";
+import { validateProductionConfig } from "../packages/config/src/index.js";
+
 
 test("Token encryption and decryption cycle works with AES-256-GCM", () => {
   const secretKey = "test_secret_key_1234567890123456";
@@ -388,3 +390,158 @@ test("SecurityAuditLog model is properly declared and available", () => {
   assert.ok(SecurityAuditLog);
   assert.ok(typeof SecurityAuditLog.create === "function" || typeof SecurityAuditLog.find === "function");
 });
+
+test("requireRole blocks unauthorized roles and allows authorized ones", () => {
+  const middleware = requireRole(["SUPERADMIN", "ADMIN"]);
+
+  let superadminPassed = false;
+  const reqSuperadmin = {
+    authenticated: true,
+    isMasterKey: false,
+    sessionUser: { username: "admin", role: "SUPERADMIN" }
+  };
+  middleware(reqSuperadmin, {}, () => { superadminPassed = true; });
+  assert.equal(superadminPassed, true);
+
+  let adminPassed = false;
+  const reqAdmin = {
+    authenticated: true,
+    isMasterKey: false,
+    sessionUser: { username: "admin2", role: "ADMIN" }
+  };
+  middleware(reqAdmin, {}, () => { adminPassed = true; });
+  assert.equal(adminPassed, true);
+
+  let moderatorStatus = 0;
+  const mockRes403 = {
+    status: (code) => {
+      moderatorStatus = code;
+      return { json: () => {} };
+    }
+  };
+  const reqModerator = {
+    authenticated: true,
+    isMasterKey: false,
+    sessionUser: { username: "mod1", role: "MODERATOR" }
+  };
+  middleware(reqModerator, mockRes403, () => {
+    assert.fail("MODERATOR rolü bu endpoint icin gecmemeli");
+  });
+  assert.equal(moderatorStatus, 403);
+
+  let readonlyStatus = 0;
+  const mockResReadonly = {
+    status: (code) => {
+      readonlyStatus = code;
+      return { json: () => {} };
+    }
+  };
+  const reqReadonly = {
+    authenticated: true,
+    isMasterKey: false,
+    sessionUser: { username: "viewer1", role: "READ_ONLY" }
+  };
+  middleware(reqReadonly, mockResReadonly, () => {
+    assert.fail("READ_ONLY rolü bu endpoint icin gecmemeli");
+  });
+  assert.equal(readonlyStatus, 403);
+
+  let masterKeyPassed = false;
+  const reqMasterKey = {
+    authenticated: true,
+    isMasterKey: true,
+    sessionUser: null
+  };
+  middleware(reqMasterKey, {}, () => { masterKeyPassed = true; });
+  assert.equal(masterKeyPassed, true);
+});
+
+test("requireRole blocks unauthenticated requests with 401", () => {
+  const middleware = requireRole("SUPERADMIN");
+  let statusCode = 0;
+  const mockRes = {
+    status: (code) => {
+      statusCode = code;
+      return { json: () => {} };
+    }
+  };
+  const reqUnauthenticated = { authenticated: false };
+  middleware(reqUnauthenticated, mockRes, () => {
+    assert.fail("Kimliksiz istek gecmemeli");
+  });
+  assert.equal(statusCode, 401);
+});
+
+test("requireRole SUPERADMIN-only endpoint blocks MODERATOR and READ_ONLY", () => {
+  const middleware = requireRole("SUPERADMIN");
+
+  const roles = ["MODERATOR", "READ_ONLY", "ADMIN"];
+  for (const role of roles) {
+    let blocked = false;
+    const mockRes = {
+      status: (code) => {
+        if (code === 403) blocked = true;
+        return { json: () => {} };
+      }
+    };
+    const req = {
+      authenticated: true,
+      isMasterKey: false,
+      sessionUser: { username: "testuser", role }
+    };
+    middleware(req, mockRes, () => {
+      if (role !== "SUPERADMIN") {
+        assert.fail(`${role} rolü SUPERADMIN-only endpoint gecmemeli`);
+      }
+    });
+    if (role !== "SUPERADMIN") {
+      assert.equal(blocked, true, `${role} 403 almali`);
+    }
+  }
+});
+
+test("validateProductionConfig throws for weak keys in production", () => {
+  const originalEnv = process.env.NODE_ENV;
+  const originalSecret = process.env.DASHBOARD_SECRET;
+  const originalEncKey = process.env.ENCRYPTION_KEY;
+
+  process.env.NODE_ENV = "production";
+
+  process.env.DASHBOARD_SECRET = "public-ecosystem-secret-key";
+  process.env.ENCRYPTION_KEY = "strong_encryption_key_32chars_ok";
+  assert.throws(() => validateProductionConfig(), /DASHBOARD_SECRET/);
+
+  process.env.DASHBOARD_SECRET = "short";
+  assert.throws(() => validateProductionConfig(), /DASHBOARD_SECRET/);
+
+  process.env.DASHBOARD_SECRET = "strong_dashboard_secret_16chars";
+  process.env.ENCRYPTION_KEY = "bfe_default_fallback_encryption_key";
+  assert.throws(() => validateProductionConfig(), /ENCRYPTION_KEY/);
+
+  process.env.DASHBOARD_SECRET = "strong_dashboard_secret_16chars";
+  process.env.ENCRYPTION_KEY = "strong_encryption_key_32chars_ok";
+  assert.doesNotThrow(() => validateProductionConfig());
+
+  process.env.NODE_ENV = originalEnv;
+  if (originalSecret !== undefined) process.env.DASHBOARD_SECRET = originalSecret;
+  else delete process.env.DASHBOARD_SECRET;
+  if (originalEncKey !== undefined) process.env.ENCRYPTION_KEY = originalEncKey;
+  else delete process.env.ENCRYPTION_KEY;
+});
+
+test("2FA secret encryption roundtrip with encryptToken and isEncrypted", () => {
+  const key = "test_encryption_key_12345678901";
+  const rawSecret = "JBSWY3DPEHPK3PXP";
+
+  const encrypted = encryptToken(rawSecret, key);
+  assert.ok(isEncrypted(encrypted), "Sifrelenmis secret isEncrypted kontrolünden gecmeli");
+  assert.notEqual(encrypted, rawSecret, "Sifrelenmis deger ham degere esit olmamali");
+
+  const decrypted = decryptToken(encrypted, key);
+  assert.equal(decrypted, rawSecret, "Cozülen deger orijinal secret ile eslesemeli");
+
+  const alreadyEncrypted = encryptToken(encrypted, key);
+  assert.equal(alreadyEncrypted, encrypted, "Zaten sifrelenmis degeri tekrar sifrelememeli");
+});
+
+

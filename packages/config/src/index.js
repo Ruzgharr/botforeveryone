@@ -26,8 +26,11 @@ export const environment = {
 
 export function validateProductionConfig() {
   if (process.env.NODE_ENV === "production") {
-    if (!process.env.DASHBOARD_SECRET || process.env.DASHBOARD_SECRET === "public-ecosystem-secret-key") {
-      throw new Error("GÜVENLİK HATASI: Production ortamında DASHBOARD_SECRET tanımlanmalı ve varsayılan değerde bırakılmamalıdır.");
+    if (!process.env.DASHBOARD_SECRET || process.env.DASHBOARD_SECRET === "public-ecosystem-secret-key" || process.env.DASHBOARD_SECRET.length < 16) {
+      throw new Error("GÜVENLİK HATASI: Production ortamında DASHBOARD_SECRET tanımlanmalı, en az 16 karakter olmalı ve varsayılan değerde bırakılmamalıdır.");
+    }
+    if (!process.env.ENCRYPTION_KEY || process.env.ENCRYPTION_KEY === "bfe_default_fallback_encryption_key" || process.env.ENCRYPTION_KEY.length < 16) {
+      throw new Error("GÜVENLİK HATASI: Production ortamında ENCRYPTION_KEY tanımlanmalı, en az 16 karakter olmalı ve varsayılan değerde bırakılmamalıdır.");
     }
   }
   return true;

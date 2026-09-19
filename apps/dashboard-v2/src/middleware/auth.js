@@ -13,7 +13,13 @@ function safeCompare(a, b) {
 }
 
 export function getExpectedSecret() {
-  return process.env.DASHBOARD_SECRET || "public-ecosystem-secret-key";
+  const secret = process.env.DASHBOARD_SECRET;
+  if (process.env.NODE_ENV === "production") {
+    if (!secret || secret === "public-ecosystem-secret-key" || secret.length < 16) {
+      throw new Error("GÜVENLİK KRİTİK HATASI: Production ortamında güçlü bir DASHBOARD_SECRET tanımlanmalıdır (en az 16 karakter).");
+    }
+  }
+  return secret || "public-ecosystem-secret-key";
 }
 
 export function hashPassword(password, salt) {
@@ -223,5 +229,33 @@ export function createRateLimiter({ windowMs = 60000, maxRequests = 100, message
     }
 
     next();
+  };
+}
+
+export function requireRole(allowedRoles = []) {
+  const rolesArray = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
+  return (req, res, next) => {
+    if (!req.authenticated) {
+      return res.status(401).json({ success: false, error: "Yetkisiz istek: Lütfen önce giriş yapınız." });
+    }
+
+    if (req.isMasterKey) {
+      return next();
+    }
+
+    const userRole = req.sessionUser?.role || "READ_ONLY";
+
+    if (userRole === "SUPERADMIN") {
+      return next();
+    }
+
+    if (rolesArray.includes(userRole)) {
+      return next();
+    }
+
+    return res.status(403).json({
+      success: false,
+      error: `Erişim engellendi: Bu işlem için yetkiniz bulunmamaktadır. Gerekli rol: ${rolesArray.join(", ")}`
+    });
   };
 }

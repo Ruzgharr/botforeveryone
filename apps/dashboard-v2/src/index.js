@@ -6,9 +6,9 @@ import { spawn } from "child_process";
 import { fileURLToPath } from "url";
 import mongoose from "mongoose";
 import { environment, defaultGuildConfig, getActiveDatabaseUri, validateProductionConfig } from "@bot/config";
-import { connectDatabase, DatabaseManager, GuildConfig, Penalty, Stat, VoiceBot, UserAccount, BotCredential, ForceBan, Ticket, Backup, Economy, InviteRecord, StaffTask, StaffKpi, ChatMessage, BattlePass, UserBattlePass, Clan, Pet, ShopItem, MarketItem, DashboardAdmin, SecurityAuditLog, encryptToken, decryptToken } from "@bot/database";
+import { connectDatabase, DatabaseManager, GuildConfig, Penalty, Stat, VoiceBot, UserAccount, BotCredential, ForceBan, Ticket, Backup, Economy, InviteRecord, StaffTask, StaffKpi, ChatMessage, BattlePass, UserBattlePass, Clan, Pet, ShopItem, MarketItem, DashboardAdmin, SecurityAuditLog, encryptToken, decryptToken, isEncrypted } from "@bot/database";
 import { Logger, GitUpdateManager, SecurityHelper, TotpHelper } from "@bot/core";
-import { authenticateDashboard, createRateLimiter, getExpectedSecret, hashPassword, verifyPassword, generateSalt, createSessionToken, getSession, invalidateSession, checkBruteForceLock, recordFailedLogin, resetFailedLogins, createTemp2faToken, getTemp2faSession, invalidateTemp2faToken } from "./middleware/auth.js";
+import { authenticateDashboard, createRateLimiter, getExpectedSecret, hashPassword, verifyPassword, generateSalt, createSessionToken, getSession, invalidateSession, checkBruteForceLock, recordFailedLogin, resetFailedLogins, createTemp2faToken, getTemp2faSession, invalidateTemp2faToken, requireRole } from "./middleware/auth.js";
 import { createSecurityHeadersMiddleware, configureSocketTimeouts, createCsrfProtectionMiddleware, createForceHttpsMiddleware } from "./middleware/securityHeaders.js";
 import { MARKET_ITEMS } from "../../economy/src/services/ItemMarketCatalog.js";
 import { BattlePassService } from "../../stats/src/services/BattlePassService.js";
@@ -189,15 +189,7 @@ app.post("/api/auth/login", async (req, res) => {
     });
   }
 
-  const { username, password, key } = req.body || {};
-  const expectedKey = getExpectedSecret();
-
-  if (key && String(key).trim() === expectedKey) {
-    resetFailedLogins(ip);
-    await recordAuditLog({ action: "LOGIN_SUCCESS", ip, username: "master_key", details: { method: "MASTER_KEY" }, status: "SUCCESS" });
-    const session = createSessionToken({ username: "master_key", role: "MASTER" });
-    return res.json({ success: true, token: session.token, user: session.user });
-  }
+  const { username, password } = req.body || {};
 
   if (username && password) {
     const cleanUser = String(username).toLowerCase().trim();
@@ -250,7 +242,10 @@ app.post("/api/auth/2fa/verify", async (req, res) => {
     return res.status(400).json({ success: false, error: "2FA yapılandırması bulunamadı." });
   }
 
-  const isValid = TotpHelper.verifyTotp(admin.twoFactorSecret, String(code).trim());
+  const rawSecret = admin.twoFactorSecret;
+  const secret = isEncrypted(rawSecret) ? decryptToken(rawSecret) : rawSecret;
+
+  const isValid = TotpHelper.verifyTotp(secret, String(code).trim());
   if (!isValid) {
     await recordAuditLog({ action: "2FA_VERIFY_FAILED", ip, username: admin.username, status: "FAILURE" });
     return res.status(401).json({ success: false, error: "Geçersiz veya süresi dolmuş 2FA kodu." });
@@ -367,9 +362,10 @@ app.post("/api/auth/2fa/enable", async (req, res) => {
       return res.status(400).json({ success: false, error: "Geçersiz doğrulama kodu. Kod telefonunuzdaki Authenticator uygulaması ile uyuşmuyor." });
     }
 
+    const encryptedSecret = encryptToken(secret);
     await DashboardAdmin.updateOne(
       { username },
-      { $set: { twoFactorEnabled: true, twoFactorSecret: secret } }
+      { $set: { twoFactorEnabled: true, twoFactorSecret: encryptedSecret } }
     );
     await recordAuditLog({ action: "2FA_ENABLED", ip, username, status: "SUCCESS" });
     return res.json({ success: true, message: "İki aşamalı doğrulama başarıyla etkinleştirildi." });
@@ -393,7 +389,9 @@ app.post("/api/auth/2fa/disable", async (req, res) => {
 
     let verified = false;
     if (code && admin.twoFactorSecret) {
-      verified = TotpHelper.verifyTotp(admin.twoFactorSecret, String(code).trim());
+      const rawSecret = admin.twoFactorSecret;
+      const plainSecret = isEncrypted(rawSecret) ? decryptToken(rawSecret) : rawSecret;
+      verified = TotpHelper.verifyTotp(plainSecret, String(code).trim());
     }
     if (!verified && password) {
       verified = verifyPassword(password, admin.salt, admin.passwordHash);
@@ -431,7 +429,7 @@ app.get("/api/guard/lockdown-status", (req, res) => {
   });
 });
 
-app.post("/api/guard/lockdown", async (req, res) => {
+app.post("/api/guard/lockdown", requireRole(["SUPERADMIN", "ADMIN"]), async (req, res) => {
   try {
     const ip = req.ip || req.socket.remoteAddress || "127.0.0.1";
     const username = req.sessionUser?.username || (req.isMasterKey ? "master_key" : "ADMIN");
@@ -987,7 +985,7 @@ app.get("/api/terminal/logs", async (req, res) => {
   }
 });
 
-app.post("/api/terminal/command", async (req, res) => {
+app.post("/api/terminal/command", requireRole("SUPERADMIN"), async (req, res) => {
   try {
     const rawCmd = String(req.body.command || "").trim();
     if (!rawCmd) {
@@ -4102,7 +4100,7 @@ app.get("/api/system/git-status", (req, res) => {
   }
 });
 
-app.post("/api/system/git-update", async (req, res) => {
+app.post("/api/system/git-update", requireRole("SUPERADMIN"), async (req, res) => {
   try {
     const { branch = "main" } = req.body || {};
     const result = await GitUpdateManager.performSafeUpdate({ branch });
@@ -4121,7 +4119,7 @@ app.get("/api/system/backups", (req, res) => {
   }
 });
 
-app.post("/api/system/backup-create", async (req, res) => {
+app.post("/api/system/backup-create", requireRole(["SUPERADMIN", "ADMIN"]), async (req, res) => {
   try {
     const ip = req.ip || req.socket.remoteAddress || "127.0.0.1";
     const username = req.sessionUser?.username || (req.isMasterKey ? "master_key" : "ADMIN");
@@ -4143,7 +4141,7 @@ app.post("/api/system/backup-create", async (req, res) => {
   }
 });
 
-app.post("/api/system/restore-backup", async (req, res) => {
+app.post("/api/system/restore-backup", requireRole("SUPERADMIN"), async (req, res) => {
   try {
     const ip = req.ip || req.socket.remoteAddress || "127.0.0.1";
     const username = req.sessionUser?.username || (req.isMasterKey ? "master_key" : "ADMIN");

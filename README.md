@@ -11,8 +11,7 @@ Bu ekosistem, yüksek üye sayılı topluluklarda Discord API hız sınırların
 ### Temel Yetenekler
 
 * **Çoklu Veritabanı Desteği:** PostgreSQL 16 (JSONB indeksleme), MongoDB ve SQLite sürücüleri ile sıfır harici bağımlılıkla veya kurumsal SQL altyapısıyla çalışabilme.
-* **Web Dashboard V2 (Port 3001):** 23 modüllü yönetim konsolu. Canlı metrikler, web terminali, git güncelleme, bilet yönetimi, ceza masası ve rol atama.
-* **Banka ve Kurumsal Düzeyde Güvenlik (Bank-Grade):** RFC 6238 TOTP 2FA (Google Authenticator/Authy), tek seferlik kurulum kilidi, güvenlik denetim günlüğü (Security Audit Log), AES-256-GCM şifreli sistem yedekleri, 15 dakika boşta kalma zaman aşımı, otomatik HTTPS yönlendirmesi, CSRF engelleme, otomatik log maskeleme ve Discord Guard acil kilit modu (Panic Shield).
+* **Kapsamlı Güvenlik Mimarisi:** RFC 6238 TOTP 2FA (Google Authenticator / Authy), Rol Tabanlı Yetkilendirme (RBAC: SUPERADMIN, ADMIN, MODERATOR), tek seferlik kurulum kilidi, veritabanı denetim günlüğü (Security Audit Log), AES-256-GCM ile şifrelenen sistem yedekleri ve 2FA anahtarları, 15 dakika boşta kalma zaman aşımı (Idle Session Timeout), zorunlu HTTPS yönlendirmesi, CSRF engelleme, otomatik log maskeleme, anti-SSRF süzgeci ve Discord Guard acil kilit modu (Panic Shield).
 * **Dayanıklı Denetleyici (Supervisor & Watchdog):** STARTING, READY, DEGRADED, FAILED, STOPPED sağlık durumları, üstel geri çekilme (exponential backoff) ve crash-loop koruma mekanizması.
 * **Güvenli Güncelleme:** GitUpdateManager üzerinde komut enjeksiyonu ve dizin geçişi (path traversal) korumaları ile güvenli güncelleme ve otomatik yedekleme.
 * **Görsel Kart Motoru:** Node-Canvas ve FFmpeg tabanlı 15 FPS hareketli profil, seviye, cüzdan ve liderlik kartları (PNG, GIF ve MP4).

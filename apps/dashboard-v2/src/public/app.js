@@ -142,16 +142,9 @@ window.handleDashboardAuthSubmit = async function(e) {
 
   const usernameVal = userInput ? userInput.value.trim() : "";
   const passwordVal = passInput ? passInput.value : "";
-  if (!usernameVal) return;
+  if (!usernameVal || !passwordVal) return;
 
-  const payload = {};
-  if (passwordVal) {
-    payload.username = usernameVal;
-    payload.password = passwordVal;
-  } else {
-    payload.key = usernameVal;
-    payload.username = usernameVal;
-  }
+  const payload = { username: usernameVal, password: passwordVal };
 
   if (btn) btn.disabled = true;
   try {
